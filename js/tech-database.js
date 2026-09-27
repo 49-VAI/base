@@ -94,7 +94,7 @@ function getTechStatus(row) {
     const diffDays = Math.ceil((date - today) / (1000 * 60 * 60 * 24));
 
     if (diffDays < 0) return { status: 'expired', text: 'ПРОСРОЧЕНО', class: 'eis-status-expired' };
-    if (diffDays <= 30) return { status: 'expiring', text: 'ИСТЕКАЕТ', class: 'eis-status-expiring' };
+    if (diffDays <= 7) return { status: 'expiring', text: 'ИСТЕКАЕТ', class: 'eis-status-expiring' };
     return { status: 'valid', text: 'ДЕЙСТВИТЕЛЬНО', class: 'eis-status-valid' };
 }
 
