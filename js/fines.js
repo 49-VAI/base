@@ -225,7 +225,7 @@ function displayFines(rows) {
         const fio = [row.violator_last_name, row.violator_first_name, row.violator_middle_name]
             .filter(Boolean).join(' ') || '—';
         const article = [
-            row.article_part,
+            'ч. ' +row.article_part,
             row.article_number ? 'ст. ' + row.article_number : ''
         ].filter(Boolean).join(' ') || '—';
         const ts = [row.vehicle_make, row.vehicle_plate].filter(Boolean).join(' · ') || '—';
@@ -288,7 +288,7 @@ function openFineDetail(id) {
     const fio = [row.violator_last_name, row.violator_first_name, row.violator_middle_name]
         .filter(Boolean).join(' ') || '—';
     const article = [
-        row.article_part,
+        'ч. ' +row.article_part,
         row.article_number ? 'ст. ' + row.article_number : ''
     ].filter(Boolean).join(' ') || '—';
 
