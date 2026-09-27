@@ -2940,3 +2940,207 @@ textarea {
         min-height: 220px;
     }
 }
+
+/* ================================================================
+   ПОЛЕ ВВОДА С КНОПКОЙ РЯДОМ
+   ================================================================ */
+.eis-input-with-btn {
+    display: flex;
+    gap: 8px;
+    align-items: stretch;
+}
+
+    .eis-input-with-btn .eis-input {
+        flex: 1;
+        min-width: 0;
+    }
+
+    .eis-input-with-btn .eis-btn {
+        white-space: nowrap;
+        flex-shrink: 0;
+    }
+
+@media (max-width: 768px) {
+    .eis-input-with-btn {
+        flex-direction: column;
+    }
+
+        .eis-input-with-btn .eis-btn {
+            width: 100%;
+        }
+}
+
+/* ================================================================
+   ДВУХКОЛОНОЧНЫЙ БЛОК ДЛЯ ТС «A» И «B» (ДТП)
+   ================================================================ */
+.eis-two-col-dtp {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 24px;
+    align-items: start;
+}
+
+.eis-dtp-vehicle-col {
+    background: #fafbfc;
+    border: 1px solid var(--eis-border);
+    border-radius: var(--eis-radius);
+    padding: 16px;
+    min-width: 0;
+}
+
+.eis-dtp-vehicle-title {
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--eis-accent);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    padding-bottom: 10px;
+    margin-bottom: 14px;
+    border-bottom: 2px solid var(--eis-accent);
+    text-align: center;
+}
+
+/* --- Адаптив --- */
+@media (max-width: 1024px) {
+    .eis-two-col-dtp {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 768px) {
+    .eis-dtp-vehicle-col {
+        padding: 12px;
+    }
+
+    .eis-dtp-vehicle-title {
+        font-size: 13px;
+        padding-bottom: 8px;
+        margin-bottom: 12px;
+    }
+}
+
+/* ================================================================
+   ОБСТОЯТЕЛЬСТВА ДТП (ЧЕКБОКСЫ)
+   ================================================================ */
+.eis-circumstances-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    margin-top: 8px;
+    padding: 10px;
+    background: #fff;
+    border: 1px solid var(--eis-border);
+    border-radius: var(--eis-radius-sm);
+    max-height: 500px;
+    overflow-y: auto;
+}
+
+.eis-circumstances-grid .eis-radio {
+    display: flex;
+    align-items: flex-start;
+    padding: 6px 10px;
+    font-size: 13px;
+    line-height: 1.3;
+    gap: 8px;
+    cursor: pointer;
+}
+
+.eis-circumstances-grid .eis-radio input[type="checkbox"] {
+    width: 16px;
+    height: 16px;
+    margin-top: 2px;
+    flex-shrink: 0;
+    accent-color: var(--eis-accent);
+}
+
+.eis-circumstances-grid .eis-radio:has(input:checked) {
+    background: var(--eis-accent-light);
+    color: var(--eis-accent);
+    font-weight: 600;
+}
+
+/* Обёртка для пункта обстоятельств */
+.eis-circumstance-item {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+/* Текстовое поле "Иное" внутри блока обстоятельств */
+.eis-circumstances-grid .eis-input-sm {
+    font-size: 13px;
+    padding: 6px 10px;
+    background: #fff;
+    border: 1px solid var(--eis-border);
+    border-radius: var(--eis-radius-sm);
+    width: 100%;
+}
+
+/* ================================================================
+   ТУЛБАР РИСОВАНИЯ НА СХЕМЕ ДТП
+   ================================================================ */
+.eis-draw-toolbar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 10px;
+    background: #fafbfc;
+    border: 1px solid var(--eis-border);
+    border-radius: var(--eis-radius-sm);
+    width: 100%;
+    max-width: 100%;
+}
+
+    .eis-draw-toolbar .eis-btn {
+        padding: 6px 12px;
+        font-size: 13px;
+        line-height: 1.2;
+    }
+
+        .eis-draw-toolbar .eis-btn.is-active {
+            background: var(--eis-accent);
+            color: #fff;
+            border-color: var(--eis-accent);
+        }
+
+.eis-draw-toolbar-sep {
+    display: inline-block;
+    width: 1px;
+    height: 22px;
+    background: var(--eis-border);
+    margin: 0 4px;
+}
+
+.eis-draw-hint {
+    font-size: 12px;
+    color: var(--eis-text-light);
+    text-align: center;
+    width: 100%;
+}
+
+@media (max-width: 768px) {
+    .eis-draw-toolbar {
+        gap: 4px;
+        padding: 6px;
+    }
+
+        .eis-draw-toolbar .eis-btn {
+            flex: 1 1 calc(50% - 4px);
+            padding: 8px 10px;
+            font-size: 12px;
+        }
+
+    .eis-draw-toolbar-sep {
+        display: none;
+    }
+}
+
+.eis-draw-toolbar.is-disabled {
+    opacity: 0.55;
+    background: #f0f0f0;
+}
+
+    .eis-draw-toolbar.is-disabled .eis-btn {
+        cursor: not-allowed;
+    }

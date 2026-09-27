@@ -533,7 +533,7 @@ async function drawProtocolPage1(canvas, data) {
     }
 
     if (data.vehicleOwner) {
-        fitText(ctx, String(data.vehicleOwner).toLowerCase(), 307, 1201 + 30, 1300, 35, fontFamily, 'normal', color, 'left', fontStyle);
+        fitText(ctx, String(data.vehicleOwner), 307, 1201 + 30, 1300, 35, fontFamily, 'normal', color, 'left', fontStyle);
     }
 
     if (data.vehicleRegistered) {
@@ -1044,6 +1044,69 @@ document.addEventListener('DOMContentLoaded', function () {
     setTimeout(generateProtocol, 300);
 });
 
+// ================================================================
+// ПОЛУЧЕНИЕ ПОСЛЕДНЕГО НОМЕРА ПРОТОКОЛА
+// ================================================================
+async function fetchLastProtocolNumber() {
+    const btn = document.getElementById('lastProtocolBtn');
+    const input = document.getElementById('protocolRegNumber');
+    if (!btn || !input) return;
+
+    const origText = btn.textContent;
+    btn.disabled = true;
+    btn.textContent = 'Поиск...';
+
+    try {
+        // Берём запись с самой поздней датой создания
+        const { data, error } = await supabaseClient
+            .from('protocols')
+            .select('reg_number, protocol_date, created_at')
+            .order('created_at', { ascending: false })
+            .limit(1)
+            .maybeSingle();
+
+        if (error) throw new Error(error.message);
+
+        if (!data || !data.reg_number) {
+            showToast('В базе пока нет протоколов — начните с 000001-ПДД', 'info');
+            return;
+        }
+
+        const lastNumber = data.reg_number;
+        const nextNumber = incrementRegNumber(lastNumber);
+
+        input.value = nextNumber;
+        generateProtocol();
+
+        showToast(
+            `Последний номер в базе: ${lastNumber}. Подставлен следующий: ${nextNumber}`,
+            'success'
+        );
+    } catch (e) {
+        console.error('[last-protocol]', e);
+        showToast('Ошибка: ' + e.message, 'error');
+    } finally {
+        btn.disabled = false;
+        btn.textContent = origText;
+    }
+}
+
+// Увеличивает числовую часть номера на 1, сохраняя формат и префикс/суффикс
+// "000001-ПДД" → "000002-ПДД"
+// "12-АП"       → "13-АП"
+function incrementRegNumber(regNumber) {
+    const str = String(regNumber || '').trim();
+    if (!str) return '000001-ПДД';
+
+    const match = str.match(/^(.*?)(\d+)(\D*)$/);
+    if (!match) return str;
+
+    const [, prefix, digits, suffix] = match;
+    const next = String(parseInt(digits, 10) + 1).padStart(digits.length, '0');
+
+    return prefix + next + suffix;
+}
+
 // ========== ЭКСПОРТ ==========
 window.generateProtocol = generateProtocol;
 window.saveProtocolPage1 = saveProtocolPage1;
@@ -1053,6 +1116,8 @@ window.formatProtocolDate = formatProtocolDate;
 window.formatProtocolTime = formatProtocolTime;
 window.formatProtocolPhone = formatProtocolPhone;
 window.saveProtocolToDB = saveProtocolToDB;
+window.fetchLastProtocolNumber = fetchLastProtocolNumber;
+window.incrementRegNumber = incrementRegNumber;
 window.formatProtocolBirthDate = formatProtocolBirthDate;
 window.getFieldValue = getFieldValue;
 window.getCheckedValue = getCheckedValue;

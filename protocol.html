@@ -26,7 +26,13 @@
                     <div class="eis-panel-body">
                         <div class="eis-form-group">
                             <label class="eis-form-label">Регистрационный номер по подсистеме «Административная практика»</label>
-                            <input type="text" class="eis-input" id="protocolRegNumber" placeholder="000001-ПДД" oninput="generateProtocol()">
+                            <div class="eis-input-with-btn">
+                                <input type="text" class="eis-input" id="protocolRegNumber" placeholder="000001-ПДД" oninput="generateProtocol()">
+                                <button type="button" class="eis-btn eis-btn-secondary" id="lastProtocolBtn"
+                                        onclick="fetchLastProtocolNumber()">
+                                    Узнать номер последнего протокола
+                                </button>
+                            </div>
                         </div>
 
                         <div class="eis-form-row">

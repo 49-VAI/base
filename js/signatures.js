@@ -71,17 +71,25 @@ const signatureData = {
         y: 0.5,
         active: false,
         imageData: null
+    },
+    driverA: {
+        image: null, src: null, scale: 1, rotation: 0,
+        x: 0.5, y: 0.5, active: false, imageData: null
+    },
+    driverB: {
+        image: null, src: null, scale: 1, rotation: 0,
+        x: 0.5, y: 0.5, active: false, imageData: null
+    },
+    p2Officer: {
+        image: null, src: null, scale: 1, rotation: 0,
+        x: 0.5, y: 0.5, active: false, imageData: null
     }
 };
 
 const ALL_SIGNATURE_TYPES = [
-    'examiner',
-    'candidate',
-    'techExpert',
-    'official',
-    'violator',
-    'witness',
-    'victim'
+    'examiner', 'candidate', 'techExpert',
+    'official', 'violator', 'witness', 'victim',
+    'driverA', 'driverB', 'p2Officer'
 ];
 
 // Типы, которые нужно перерисовывать на своих канвасах
@@ -92,7 +100,10 @@ const SIGNATURE_CANVAS_MAP = {
     official: 'protocolCanvas2',
     violator: 'protocolCanvas2',
     witness: 'protocolCanvas2',
-    victim: 'protocolCanvas2'
+    victim: 'protocolCanvas2',
+    driverA: 'dtpCanvas1',
+    driverB: 'dtpCanvas1',
+    p2Officer: 'dtpCanvas2'
 };
 
 let activeSignatureType = null;
@@ -151,6 +162,11 @@ function activateSignature(type) {
         data.active = true;
         activeSignatureType = type;
 
+        // Хук: уведомить внешние модули (dtp.js выключает режим рисования)
+        if (typeof window.onSignatureActivated === 'function') {
+            window.onSignatureActivated(type);
+        }
+
         const controls = document.getElementById('signatureControls');
         if (controls) controls.style.display = 'flex';
 
@@ -180,6 +196,7 @@ function regenerateAll() {
     if (typeof generateExam === 'function') generateExam();
     if (typeof generateTech === 'function') generateTech();
     if (typeof generateProtocol === 'function') generateProtocol();
+    if (typeof generateDTP === 'function') generateDTP();
 }
 
 // ========== ПРЕВЬЮ ==========
@@ -233,7 +250,10 @@ function updateSignatureInfo(type) {
             official: 'Должностное лицо',
             violator: 'Нарушитель',
             witness: 'Свидетель',
-            victim: 'Потерпевший'
+            victim: 'Потерпевший',
+            driverA: 'Водитель ТС «A»',
+            driverB: 'Водитель ТС «B»',
+            p2Officer: 'Сотрудник (2-й лист)'
         };
         const label = labels[type] || type;
         info.textContent = `${label}: Масштаб ${Math.round(data.scale * 100)}% | Поворот ${Math.round(data.rotation)}°`;
@@ -405,7 +425,7 @@ function handleCanvasMouseUp() {
     isRotating = false;
     selectedSignature = null;
 
-    const canvases = ['examCanvas2', 'techCanvas', 'protocolCanvas2'];
+    const canvases = ['examCanvas2', 'techCanvas', 'protocolCanvas2', 'dtpCanvas1', 'dtpCanvas2'];
     canvases.forEach(id => {
         const canvas = document.getElementById(id);
         if (canvas) canvas.style.cursor = 'default';
@@ -505,7 +525,10 @@ function drawSignatureOnCanvas(ctx, type, canvas, showEditMode) {
             official: 'Должностное лицо',
             violator: 'Нарушитель',
             witness: 'Свидетель',
-            victim: 'Потерпевший'
+            victim: 'Потерпевший',
+            driverA: 'Водитель ТС «A»',
+            driverB: 'Водитель ТС «B»',
+            p2Officer: 'Сотрудник (2-й лист)'
         };
         const label = labels[type] || type;
         ctx.fillText(label, x, y - drawHeight / 2 - 5);
@@ -543,7 +566,7 @@ function resetSignature(type) {
 
 // ========== ИНИЦИАЛИЗАЦИЯ ==========
 document.addEventListener('DOMContentLoaded', function () {
-    const canvases = ['examCanvas2', 'techCanvas', 'protocolCanvas2'];
+    const canvases = ['examCanvas2', 'techCanvas', 'protocolCanvas2', 'dtpCanvas1', 'dtpCanvas2'];
     canvases.forEach(id => {
         const canvas = document.getElementById(id);
         if (!canvas) return;

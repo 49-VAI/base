@@ -1,0 +1,678 @@
+﻿<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Протокол ДТП — ЕИС ВАИ</title>
+    <link rel="icon" type="image/png" href="images/favicon.png">
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <div class="eis-wrapper">
+        <div id="site-header"></div>
+        <div id="site-nav"></div>
+
+        <main class="eis-main">
+            <div class="eis-container">
+                <div class="eis-page-header">
+                    <h1 class="eis-page-title">Протокол ДТП</h1>
+                    <div class="eis-page-subtitle">Заполнение данных о дорожно-транспортном происшествии</div>
+                </div>
+
+                <!-- ============ 1. ОБЩИЕ СВЕДЕНИЯ ============ -->
+                <div class="eis-panel">
+                    <div class="eis-panel-header">
+                        <span class="eis-panel-title">1. Общие сведения о ДТП</span>
+                    </div>
+                    <div class="eis-panel-body">
+                        <div class="eis-form-row">
+                            <div class="eis-form-group">
+                                <label class="eis-form-label">Номер извещения о ДТП</label>
+                                <input type="text" class="eis-input" id="dtpNumber" oninput="generateDTP()" placeholder="0000001-ВАИ">
+                            </div>
+                            <div class="eis-form-group">
+                                <label class="eis-form-label">Дата ДТП</label>
+                                <input type="date" class="eis-input" id="dtpDate" onchange="generateDTP()">
+                            </div>
+                            <div class="eis-form-group">
+                                <label class="eis-form-label">Время ДТП</label>
+                                <input type="time" class="eis-input" id="dtpTime" onchange="generateDTP()">
+                            </div>
+                        </div>
+                        <div class="eis-form-group">
+                            <label class="eis-form-label">Место ДТП</label>
+                            <input type="text" class="eis-input" id="dtpPlace" oninput="generateDTP()">
+                        </div>
+                        <div class="eis-form-row">
+                            <div class="eis-form-group">
+                                <label class="eis-form-label">Кол-во повреждённых ТС</label>
+                                <input type="number" class="eis-input" id="dtpDamagedCount" min="0" value="2" oninput="generateDTP()">
+                            </div>
+                            <div class="eis-form-group">
+                                <label class="eis-form-label">Кол-во раненых</label>
+                                <input type="number" class="eis-input" id="dtpInjuredCount" min="0" value="0" oninput="generateDTP()">
+                            </div>
+                            <div class="eis-form-group">
+                                <label class="eis-form-label">Кол-во погибших</label>
+                                <input type="number" class="eis-input" id="dtpDeadCount" min="0" value="0" oninput="generateDTP()">
+                            </div>
+                        </div>
+                        <div class="eis-form-row">
+                            <div class="eis-form-group">
+                                <label class="eis-form-label">Освидетельствование на опьянение</label>
+                                <select class="eis-select" id="dtpAlcohol" onchange="generateDTP()">
+                                    <option value="">—</option>
+                                    <option value="Да">Да</option>
+                                    <option value="Нет">Нет</option>
+                                </select>
+                            </div>
+                            <div class="eis-form-group">
+                                <label class="eis-form-label">Мат. ущерб другим ТС (кроме A и B)</label>
+                                <select class="eis-select" id="dtpDamageOtherVehicles" onchange="generateDTP()">
+                                    <option value="">—</option>
+                                    <option value="Да">Да</option>
+                                    <option value="Нет">Нет</option>
+                                </select>
+                            </div>
+                            <div class="eis-form-group">
+                                <label class="eis-form-label">Мат. ущерб другому имуществу</label>
+                                <select class="eis-select" id="dtpDamageOtherProperty" onchange="generateDTP()">
+                                    <option value="">—</option>
+                                    <option value="Да">Да</option>
+                                    <option value="Нет">Нет</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ============ 2. СВИДЕТЕЛИ ============ -->
+                <div class="eis-panel">
+                    <div class="eis-panel-header">
+                        <span class="eis-panel-title">2. Свидетели ДТП</span>
+                    </div>
+                    <div class="eis-panel-body">
+                        <div class="eis-form-group">
+                            <label class="eis-form-label">ФИО, адрес места жительства</label>
+                            <textarea class="eis-input" id="dtpWitnesses" rows="0" oninput="generateDTP()"
+                                      style="resize: none; min-height: 50px;"></textarea>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ============ 3. ГИБДД ============ -->
+                <div class="eis-panel">
+                    <div class="eis-panel-header">
+                        <span class="eis-panel-title">3. Оформление сотрудником ГИБДД</span>
+                    </div>
+                    <div class="eis-panel-body">
+                        <div class="eis-form-row">
+                            <div class="eis-form-group">
+                                <label class="eis-form-label">Оформление проводилось сотрудником ГИБДД</label>
+                                <select class="eis-select" id="dtpGibdd" onchange="onGibddChange()">
+                                    <option value="">—</option>
+                                    <option value="Да">Да</option>
+                                    <option value="Нет">Нет</option>
+                                </select>
+                            </div>
+                            <div class="eis-form-group">
+                                <label class="eis-form-label">Номер нагрудного знака</label>
+                                <input type="text" class="eis-input" id="dtpGibddNumber" disabled oninput="generateDTP()">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ============ 4. ТРАНСПОРТНЫЕ СРЕДСТВА «A» и «B» ============ -->
+                <div class="eis-panel">
+                    <div class="eis-panel-header">
+                        <span class="eis-panel-title">4. Транспортные средства «A» и «B»</span>
+                    </div>
+                    <div class="eis-panel-body">
+                        <div class="eis-two-col-dtp">
+
+                            <!-- ================= ТС «A» ================= -->
+                            <div class="eis-dtp-vehicle-col">
+                                <div class="eis-dtp-vehicle-title">Транспортное средство «A»</div>
+
+                                <div class="eis-form-group">
+                                    <label class="eis-form-label">Марка, модель ТС</label>
+                                    <input type="text" class="eis-input" id="aMakeModel" oninput="generateDTP()">
+                                </div>
+                                <div class="eis-form-row">
+                                    <div class="eis-form-group">
+                                        <label class="eis-form-label">VIN</label>
+                                        <input type="text" class="eis-input" id="aVin" maxlength="17" oninput="generateDTP()">
+                                    </div>
+                                    <div class="eis-form-group">
+                                        <label class="eis-form-label">Гос. рег. знак</label>
+                                        <input type="text" class="eis-input" id="aPlate" maxlength="9" oninput="generateDTP()">
+                                    </div>
+                                </div>
+                                <div class="eis-form-row">
+                                    <div class="eis-form-group">
+                                        <label class="eis-form-label">СТС — серия</label>
+                                        <input type="text" class="eis-input" id="aStsSeries" maxlength="4" oninput="generateDTP()">
+                                    </div>
+                                    <div class="eis-form-group">
+                                        <label class="eis-form-label">СТС — номер</label>
+                                        <input type="text" class="eis-input" id="aStsNumber" maxlength="6" oninput="generateDTP()">
+                                    </div>
+                                </div>
+                                <div class="eis-form-group">
+                                    <label class="eis-form-label">Собственник ТС</label>
+                                    <input type="text" class="eis-input" id="aOwner" oninput="generateDTP()">
+                                </div>
+                                <div class="eis-form-group">
+                                    <label class="eis-form-label">Адрес собственника</label>
+                                    <input type="text" class="eis-input" id="aOwnerAddress" oninput="generateDTP()">
+                                </div>
+                                <div class="eis-form-row">
+                                    <div class="eis-form-group">
+                                        <label class="eis-form-label">Водитель ТС (ФИО)</label>
+                                        <input type="text" class="eis-input" id="aDriverName" oninput="generateDTP()">
+                                    </div>
+                                    <div class="eis-form-group">
+                                        <label class="eis-form-label">Дата рождения</label>
+                                        <input type="date" class="eis-input" id="aDriverBirthDate" onchange="generateDTP()">
+                                    </div>
+                                </div>
+                                <div class="eis-form-row">
+                                    <div class="eis-form-group">
+                                        <label class="eis-form-label">Телефон</label>
+                                        <input type="text" class="eis-input" id="aDriverPhone" maxlength="15" oninput="generateDTP()">
+                                    </div>
+                                    <div class="eis-form-group">
+                                        <label class="eis-form-label">Адрес водителя</label>
+                                        <input type="text" class="eis-input" id="aDriverAddress" oninput="generateDTP()">
+                                    </div>
+                                </div>
+                                <div class="eis-form-row">
+                                    <div class="eis-form-group">
+                                        <label class="eis-form-label">В/У — серия</label>
+                                        <input type="text" class="eis-input" id="aVUSeries" maxlength="4" oninput="generateDTP()">
+                                    </div>
+                                    <div class="eis-form-group">
+                                        <label class="eis-form-label">В/У — номер</label>
+                                        <input type="text" class="eis-input" id="aVUNumber" maxlength="6" oninput="generateDTP()">
+                                    </div>
+                                </div>
+                                <div class="eis-form-row">
+                                    <div class="eis-form-group">
+                                        <label class="eis-form-label">В/У — категория</label>
+                                        <input type="text" class="eis-input" id="aVUCategory" maxlength="5"
+                                               placeholder="ABCDE" oninput="generateDTP()">
+                                    </div>
+                                    <div class="eis-form-group">
+                                        <label class="eis-form-label">В/У — дата выдачи</label>
+                                        <input type="date" class="eis-input" id="aVUIssueDate"
+                                               onchange="generateDTP()">
+                                    </div>
+                                </div>
+                                <div class="eis-form-group">
+                                    <label class="eis-form-label">Документ на право владения ТС</label>
+                                    <input type="text" class="eis-input" id="aOwnershipDoc" oninput="generateDTP()">
+                                </div>
+                                <div class="eis-form-group">
+                                    <label class="eis-form-label">Страховщик</label>
+                                    <input type="text" class="eis-input" id="aInsurer" oninput="generateDTP()">
+                                </div>
+                                <div class="eis-form-row">
+                                    <div class="eis-form-group">
+                                        <label class="eis-form-label">Полис — серия</label>
+                                        <input type="text" class="eis-input" id="aPolicySeries" maxlength="3" oninput="generateDTP()">
+                                    </div>
+                                    <div class="eis-form-group">
+                                        <label class="eis-form-label">Полис — номер</label>
+                                        <input type="text" class="eis-input" id="aPolicyNumber" maxlength="10" oninput="generateDTP()">
+                                    </div>
+                                </div>
+                                <div class="eis-form-row">
+                                    <div class="eis-form-group">
+                                        <label class="eis-form-label">Действителен до</label>
+                                        <input type="date" class="eis-input" id="aPolicyValidUntil" onchange="generateDTP()">
+                                    </div>
+                                    <div class="eis-form-group">
+                                        <label class="eis-form-label">ТС застраховано от ущерба</label>
+                                        <select class="eis-select" id="aInsured" onchange="generateDTP()">
+                                            <option value="">—</option>
+                                            <option value="Да">Да</option>
+                                            <option value="Нет">Нет</option>
+                                        </select>
+                                    </div>
+                                </div>
+
+                                <div class="eis-form-group">
+                                    <label class="eis-form-label">Место первоначального удара</label>
+                                    <div class="eis-actions-bar" style="margin-bottom: 8px;">
+                                        <button type="button" class="eis-btn eis-btn-sm eis-btn-secondary" id="toggleDrawABtn"
+                                                onclick="toggleDrawingMode('a')">
+                                            Режим рисования — ВЫКЛ
+                                        </button>
+                                        <button type="button" class="eis-btn eis-btn-sm eis-btn-danger"
+                                                onclick="clearDtpDrawing('a')">
+                                            Очистить рисунок
+                                        </button>
+                                    </div>
+                                    <div style="font-size: 12px; color: #888;">
+                                        Включите режим рисования и рисуйте прямо на бланке.
+                                    </div>
+                                </div>
+
+                                <div class="eis-form-group">
+                                    <label class="eis-form-label">Характер и перечень видимых повреждений</label>
+                                    <textarea class="eis-input" id="aDamage" rows="3" oninput="generateDTP()"
+                                              style="resize: vertical; min-height: 70px;"></textarea>
+                                </div>
+                                <div class="eis-form-group">
+                                    <label class="eis-form-label">Замечания</label>
+                                    <input type="text" class="eis-input" id="aRemarks" oninput="generateDTP()">
+                                </div>
+
+                                <div class="eis-form-group">
+                                    <label class="eis-form-label" style="font-weight: 700; color: #333;">Обстоятельства ДТП</label>
+                                    <div class="eis-circumstances-grid" id="circumstancesA">
+                                        <!-- Чекбоксы будут сгенерированы через JS -->
+                                    </div>
+                                </div>
+
+                                <div class="eis-signature-item">
+                                    <div class="eis-signature-label">Подпись водителя ТС «A»</div>
+                                    <input type="file" class="eis-file-input" id="signatureDriverAInput"
+                                           accept="image/*" onchange="loadSignature('driverA', this)">
+                                    <div class="eis-signature-preview" id="signatureDriverAPreview">Подпись не загружена</div>
+                                    <button class="eis-btn eis-btn-sm" onclick="resetSignature('driverA')">Сбросить</button>
+                                </div>
+
+                            </div>
+
+                            <!-- ================= ТС «B» ================= -->
+                            <div class="eis-dtp-vehicle-col">
+                                <div class="eis-dtp-vehicle-title">Транспортное средство «B»</div>
+
+                                <div class="eis-form-group">
+                                    <label class="eis-form-label">Марка, модель ТС</label>
+                                    <input type="text" class="eis-input" id="bMakeModel" oninput="generateDTP()">
+                                </div>
+                                <div class="eis-form-row">
+                                    <div class="eis-form-group">
+                                        <label class="eis-form-label">VIN</label>
+                                        <input type="text" class="eis-input" id="bVin" maxlength="17" oninput="generateDTP()">
+                                    </div>
+                                    <div class="eis-form-group">
+                                        <label class="eis-form-label">Гос. рег. знак</label>
+                                        <input type="text" class="eis-input" id="bPlate" maxlength="9" oninput="generateDTP()">
+                                    </div>
+                                </div>
+                                <div class="eis-form-row">
+                                    <div class="eis-form-group">
+                                        <label class="eis-form-label">СТС — серия</label>
+                                        <input type="text" class="eis-input" id="bStsSeries" maxlength="4" oninput="generateDTP()">
+                                    </div>
+                                    <div class="eis-form-group">
+                                        <label class="eis-form-label">СТС — номер</label>
+                                        <input type="text" class="eis-input" id="bStsNumber" maxlength="6" oninput="generateDTP()">
+                                    </div>
+                                </div>
+                                <div class="eis-form-group">
+                                    <label class="eis-form-label">Собственник ТС</label>
+                                    <input type="text" class="eis-input" id="bOwner" oninput="generateDTP()">
+                                </div>
+                                <div class="eis-form-group">
+                                    <label class="eis-form-label">Адрес собственника</label>
+                                    <input type="text" class="eis-input" id="bOwnerAddress" oninput="generateDTP()">
+                                </div>
+                                <div class="eis-form-row">
+                                    <div class="eis-form-group">
+                                        <label class="eis-form-label">Водитель ТС (ФИО)</label>
+                                        <input type="text" class="eis-input" id="bDriverName" oninput="generateDTP()">
+                                    </div>
+                                    <div class="eis-form-group">
+                                        <label class="eis-form-label">Дата рождения</label>
+                                        <input type="date" class="eis-input" id="bDriverBirthDate" onchange="generateDTP()">
+                                    </div>
+                                </div>
+                                <div class="eis-form-row">
+                                    <div class="eis-form-group">
+                                        <label class="eis-form-label">Телефон</label>
+                                        <input type="text" class="eis-input" id="bDriverPhone" maxlength="15" oninput="generateDTP()">
+                                    </div>
+                                    <div class="eis-form-group">
+                                        <label class="eis-form-label">Адрес водителя</label>
+                                        <input type="text" class="eis-input" id="bDriverAddress" oninput="generateDTP()">
+                                    </div>
+                                </div>
+                                <div class="eis-form-row">
+                                    <div class="eis-form-group">
+                                        <label class="eis-form-label">В/У — серия</label>
+                                        <input type="text" class="eis-input" id="bVUSeries" maxlength="4" oninput="generateDTP()">
+                                    </div>
+                                    <div class="eis-form-group">
+                                        <label class="eis-form-label">В/У — номер</label>
+                                        <input type="text" class="eis-input" id="bVUNumber" maxlength="6" oninput="generateDTP()">
+                                    </div>
+                                </div>
+                                <div class="eis-form-row">
+                                    <div class="eis-form-group">
+                                        <label class="eis-form-label">В/У — категория</label>
+                                        <input type="text" class="eis-input" id="bVUCategory" maxlength="5"
+                                               placeholder="ABCDE" oninput="generateDTP()">
+                                    </div>
+                                    <div class="eis-form-group">
+                                        <label class="eis-form-label">В/У — дата выдачи</label>
+                                        <input type="date" class="eis-input" id="bVUIssueDate"
+                                               onchange="generateDTP()">
+                                    </div>
+                                </div>
+                                <div class="eis-form-group">
+                                    <label class="eis-form-label">Документ на право владения ТС</label>
+                                    <input type="text" class="eis-input" id="bOwnershipDoc" oninput="generateDTP()">
+                                </div>
+                                <div class="eis-form-group">
+                                    <label class="eis-form-label">Страховщик</label>
+                                    <input type="text" class="eis-input" id="bInsurer" oninput="generateDTP()">
+                                </div>
+                                <div class="eis-form-row">
+                                    <div class="eis-form-group">
+                                        <label class="eis-form-label">Полис — серия</label>
+                                        <input type="text" class="eis-input" id="bPolicySeries" maxlength="3" oninput="generateDTP()">
+                                    </div>
+                                    <div class="eis-form-group">
+                                        <label class="eis-form-label">Полис — номер</label>
+                                        <input type="text" class="eis-input" id="bPolicyNumber" maxlength="10" oninput="generateDTP()">
+                                    </div>
+                                </div>
+                                <div class="eis-form-row">
+                                    <div class="eis-form-group">
+                                        <label class="eis-form-label">Действителен до</label>
+                                        <input type="date" class="eis-input" id="bPolicyValidUntil" onchange="generateDTP()">
+                                    </div>
+                                    <div class="eis-form-group">
+                                        <label class="eis-form-label">ТС застраховано от ущерба</label>
+                                        <select class="eis-select" id="bInsured" onchange="generateDTP()">
+                                            <option value="">—</option>
+                                            <option value="Да">Да</option>
+                                            <option value="Нет">Нет</option>
+                                        </select>
+                                    </div>
+                                </div>
+
+                                <div class="eis-form-group">
+                                    <label class="eis-form-label">Место первоначального удара</label>
+                                    <div class="eis-actions-bar" style="margin-bottom: 8px;">
+                                        <button type="button" class="eis-btn eis-btn-sm eis-btn-secondary" id="toggleDrawBBtn"
+                                                onclick="toggleDrawingMode('b')">
+                                            Режим рисования — ВЫКЛ
+                                        </button>
+                                        <button type="button" class="eis-btn eis-btn-sm eis-btn-danger"
+                                                onclick="clearDtpDrawing('b')">
+                                            Очистить рисунок
+                                        </button>
+                                    </div>
+                                    <div style="font-size: 12px; color: #888;">
+                                        Включите режим рисования и рисуйте прямо на бланке.
+                                    </div>
+                                </div>
+
+                                <div class="eis-form-group">
+                                    <label class="eis-form-label">Характер и перечень видимых повреждений</label>
+                                    <textarea class="eis-input" id="bDamage" rows="3" oninput="generateDTP()"
+                                              style="resize: vertical; min-height: 70px;"></textarea>
+                                </div>
+                                <div class="eis-form-group">
+                                    <label class="eis-form-label">Замечания</label>
+                                    <input type="text" class="eis-input" id="bRemarks" oninput="generateDTP()">
+                                </div>
+
+                                <div class="eis-form-group">
+                                    <label class="eis-form-label" style="font-weight: 700; color: #333;">Обстоятельства ДТП</label>
+                                    <div class="eis-circumstances-grid" id="circumstancesB">
+                                        <!-- Чекбоксы будут сгенерированы через JS -->
+                                    </div>
+                                </div>
+
+                                <div class="eis-signature-item">
+                                    <div class="eis-signature-label">Подпись водителя ТС «B»</div>
+                                    <input type="file" class="eis-file-input" id="signatureDriverBInput"
+                                           accept="image/*" onchange="loadSignature('driverB', this)">
+                                    <div class="eis-signature-preview" id="signatureDriverBPreview">Подпись не загружена</div>
+                                    <button class="eis-btn eis-btn-sm" onclick="resetSignature('driverB')">Сбросить</button>
+                                </div>
+                            </div>
+
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ============ 5. ДАННЫЕ ВТОРОГО ЛИСТА ============ -->
+                <div class="eis-panel">
+                    <div class="eis-panel-header">
+                        <span class="eis-panel-title">5. Данные второго листа (объяснение водителя)</span>
+                    </div>
+                    <div class="eis-panel-body">
+
+                        <div class="eis-form-group">
+                            <label class="eis-form-label">Транспортное средство</label>
+                            <div class="eis-radio-group">
+                                <label class="eis-radio">
+                                    <input type="radio" name="dtpP2Vehicle" value="a" checked onchange="generateDTP()">
+                                    <span>ТС «A»</span>
+                                </label>
+                                <label class="eis-radio">
+                                    <input type="radio" name="dtpP2Vehicle" value="b" onchange="generateDTP()">
+                                    <span>ТС «B»</span>
+                                </label>
+                            </div>
+                        </div>
+
+                        <div class="eis-form-group">
+                            <label class="eis-form-label">Обстоятельства ДТП</label>
+                            <textarea class="eis-input" id="p2Circumstances" rows="3" oninput="generateDTP()"
+                                      style="resize: vertical; min-height: 60px;"></textarea>
+                        </div>
+
+                        <div class="eis-form-group">
+                            <label class="eis-form-label">ТС находилось под управлением</label>
+                            <div class="eis-radio-group">
+                                <label class="eis-radio">
+                                    <input type="radio" name="p2DrivenBy" value="owner" onchange="generateDTP()">
+                                    <span>Собственника ТС</span>
+                                </label>
+                                <label class="eis-radio">
+                                    <input type="radio" name="p2DrivenBy" value="other" onchange="generateDTP()">
+                                    <span>Иного лица, допущенного к управлению ТС</span>
+                                </label>
+                            </div>
+                        </div>
+
+                        <div class="eis-form-group">
+                            <label class="eis-form-label">
+                                Сведения о других ТС (если в ДТП участвовало более 2-х ТС):
+                                марка, модель ТС, гос. рег. знак, наименование страховой организации,
+                                серия и номер страхового полиса
+                            </label>
+                            <textarea class="eis-input" id="p2OtherVehicles" rows="2" oninput="generateDTP()"
+                                      style="resize: vertical; min-height: 50px;"></textarea>
+                        </div>
+
+                        <div class="eis-form-row">
+                            <div class="eis-form-group">
+                                <label class="eis-form-label">Повреждения иного имущества, чем ТС — наименование</label>
+                                <input type="text" class="eis-input" id="p2PropertyName" oninput="generateDTP()">
+                            </div>
+                            <div class="eis-form-group">
+                                <label class="eis-form-label">Кому принадлежит (при наличии сведений)</label>
+                                <input type="text" class="eis-input" id="p2PropertyOwner" oninput="generateDTP()">
+                            </div>
+                        </div>
+
+                        <div class="eis-form-row">
+                            <div class="eis-form-group">
+                                <label class="eis-form-label">Может ли ТС передвигаться своим ходом?</label>
+                                <div class="eis-radio-group">
+                                    <label class="eis-radio">
+                                        <input type="radio" name="p2CanMove" value="yes" onchange="onP2CanMoveChange()">
+                                        <span>Да</span>
+                                    </label>
+                                    <label class="eis-radio">
+                                        <input type="radio" name="p2CanMove" value="no" onchange="onP2CanMoveChange()">
+                                        <span>Нет</span>
+                                    </label>
+                                </div>
+                            </div>
+                            <div class="eis-form-group">
+                                <label class="eis-form-label">Где сейчас находится ТС (если не может двигаться)</label>
+                                <input type="text" class="eis-input" id="p2VehicleLocation" disabled oninput="generateDTP()">
+                            </div>
+                        </div>
+
+                        <div class="eis-form-group">
+                            <label class="eis-form-label">Примечание</label>
+                            <textarea class="eis-input" id="p2Note" rows="2" oninput="generateDTP()"
+                                      style="resize: vertical; min-height: 50px;"></textarea>
+                        </div>
+
+                        <hr style="margin: 20px 0; border: none; border-top: 1px solid var(--eis-border);">
+
+                        <div class="eis-form-row">
+                            <div class="eis-form-group">
+                                <label class="eis-form-label">Дата заполнения</label>
+                                <input type="date" class="eis-input" id="p2FillDate" onchange="generateDTP()">
+                            </div>
+                            <div class="eis-form-group">
+                                <label class="eis-form-label">Фамилия и инициалы сотрудника</label>
+                                <input type="text" class="eis-input" id="p2OfficerName" oninput="generateDTP()">
+                            </div>
+                        </div>
+
+                        <div class="eis-signature-item">
+                            <div class="eis-signature-label">Подпись сотрудника</div>
+                            <input type="file" class="eis-file-input" id="signatureP2OfficerInput" accept="image/*"
+                                   onchange="loadSignature('p2Officer', this)">
+                            <div class="eis-signature-preview" id="signatureP2OfficerPreview">Подпись не загружена</div>
+                            <button class="eis-btn eis-btn-sm" onclick="resetSignature('p2Officer')">Сбросить</button>
+                        </div>
+
+                    </div>
+                </div>
+
+                <!-- ============ 6. СХЕМА ДТП ============ -->
+                <div class="eis-panel">
+                    <div class="eis-panel-header">
+                        <span class="eis-panel-title">6. Схема ДТП</span>
+                    </div>
+                    <div class="eis-panel-body">
+
+                        <div class="eis-form-row">
+                            <div class="eis-form-group">
+                                <label class="eis-form-label">Дата составления</label>
+                                <input type="date" class="eis-input" id="p3FillDate" onchange="generateDTP()">
+                            </div>
+                            <div class="eis-form-group">
+                                <label class="eis-form-label">Время составления</label>
+                                <input type="time" class="eis-input" id="p3FillTime" onchange="generateDTP()">
+                            </div>
+                            <div class="eis-form-group">
+                                <label class="eis-form-label">Место составления</label>
+                                <input type="text" class="eis-input" id="p3Place" oninput="generateDTP()">
+                            </div>
+                        </div>
+
+                        <div class="eis-form-group">
+                            <label class="eis-form-label">Рисование на схеме</label>
+                            <div class="eis-actions-bar" style="margin-bottom: 8px;">
+                                <button type="button" class="eis-btn eis-btn-sm eis-btn-secondary" id="toggleDrawP3Btn"
+                                        onclick="toggleDrawingMode('p3')">
+                                    Режим рисования — ВЫКЛ
+                                </button>
+                                <button type="button" class="eis-btn eis-btn-sm eis-btn-danger"
+                                        onclick="clearDtpDrawing('p3')">
+                                    Очистить рисунок
+                                </button>
+                            </div>
+                            <div style="font-size: 12px; color: #888;">
+                                Включите режим рисования и рисуйте прямо на схеме.
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+
+                <div class="eis-actions-bar">
+                    <button class="eis-btn eis-btn-secondary" onclick="saveDTPPage1()">Скачать стр. 1</button>
+                    <button class="eis-btn eis-btn-secondary" onclick="saveDTPPage2()">Скачать стр. 2</button>
+                    <button class="eis-btn eis-btn-secondary" onclick="saveDTPPage3()">Скачать стр. 3</button>
+                    <button class="eis-btn eis-btn-success" onclick="saveDTPBoth()">Скачать обе страницы</button>
+                </div>
+
+                <div class="eis-panel">
+                    <div class="eis-panel-header">
+                        <span class="eis-panel-title">Предпросмотр страниц</span>
+                    </div>
+                    <div class="eis-panel-body eis-preview-body">
+                        <div class="eis-page-preview">
+                            <h3>Страница 1</h3>
+                            <canvas id="dtpCanvas1" width="1654" height="2339"
+                                    style="touch-action: none;"></canvas>
+                        </div>
+                        <div class="eis-page-preview">
+                            <h3>Страница 2</h3>
+                            <canvas id="dtpCanvas2" width="1654" height="2339"></canvas>
+                        </div>
+                        <div class="eis-page-preview">
+                            <h3>Схема ДТП</h3>
+
+                            <div class="eis-draw-toolbar" id="p3Toolbar">
+                                <button type="button" class="eis-btn eis-btn-sm eis-btn-secondary" id="p3ToolPen"
+                                        onclick="p3SetTool('pen')" title="Рисовать">
+                                    ✏️ Карандаш
+                                </button>
+                                <button type="button" class="eis-btn eis-btn-sm eis-btn-secondary" id="p3ToolEraser"
+                                        onclick="p3SetTool('eraser')" title="Стирать">
+                                    🧽 Ластик
+                                </button>
+
+                                <span class="eis-draw-toolbar-sep"></span>
+
+                                <button type="button" class="eis-btn eis-btn-sm eis-btn-secondary" id="p3BtnUndo"
+                                        onclick="p3Undo()" title="Отменить последний штрих">
+                                    ↶ Отменить
+                                </button>
+                                <button type="button" class="eis-btn eis-btn-sm eis-btn-secondary" id="p3BtnRedo"
+                                        onclick="p3Redo()" title="Вернуть отменённое">
+                                    ↷ Вернуть
+                                </button>
+
+                                <span class="eis-draw-toolbar-sep"></span>
+
+                                <button type="button" class="eis-btn eis-btn-sm eis-btn-secondary" id="p3BtnClear"
+                                        onclick="p3ClearAll()" title="Очистить всё">
+                                    🗑 Очистить
+                                </button>
+                            </div>
+
+                            <canvas id="dtpCanvas3" width="1697" height="1200" style="touch-action: none;"></canvas>
+
+                            <div class="eis-draw-hint">
+                                Рисуйте мышью или пальцем прямо по схеме. Режим рисования включается автоматически при нажатии.
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+
+        <div id="site-footer"></div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="js/layout.js"></script>
+    <script src="js/toast.js"></script>
+    <script src="js/supabase.js"></script>
+    <script src="js/auth.js"></script>
+    <script src="js/guard.js"></script>
+    <script src="js/main.js"></script>
+    <script src="js/signatures.js"></script>
+    <script src="js/dtp.js"></script>
+</body>
+</html>
