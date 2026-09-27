@@ -288,9 +288,12 @@
                 </div>
 
                 <div class="eis-actions-bar">
-                    <button class="eis-btn eis-btn-primary" onclick="saveProtocolPage1()">Сохранить стр. 1</button>
-                    <button class="eis-btn eis-btn-primary" onclick="saveProtocolPage2()">Сохранить стр. 2</button>
-                    <button class="eis-btn eis-btn-success" onclick="saveProtocolBoth()">Сохранить обе страницы</button>
+                    <button class="eis-btn eis-btn-secondary" onclick="saveProtocolPage1()">Скачать стр. 1</button>
+                    <button class="eis-btn eis-btn-secondary" onclick="saveProtocolPage2()">Скачать стр. 2</button>
+                    <button class="eis-btn eis-btn-secondary" onclick="saveProtocolBoth()">Скачать обе</button>
+                    <button class="eis-btn eis-btn-success" id="protocolSaveToDbBtn" onclick="saveProtocolToDB()">
+                        Сохранить в базу ЕИС
+                    </button>
                 </div>
 
                 <div class="eis-panel">

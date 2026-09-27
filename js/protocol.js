@@ -818,6 +818,211 @@ async function saveProtocolBoth() {
     await generateProtocol();
 }
 
+// ================================================================
+// СОХРАНЕНИЕ ПРОТОКОЛА В БАЗУ ЕИС
+// ================================================================
+async function saveProtocolToDB() {
+    const btn = document.getElementById('protocolSaveToDbBtn');
+    const origText = btn ? btn.textContent : 'Сохранить в базу ЕИС';
+
+    // Обязательные поля
+    const regNumber = getFieldValue('protocolRegNumber');
+    const protocolDate = getFieldValue('protocolDate');
+    const lastName = getFieldValue('protocolLastName');
+    const firstName = getFieldValue('protocolFirstName');
+    const violation = getFieldValue('protocolViolationDescription');
+    const articleNum = getFieldValue('protocolArticleNumber');
+
+    if (!regNumber) { showToast('Укажите регистрационный номер протокола', 'warning'); return; }
+    if (!protocolDate) { showToast('Укажите дату составления', 'warning'); return; }
+    if (!lastName) { showToast('Укажите фамилию нарушителя', 'warning'); return; }
+    if (!firstName) { showToast('Укажите имя нарушителя', 'warning'); return; }
+    if (!violation) { showToast('Укажите существо нарушения', 'warning'); return; }
+    if (!articleNum) { showToast('Укажите номер статьи КоАП РФ', 'warning'); return; }
+
+    // Проверяем уникальность
+    const { data: existing } = await supabaseClient
+        .from('protocols')
+        .select('id')
+        .eq('reg_number', regNumber)
+        .maybeSingle();
+
+    if (existing) {
+        showToast(`Протокол ${regNumber} уже существует в базе`, 'error');
+        return;
+    }
+
+    if (btn) { btn.disabled = true; btn.textContent = 'Сохранение...'; }
+
+    const uploadedFiles = [];
+
+    try {
+        // 1. Генерируем канвасы без подсветки подписей
+        const wasActive = {};
+        if (typeof signatureData !== 'undefined') {
+            for (const type of ['official', 'violator', 'witness', 'victim']) {
+                if (signatureData[type]) {
+                    wasActive[type] = signatureData[type].active;
+                    signatureData[type].active = false;
+                }
+            }
+        }
+        await generateProtocol();
+
+        const canvas1 = document.getElementById('protocolCanvas1');
+        const canvas2 = document.getElementById('protocolCanvas2');
+        if (!canvas1 || !canvas2) throw new Error('Не удалось сгенерировать изображения');
+
+        // 2. Загружаем обе страницы
+        const url1 = await uploadProtocolPhoto(canvas1, regNumber, 1);
+        uploadedFiles.push(extractProtocolFileName(url1));
+        const url2 = await uploadProtocolPhoto(canvas2, regNumber, 2);
+        uploadedFiles.push(extractProtocolFileName(url2));
+
+        // Восстанавливаем подписи
+        if (typeof signatureData !== 'undefined') {
+            for (const type of ['official', 'violator', 'witness', 'victim']) {
+                if (signatureData[type]) signatureData[type].active = wasActive[type];
+            }
+        }
+        await generateProtocol();
+
+        // 3. Собираем payload
+        const toISO = (str) => {
+            if (!str) return null;
+            const p = String(str).trim().split('.');
+            if (p.length === 3) return `${p[2]}-${p[1]}-${p[0]}`;
+            return str;
+        };
+
+        const payload = {
+            reg_number: regNumber,
+            protocol_date: toISO(protocolDate),
+            protocol_time: getFieldValue('protocolTime') || null,
+            protocol_place: getFieldValue('protocolPlace') || null,
+            official_position: getFieldValue('protocolOfficialPosition') || null,
+            official_rank: getFieldValue('protocolOfficialRank') || null,
+            official_name: getFieldValue('protocolOfficialName') || null,
+            violator_last_name: lastName,
+            violator_first_name: firstName,
+            violator_middle_name: getFieldValue('protocolMiddleName') || null,
+            violator_birth_date: toISO(getFieldValue('protocolBirthDate')),
+            violator_birth_place: getFieldValue('protocolBirthPlace') || null,
+            russian_language: getCheckedValue('protocolRussianLanguage') || null,
+            registered_address: getFieldValue('protocolRegisteredAddress') || null,
+            registered_phone: getFieldValue('protocolRegisteredPhone') || null,
+            actual_address: getFieldValue('protocolActualAddress') || null,
+            actual_phone: getFieldValue('protocolActualPhone') || null,
+            work_place: getFieldValue('protocolWorkPlace2') || null,
+            driver_license: getFieldValue('protocolDriverLicense') || null,
+            vehicle_make: getFieldValue('protocolVehicleMake') || null,
+            vehicle_color: getFieldValue('protocolVehicleColor') || null,
+            vehicle_plate: getFieldValue('protocolVehiclePlate') || null,
+            vehicle_owner: getFieldValue('protocolVehicleOwner') || null,
+            vehicle_registered: getFieldValue('protocolVehicleRegistered') || null,
+            violation_date: toISO(getFieldValue('protocolViolationDate')),
+            violation_time: getFieldValue('protocolViolationTime') || null,
+            violation_place: getFieldValue('protocolViolationPlace') || null,
+            violation_description: violation,
+            article_part: getFieldValue('protocolArticlePart') || null,
+            article_number: articleNum,
+            witnesses: getFieldValue('protocolWitnesses') || null,
+            witnesses_notified: getFieldValue('protocolWitnessesNotified') || null,
+            victims_notified: getFieldValue('protocolVictimsNotified') || null,
+            consideration_place_time: getFieldValue('protocolConsiderationPlaceTime') || null,
+            explanation: getFieldValue('protocolExplanation') || null,
+            remarks: getFieldValue('protocolRemarks') || null,
+            photo_url: url1,
+            photos: { page1: [url1], page2: [url2] },
+            created_by: window.currentUser?.id || null
+        };
+
+        // 4. Запись в БД
+        const { data, error } = await supabaseClient
+            .from('protocols')
+            .insert(payload)
+            .select()
+            .single();
+
+        if (error) throw new Error(error.message);
+
+        await logAction('protocol_create', 'protocols', data.id, {
+            reg_number: regNumber,
+            fio: `${lastName} ${firstName}`,
+            article: `${payload.article_part || ''} ст. ${payload.article_number || ''}`.trim()
+        });
+
+        showToast(`Протокол ${regNumber} сохранён в базе ЕИС`, 'success');
+
+    } catch (e) {
+        console.error('[protocol-save]', e);
+
+        // Чистим загруженные файлы при ошибке
+        if (uploadedFiles.length > 0) {
+            try {
+                await supabaseClient.storage.from('protocol-photos').remove(uploadedFiles);
+            } catch (_) { }
+        }
+
+        showToast('Ошибка: ' + e.message, 'error');
+    } finally {
+        if (btn) { btn.disabled = false; btn.textContent = origText; }
+    }
+}
+
+// ================================================================
+// ЗАГРУЗКА ФОТО ПРОТОКОЛА
+// ================================================================
+async function uploadProtocolPhoto(canvas, regNumber, pageNum) {
+    const safe = String(regNumber).replace(/[^a-zA-Z0-9]/g, '_') || 'protocol';
+    const fileName = `protocol_${safe}_p${pageNum}_${Date.now()}.jpg`;
+
+    const blob = await compressProtocolCanvas(canvas, 1600, 0.85);
+
+    const { error } = await supabaseClient.storage
+        .from('protocol-photos')
+        .upload(fileName, blob, { contentType: 'image/jpeg', upsert: false });
+
+    if (error) throw new Error('Не удалось загрузить фото: ' + error.message);
+
+    const { data: { publicUrl } } = supabaseClient.storage
+        .from('protocol-photos')
+        .getPublicUrl(fileName);
+
+    return publicUrl;
+}
+
+function compressProtocolCanvas(sourceCanvas, maxWidth = 1600, quality = 0.85) {
+    return new Promise((resolve, reject) => {
+        const srcW = sourceCanvas.width, srcH = sourceCanvas.height;
+        let dstW = srcW, dstH = srcH;
+        if (srcW > maxWidth) {
+            dstW = maxWidth;
+            dstH = Math.round(srcH * (maxWidth / srcW));
+        }
+        const off = document.createElement('canvas');
+        off.width = dstW; off.height = dstH;
+        const ctx = off.getContext('2d');
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(0, 0, dstW, dstH);
+        ctx.imageSmoothingEnabled = true;
+        ctx.imageSmoothingQuality = 'high';
+        ctx.drawImage(sourceCanvas, 0, 0, srcW, srcH, 0, 0, dstW, dstH);
+        off.toBlob(
+            b => b ? resolve(b) : reject(new Error('Не удалось сжать изображение')),
+            'image/jpeg',
+            quality
+        );
+    });
+}
+
+function extractProtocolFileName(url) {
+    if (!url) return null;
+    const parts = url.split('/protocol-photos/');
+    if (parts.length < 2) return null;
+    return decodeURIComponent(parts[1]);
+}
+
 // ========== ПОДПИСКА НА СОБЫТИЯ ==========
 document.addEventListener('DOMContentLoaded', function () {
     // Работаем только на странице protocol.html
@@ -847,6 +1052,7 @@ window.saveProtocolBoth = saveProtocolBoth;
 window.formatProtocolDate = formatProtocolDate;
 window.formatProtocolTime = formatProtocolTime;
 window.formatProtocolPhone = formatProtocolPhone;
+window.saveProtocolToDB = saveProtocolToDB;
 window.formatProtocolBirthDate = formatProtocolBirthDate;
 window.getFieldValue = getFieldValue;
 window.getCheckedValue = getCheckedValue;

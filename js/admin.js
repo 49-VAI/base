@@ -541,7 +541,8 @@ function humanizeAction(action) {
         'vehicle_delete': '🗑 Удаление ТС из реестра',
 
         'protocol_create': '📋 Создание протокола',
-
+        'protocol_update': '✏️ Редактирование протокола',
+        'protocol_delete': '🗑 Удаление протокола',
         'admin_user_create': '👤 Создание пользователя',
         'admin_user_update': '✏️ Редактирование пользователя',
         'admin_user_delete': '🗑 Удаление пользователя',

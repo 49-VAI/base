@@ -1,0 +1,384 @@
+﻿<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>База нарушений — ЕИС ВАИ</title>
+    <link rel="icon" type="image/png" href="images/favicon.png">
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <div class="eis-wrapper">
+        <div id="site-header"></div>
+        <div id="site-nav"></div>
+
+        <main class="eis-main">
+            <div class="eis-container">
+                <div class="eis-page-header">
+                    <h1 class="eis-page-title">База нарушений</h1>
+                    <div class="eis-page-subtitle">Поиск административных правонарушений по данным гражданина</div>
+                </div>
+
+                <div class="eis-panel">
+                    <div class="eis-panel-header">
+                        <span class="eis-panel-title">Сводка</span>
+                    </div>
+                    <div class="eis-panel-body">
+                        <div class="eis-admin-stats">
+                            <div class="eis-stat-card">
+                                <div class="eis-stat-value" id="statTotalProtocols">—</div>
+                                <div class="eis-stat-label">Всего протоколов</div>
+                            </div>
+                            <div class="eis-stat-card">
+                                <div class="eis-stat-value" id="statUniqueViolators">—</div>
+                                <div class="eis-stat-label">Нарушителей</div>
+                            </div>
+                            <div class="eis-stat-card">
+                                <div class="eis-stat-value" id="statMonthProtocols">—</div>
+                                <div class="eis-stat-label">За 30 дней</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="eis-panel">
+                    <div class="eis-panel-header">
+                        <span class="eis-panel-title">Поиск по гражданину</span>
+                    </div>
+                    <div class="eis-panel-body">
+                        <form class="eis-search-form" id="finesSearchForm" onsubmit="return false;">
+                            <div class="eis-form-row">
+                                <div class="eis-form-group">
+                                    <label class="eis-form-label">ФИО</label>
+                                    <input type="text" class="eis-input" id="fineSearchFIO" placeholder="Фамилия, имя, отчество">
+                                </div>
+                                <div class="eis-form-group">
+                                    <label class="eis-form-label">Водительское удостоверение</label>
+                                    <input type="text" class="eis-input" id="fineSearchLicense" placeholder="Номер В/У">
+                                </div>
+                                <div class="eis-form-group">
+                                    <label class="eis-form-label">Дата рождения</label>
+                                    <input type="date" class="eis-input" id="fineSearchBirthDate">
+                                </div>
+                            </div>
+                            <div class="eis-form-row">
+                                <div class="eis-form-group">
+                                    <label class="eis-form-label">Гос. номер ТС</label>
+                                    <input type="text" class="eis-input" id="fineSearchPlate" placeholder="0100MP43">
+                                </div>
+                                <div class="eis-form-group">
+                                    <label class="eis-form-label">Номер протокола</label>
+                                    <input type="text" class="eis-input" id="fineSearchRegNumber" placeholder="000001-ПДД">
+                                </div>
+                                <div class="eis-form-group">
+                                    <label class="eis-form-label">Статья КоАП</label>
+                                    <input type="text" class="eis-input" id="fineSearchArticle" placeholder="12.8">
+                                </div>
+                                <div class="eis-form-group">
+                                    <label class="eis-form-label">Дата с</label>
+                                    <input type="date" class="eis-input" id="fineSearchDateFrom">
+                                </div>
+                                <div class="eis-form-group">
+                                    <label class="eis-form-label">Дата по</label>
+                                    <input type="date" class="eis-input" id="fineSearchDateTo">
+                                </div>
+                            </div>
+
+                            <div class="eis-actions-bar" style="margin-bottom: 0; margin-top: 4px;">
+                                <button type="button" class="eis-btn eis-btn-primary" id="fineSearchBtn" onclick="runFinesSearch()">
+                                    <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor">
+                                        <path d="M15.5 14h-.79l-.28-.27a6.5 6.5 0 1 0-.7.7l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0A4.5 4.5 0 1 1 14 9.5 4.5 4.5 0 0 1 9.5 14z" />
+                                    </svg>
+                                    Найти
+                                </button>
+                                <button type="button" class="eis-btn eis-btn-danger" onclick="resetFinesSearch()">
+                                    Сбросить
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+
+                <div class="eis-panel">
+                    <div class="eis-panel-header">
+                        <span class="eis-panel-title">Нарушения</span>
+                        <span class="eis-badge" id="finesResultsCount">ЗАПИСЕЙ: 0</span>
+                    </div>
+                    <div class="eis-panel-body" id="finesResults">
+                        <div class="eis-no-results">
+                            <div style="font-weight: 700; margin-bottom: 8px; font-size: 15px;">
+                                Введите данные и нажмите «Найти»
+                            </div>
+                            <div style="font-size: 13px; color: #888; max-width: 520px; margin: 0 auto; line-height: 1.6;">
+                                Заполните хотя бы одно поле. Список нарушений появится после нажатия кнопки поиска.
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </main>
+
+        <!-- Модалка редактирования протокола -->
+        <div class="eis-modal-form" id="editFineModal">
+            <div class="eis-modal-form-content" style="max-width: 900px;">
+                <div class="eis-modal-form-header">
+                    <h3>Редактирование протокола</h3>
+                    <span class="eis-modal-form-close" onclick="closeEditFineModal()">×</span>
+                </div>
+                <div class="eis-modal-form-body">
+                    <input type="hidden" id="efId">
+
+                    <div class="eis-form-row">
+                        <div class="eis-form-group">
+                            <label class="eis-form-label">Рег. номер *</label>
+                            <input type="text" class="eis-input" id="efRegNumber">
+                        </div>
+                        <div class="eis-form-group">
+                            <label class="eis-form-label">Дата составления</label>
+                            <input type="date" class="eis-input" id="efProtocolDate">
+                        </div>
+                        <div class="eis-form-group">
+                            <label class="eis-form-label">Время составления</label>
+                            <input type="text" class="eis-input" id="efProtocolTime" placeholder="ЧЧ:ММ">
+                        </div>
+                    </div>
+
+                    <div class="eis-form-group">
+                        <label class="eis-form-label">Место составления</label>
+                        <input type="text" class="eis-input" id="efProtocolPlace">
+                    </div>
+
+                    <div class="eis-form-row">
+                        <div class="eis-form-group">
+                            <label class="eis-form-label">Должность</label>
+                            <input type="text" class="eis-input" id="efOfficialPosition">
+                        </div>
+                        <div class="eis-form-group">
+                            <label class="eis-form-label">Звание</label>
+                            <input type="text" class="eis-input" id="efOfficialRank">
+                        </div>
+                        <div class="eis-form-group">
+                            <label class="eis-form-label">ФИО должностного лица</label>
+                            <input type="text" class="eis-input" id="efOfficialName">
+                        </div>
+                    </div>
+
+                    <div class="eis-form-row">
+                        <div class="eis-form-group">
+                            <label class="eis-form-label">Фамилия нарушителя *</label>
+                            <input type="text" class="eis-input" id="efLastName">
+                        </div>
+                        <div class="eis-form-group">
+                            <label class="eis-form-label">Имя *</label>
+                            <input type="text" class="eis-input" id="efFirstName">
+                        </div>
+                        <div class="eis-form-group">
+                            <label class="eis-form-label">Отчество</label>
+                            <input type="text" class="eis-input" id="efMiddleName">
+                        </div>
+                    </div>
+
+                    <div class="eis-form-row">
+                        <div class="eis-form-group">
+                            <label class="eis-form-label">Дата рождения</label>
+                            <input type="date" class="eis-input" id="efBirthDate">
+                        </div>
+                        <div class="eis-form-group">
+                            <label class="eis-form-label">Место рождения</label>
+                            <input type="text" class="eis-input" id="efBirthPlace">
+                        </div>
+                        <div class="eis-form-group">
+                            <label class="eis-form-label">Владение языком</label>
+                            <select class="eis-select" id="efRussianLanguage">
+                                <option value="">—</option>
+                                <option value="владеет">Владеет</option>
+                                <option value="не владеет">Не владеет</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="eis-form-row">
+                        <div class="eis-form-group">
+                            <label class="eis-form-label">Адрес регистрации</label>
+                            <input type="text" class="eis-input" id="efRegisteredAddress">
+                        </div>
+                        <div class="eis-form-group">
+                            <label class="eis-form-label">Телефон (рег.)</label>
+                            <input type="text" class="eis-input" id="efRegisteredPhone">
+                        </div>
+                    </div>
+
+                    <div class="eis-form-row">
+                        <div class="eis-form-group">
+                            <label class="eis-form-label">Адрес проживания</label>
+                            <input type="text" class="eis-input" id="efActualAddress">
+                        </div>
+                        <div class="eis-form-group">
+                            <label class="eis-form-label">Телефон (факт.)</label>
+                            <input type="text" class="eis-input" id="efActualPhone">
+                        </div>
+                    </div>
+
+                    <div class="eis-form-row">
+                        <div class="eis-form-group">
+                            <label class="eis-form-label">Место работы</label>
+                            <input type="text" class="eis-input" id="efWorkPlace">
+                        </div>
+                        <div class="eis-form-group">
+                            <label class="eis-form-label">Водительское удостоверение</label>
+                            <input type="text" class="eis-input" id="efDriverLicense">
+                        </div>
+                    </div>
+
+                    <div class="eis-form-row">
+                        <div class="eis-form-group">
+                            <label class="eis-form-label">Марка ТС</label>
+                            <input type="text" class="eis-input" id="efVehicleMake">
+                        </div>
+                        <div class="eis-form-group">
+                            <label class="eis-form-label">Цвет ТС</label>
+                            <input type="text" class="eis-input" id="efVehicleColor">
+                        </div>
+                        <div class="eis-form-group">
+                            <label class="eis-form-label">Гос. номер</label>
+                            <input type="text" class="eis-input" id="efVehiclePlate">
+                        </div>
+                    </div>
+
+                    <div class="eis-form-row">
+                        <div class="eis-form-group">
+                            <label class="eis-form-label">Владелец ТС</label>
+                            <input type="text" class="eis-input" id="efVehicleOwner">
+                        </div>
+                        <div class="eis-form-group">
+                            <label class="eis-form-label">Состоит на учёте</label>
+                            <input type="text" class="eis-input" id="efVehicleRegistered">
+                        </div>
+                    </div>
+
+                    <div class="eis-form-row">
+                        <div class="eis-form-group">
+                            <label class="eis-form-label">Дата нарушения</label>
+                            <input type="date" class="eis-input" id="efViolationDate">
+                        </div>
+                        <div class="eis-form-group">
+                            <label class="eis-form-label">Время нарушения</label>
+                            <input type="text" class="eis-input" id="efViolationTime" placeholder="ЧЧ:ММ">
+                        </div>
+                        <div class="eis-form-group">
+                            <label class="eis-form-label">Место нарушения</label>
+                            <input type="text" class="eis-input" id="efViolationPlace">
+                        </div>
+                    </div>
+
+                    <div class="eis-form-group">
+                        <label class="eis-form-label">Существо нарушения *</label>
+                        <input type="text" class="eis-input" id="efViolationDescription">
+                    </div>
+
+                    <div class="eis-form-row">
+                        <div class="eis-form-group">
+                            <label class="eis-form-label">Часть статьи</label>
+                            <input type="text" class="eis-input" id="efArticlePart">
+                        </div>
+                        <div class="eis-form-group">
+                            <label class="eis-form-label">Номер статьи КоАП РФ *</label>
+                            <input type="text" class="eis-input" id="efArticleNumber">
+                        </div>
+                    </div>
+
+                    <div class="eis-form-group">
+                        <label class="eis-form-label">Свидетели и потерпевшие</label>
+                        <input type="text" class="eis-input" id="efWitnesses">
+                    </div>
+
+                    <div class="eis-form-row">
+                        <div class="eis-form-group">
+                            <label class="eis-form-label">Свидетели уведомлены</label>
+                            <input type="text" class="eis-input" id="efWitnessesNotified">
+                        </div>
+                        <div class="eis-form-group">
+                            <label class="eis-form-label">Потерпевшие уведомлены</label>
+                            <input type="text" class="eis-input" id="efVictimsNotified">
+                        </div>
+                    </div>
+
+                    <div class="eis-form-group">
+                        <label class="eis-form-label">Место и время рассмотрения дела</label>
+                        <input type="text" class="eis-input" id="efConsiderationPlaceTime">
+                    </div>
+
+                    <div class="eis-form-group">
+                        <label class="eis-form-label">Объяснения</label>
+                        <input type="text" class="eis-input" id="efExplanation">
+                    </div>
+
+                    <div class="eis-form-group">
+                        <label class="eis-form-label">Замечания по содержанию</label>
+                        <input type="text" class="eis-input" id="efRemarks">
+                    </div>
+
+                    <div class="eis-auth-error" id="efError"></div>
+                </div>
+                <div class="eis-modal-form-footer">
+                    <button type="button" class="eis-btn eis-btn-secondary" onclick="closeEditFineModal()">Отмена</button>
+                    <button type="button" class="eis-btn eis-btn-primary" id="efSaveBtn" onclick="saveEditFine()">Сохранить</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="eis-modal" id="photoModal">
+            <span class="eis-modal-close" onclick="closeModal()">×</span>
+            <span class="eis-modal-nav eis-modal-prev" onclick="prevPhoto()">‹</span>
+            <span class="eis-modal-nav eis-modal-next" onclick="nextPhoto()">›</span>
+            <div class="eis-modal-content">
+                <img id="modalImage" src="" alt="Документ">
+                <div class="eis-modal-counter" id="modalCounter"></div>
+            </div>
+        </div>
+
+        <div id="site-footer"></div>
+    </div>
+
+    <!-- Модалка деталей нарушения -->
+    <div class="eis-modal-form" id="fineDetailModal">
+        <div class="eis-modal-form-content eis-modal-tech-wide">
+            <div class="eis-modal-form-header">
+                <div>
+                    <h3 id="fdTitle" style="margin:0">Протокол</h3>
+                    <div id="fdRegNumber" style="font-size:13px; color:#888; margin-top:4px;"></div>
+                </div>
+                <span class="eis-modal-form-close" onclick="closeFineDetail()">×</span>
+            </div>
+            <div class="eis-modal-form-body">
+                <div class="eis-tech-detail-layout">
+                    <div>
+                        <div class="eis-fine-photos" id="fdPhotosWrap"></div>
+                    </div>
+                    <div class="eis-tech-detail-fields" id="fdFields"></div>
+                </div>
+            </div>
+            <div class="eis-modal-form-footer eis-modal-form-footer-split">
+                <button type="button" class="eis-btn eis-btn-danger" id="fdDeleteBtn">
+                    Удалить
+                </button>
+                <div class="eis-modal-form-footer-right">
+                    <button type="button" class="eis-btn eis-btn-secondary" onclick="closeFineDetail()">Закрыть</button>
+                    <button type="button" class="eis-btn eis-btn-secondary" id="fdDownloadBtn">Скачать оба листа</button>
+                    <button type="button" class="eis-btn eis-btn-primary" id="fdEditBtn">Редактировать</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="js/layout.js"></script>
+    <script src="js/toast.js"></script>
+    <script src="js/supabase.js"></script>
+    <script src="js/auth.js"></script>
+    <script src="js/guard.js"></script>
+    <script src="js/main.js"></script>
+    <script src="js/fines.js"></script>
+</body>
+</html>
