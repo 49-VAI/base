@@ -1265,6 +1265,13 @@ function saveDTPBoth() {
     setTimeout(saveDTPPage2, 600);
 }
 
+function saveDTPAll() {
+    saveDTPPage1();
+    setTimeout(saveDTPPage2, 600);
+    setTimeout(saveDTPPage3, 1200);
+    showToast('Скачивание 3 страниц...', 'info');
+}
+
 function saveDTPPage3() {
     const canvas = document.getElementById('dtpCanvas3');
     if (!canvas || canvas.width === 0) { showToast('Холст пуст', 'error'); return; }
@@ -1791,3 +1798,4 @@ window.p3Undo = p3Undo;
 window.p3Redo = p3Redo;
 window.p3ClearAll = p3ClearAll;
 window.drawDTPPage2Content = drawDTPPage2Content;
+window.saveDTPAll = saveDTPAll;
