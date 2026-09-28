@@ -1,4 +1,5 @@
-﻿<!DOCTYPE html>
+﻿
+<!DOCTYPE html>
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
@@ -27,12 +28,13 @@
             <div class="eis-container">
                 <div class="eis-page-header">
                     <h1 class="eis-page-title">База технического обслуживания</h1>
-                    <div class="eis-page-subtitle">Диагностические карты и реестр ТС</div>
+                    <div class="eis-page-subtitle">Диагностические карты, реестр ТС и планирование</div>
                 </div>
 
                 <div class="eis-tabs">
                     <button class="eis-tab active" data-tab="cards" onclick="switchTechTab('cards')">Диагностические карты</button>
                     <button class="eis-tab" data-tab="vehicles" onclick="switchTechTab('vehicles')">Реестр ТС</button>
+                    <button class="eis-tab" data-tab="planning" onclick="switchTechTab('planning')">Планирование ТО</button>
                 </div>
 
                 <!-- ================= ВКЛАДКА: КАРТЫ ================= -->
@@ -160,13 +162,108 @@
                         </div>
                     </div>
                 </div>
+
+                <!-- ================= ВКЛАДКА: ПЛАНИРОВАНИЕ ТО ================= -->
+                <div id="tab-planning" class="eis-tab-content">
+
+                    <!-- Настройки и сводка -->
+                    <div class="eis-panel">
+                        <div class="eis-panel-header">
+                            <span class="eis-panel-title">Параметры планирования</span>
+                            <div class="eis-panel-actions">
+                                <button type="button" class="eis-btn eis-btn-sm eis-btn-secondary" onclick="loadPlanningData()">Обновить</button>
+                            </div>
+                        </div>
+                        <div class="eis-panel-body">
+                            <div class="eis-form-row">
+                                <div class="eis-form-group">
+                                    <label class="eis-form-label">Мощность дня (макс. ТС в день)</label>
+                                    <input type="number" class="eis-input" id="planningCapacity" min="1" max="200"
+                                           onchange="onPlanningCapacityChange()">
+                                </div>
+                                <div class="eis-form-group">
+                                    <label class="eis-form-label">Горизонт очереди (дней до истечения)</label>
+                                    <input type="number" class="eis-input" id="planningHorizon" min="5" max="30"
+                                           placeholder="5–30" onchange="onPlanningHorizonChange()">
+                                </div>
+                                <div class="eis-form-group">
+                                    <label class="eis-form-label">&nbsp;</label>
+                                    <button type="button" class="eis-btn eis-btn-primary" onclick="openAssignModal()">
+                                        + Записать ТС
+                                    </button>
+                                </div>
+                            </div>
+
+                            <div class="eis-admin-stats" id="planningStats">
+                                <div class="eis-stat-card">
+                                    <div class="eis-stat-value" id="planStatToday">—</div>
+                                    <div class="eis-stat-label">Записано сегодня</div>
+                                </div>
+                                <div class="eis-stat-card">
+                                    <div class="eis-stat-value" id="planStatWeek">—</div>
+                                    <div class="eis-stat-label">На 7 дней</div>
+                                </div>
+                                <div class="eis-stat-card" style="border-left-color:#dc3545">
+                                    <div class="eis-stat-value" id="planStatOverload" style="color:#c62828">—</div>
+                                    <div class="eis-stat-label">Дней с перегрузом</div>
+                                </div>
+                                <div class="eis-stat-card" style="border-left-color:#f57c00">
+                                    <div class="eis-stat-value" id="planStatUnplanned" style="color:#f57c00">—</div>
+                                    <div class="eis-stat-label">ТС без записи</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Календарь загрузки -->
+                    <div class="eis-panel">
+                        <div class="eis-panel-header">
+                            <span class="eis-panel-title">Загрузка по дням</span>
+                        </div>
+                        <div class="eis-panel-body">
+                            <div class="eis-planning-toolbar">
+                                <button type="button" class="eis-calendar-nav" onclick="planningPrevMonth()" title="Предыдущий месяц">‹</button>
+                                <div class="eis-calendar-title" id="planningMonthLabel">—</div>
+                                <button type="button" class="eis-calendar-nav" onclick="planningNextMonth()" title="Следующий месяц">›</button>
+                                <button type="button" class="eis-btn eis-btn-sm eis-btn-secondary" onclick="planningToday()" style="margin-left:12px;">Сегодня</button>
+                            </div>
+
+                            <div class="eis-planning-legend">
+                                <span><i class="eis-cal-dot" style="background:#e0e4e8"></i>Пусто</span>
+                                <span><i class="eis-cal-dot" style="background:#28a745"></i>Свободно</span>
+                                <span><i class="eis-cal-dot" style="background:#fbc02d"></i>Заполнено</span>
+                                <span><i class="eis-cal-dot" style="background:#f57c00"></i>Почти полный</span>
+                                <span><i class="eis-cal-dot" style="background:#c62828"></i>Перегруз</span>
+                            </div>
+
+                            <div class="eis-calendar-weekdays">
+                                <span>Пн</span><span>Вт</span><span>Ср</span><span>Чт</span><span>Пт</span><span>Сб</span><span>Вс</span>
+                            </div>
+                            <div class="eis-planning-grid" id="planningGrid"></div>
+                        </div>
+                    </div>
+
+                    <!-- Очередь -->
+                    <div class="eis-panel">
+                        <div class="eis-panel-header">
+                            <span class="eis-panel-title">ТС без записи (требуют планирования)</span>
+                            <span class="eis-badge" id="planningQueueCount">ЗАПИСЕЙ: 0</span>
+                        </div>
+                        <div class="eis-panel-body" id="planningQueue">
+                            <div class="eis-loading">
+                                <div class="eis-spinner"></div>
+                                <span>Загрузка...</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
         </main>
 
         <div id="site-footer"></div>
     </div>
 
-    <!-- Модалка деталей ТО (увеличенная) -->
+    <!-- Модалка деталей ТО -->
     <div class="eis-modal-form" id="techDetailModal">
         <div class="eis-modal-form-content eis-modal-tech-wide">
             <div class="eis-modal-form-header">
@@ -281,7 +378,62 @@
         </div>
     </div>
 
-    
+    <!-- Модалка: запись ТС на ТО -->
+    <div class="eis-modal-form" id="assignModal">
+        <div class="eis-modal-form-content" style="max-width: 520px;">
+            <div class="eis-modal-form-header">
+                <h3>Запись на техосмотр</h3>
+                <span class="eis-modal-form-close" onclick="closeAssignModal()">×</span>
+            </div>
+            <div class="eis-modal-form-body">
+                <div class="eis-form-group">
+                    <label class="eis-form-label">Транспортное средство *</label>
+                    <select class="eis-select" id="assignVehicle" onchange="onAssignVehicleChange()">
+                        <option value="">— Выберите ТС —</option>
+                    </select>
+                </div>
+                <div class="eis-form-row">
+                    <div class="eis-form-group">
+                        <label class="eis-form-label">Дата *</label>
+                        <input type="date" class="eis-input" id="assignDate" onchange="onAssignDateChange()">
+                    </div>
+                    <div class="eis-form-group">
+                        <label class="eis-form-label">Время (необязательно)</label>
+                        <input type="time" class="eis-input" id="assignTime">
+                    </div>
+                </div>
+                <div class="eis-form-group">
+                    <label class="eis-form-label">Загрузка выбранного дня</label>
+                    <div class="eis-assign-load" id="assignLoad">Выберите дату</div>
+                </div>
+                <div class="eis-form-group">
+                    <label class="eis-form-label">Примечание</label>
+                    <input type="text" class="eis-input" id="assignNotes">
+                </div>
+                <div class="eis-auth-error" id="assignError"></div>
+            </div>
+            <div class="eis-modal-form-footer">
+                <button type="button" class="eis-btn eis-btn-secondary" onclick="closeAssignModal()">Отмена</button>
+                <button type="button" class="eis-btn eis-btn-primary" id="assignSaveBtn" onclick="saveAppointment()">Записать</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Модалка: список записей на день -->
+    <div class="eis-modal-form" id="dayAppointmentsModal">
+        <div class="eis-modal-form-content" style="max-width: 720px;">
+            <div class="eis-modal-form-header">
+                <h3 id="dayApptTitle">Записи на день</h3>
+                <span class="eis-modal-form-close" onclick="closeDayAppointmentsModal()">×</span>
+            </div>
+            <div class="eis-modal-form-body" id="dayApptBody"></div>
+            <div class="eis-modal-form-footer">
+                <button type="button" class="eis-btn eis-btn-primary" onclick="closeDayAppointmentsModal()">Закрыть</button>
+            </div>
+        </div>
+    </div>
+
+
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="js/layout.js"></script>
     <script src="js/toast.js"></script>
@@ -290,5 +442,6 @@
     <script src="js/guard.js"></script>
     <script src="js/main.js"></script>
     <script src="js/tech-database.js"></script>
+    <script src="js/tech-planning.js"></script>
 </body>
 </html>

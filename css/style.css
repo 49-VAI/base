@@ -3921,3 +3921,441 @@ textarea {
         white-space: normal;
     }
 }
+
+
+
+/* ================================================================
+   КАЛЕНДАРЬ ТЕХОСМОТРОВ
+   ================================================================ */
+.eis-calendar-toolbar {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    margin-bottom: 14px;
+}
+
+.eis-calendar-title {
+    font-size: 17px;
+    font-weight: 700;
+    min-width: 180px;
+    text-align: center;
+    color: var(--eis-text);
+}
+
+.eis-calendar-nav {
+    width: 36px;
+    height: 36px;
+    border: 1px solid var(--eis-border);
+    background: #fff;
+    border-radius: var(--eis-radius-sm);
+    cursor: pointer;
+    font-size: 22px;
+    line-height: 1;
+    color: var(--eis-text);
+    transition: all .15s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+}
+
+    .eis-calendar-nav:hover {
+        border-color: var(--eis-accent);
+        color: var(--eis-accent);
+        background: var(--eis-accent-light);
+    }
+
+.eis-calendar-legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 16px;
+    justify-content: center;
+    margin-bottom: 14px;
+    font-size: 12px;
+    color: var(--eis-text-secondary);
+}
+
+    .eis-calendar-legend span {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+    }
+
+.eis-cal-dot {
+    display: inline-block;
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+}
+
+.eis-calendar-weekdays {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 4px;
+    margin-bottom: 4px;
+}
+
+    .eis-calendar-weekdays span {
+        text-align: center;
+        font-size: 11px;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: .5px;
+        color: var(--eis-text-secondary);
+        padding: 6px 0;
+    }
+
+.eis-calendar-grid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 4px;
+}
+
+.eis-cal-day {
+    position: relative;
+    min-height: 92px;
+    background: #fff;
+    border: 1px solid var(--eis-border);
+    border-radius: var(--eis-radius-sm);
+    padding: 6px 6px 4px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    cursor: pointer;
+    transition: all .15s;
+    overflow: hidden;
+}
+
+    .eis-cal-day:hover {
+        border-color: var(--eis-accent);
+        background: #fafdfb;
+    }
+
+    .eis-cal-day.is-empty {
+        background: #fafbfc;
+        border-color: transparent;
+        cursor: default;
+    }
+
+        .eis-cal-day.is-empty:hover {
+            border-color: transparent;
+            background: #fafbfc;
+        }
+
+    .eis-cal-day.is-today {
+        border-color: var(--eis-accent);
+        box-shadow: 0 0 0 2px rgba(30,126,52,0.12);
+    }
+
+    .eis-cal-day.is-weekend .eis-cal-num {
+        color: #c62828;
+    }
+
+.eis-cal-num {
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--eis-text);
+    line-height: 1;
+}
+
+.eis-cal-badges {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    flex: 1;
+    overflow: hidden;
+}
+
+.eis-cal-badge {
+    font-size: 10px;
+    font-weight: 600;
+    padding: 2px 5px;
+    border-radius: 3px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    color: #fff;
+    line-height: 1.3;
+}
+
+    .eis-cal-badge.status-expired {
+        background: #c62828;
+    }
+
+    .eis-cal-badge.status-expiring {
+        background: #f57c00;
+    }
+
+    .eis-cal-badge.status-month {
+        background: #fbc02d;
+        color: #333;
+    }
+
+    .eis-cal-badge.status-valid {
+        background: #28a745;
+    }
+
+.eis-cal-more {
+    font-size: 10px;
+    color: var(--eis-text-secondary);
+    font-weight: 600;
+    text-align: center;
+    margin-top: auto;
+}
+
+@media (max-width: 768px) {
+    .eis-cal-day {
+        min-height: 68px;
+        padding: 4px;
+    }
+
+    .eis-cal-num {
+        font-size: 11px;
+    }
+
+    .eis-cal-badge {
+        font-size: 9px;
+        padding: 1px 4px;
+    }
+
+    .eis-calendar-legend {
+        gap: 10px;
+        font-size: 11px;
+    }
+
+    .eis-calendar-title {
+        font-size: 15px;
+        min-width: 140px;
+    }
+}
+
+@media (max-width: 480px) {
+    .eis-cal-day {
+        min-height: 56px;
+    }
+
+    .eis-cal-badge {
+        display: none;
+    }
+
+    .eis-cal-day.has-events::after {
+        content: '';
+        position: absolute;
+        bottom: 4px;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+        background: #c62828;
+    }
+}
+
+/* ================================================================
+   ПЛАНИРОВАНИЕ ТЕХОСМОТРОВ
+   ================================================================ */
+.eis-planning-toolbar {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    margin-bottom: 14px;
+    flex-wrap: wrap;
+}
+
+.eis-calendar-title {
+    font-size: 17px;
+    font-weight: 700;
+    min-width: 180px;
+    text-align: center;
+    color: var(--eis-text);
+}
+
+.eis-calendar-nav {
+    width: 36px;
+    height: 36px;
+    border: 1px solid var(--eis-border);
+    background: #fff;
+    border-radius: var(--eis-radius-sm);
+    cursor: pointer;
+    font-size: 22px;
+    line-height: 1;
+    color: var(--eis-text);
+    transition: all .15s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+}
+.eis-calendar-nav:hover {
+    border-color: var(--eis-accent);
+    color: var(--eis-accent);
+    background: var(--eis-accent-light);
+}
+
+.eis-planning-legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 16px;
+    justify-content: center;
+    margin-bottom: 14px;
+    font-size: 12px;
+    color: var(--eis-text-secondary);
+}
+.eis-planning-legend span {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+.eis-cal-dot {
+    display: inline-block;
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+}
+
+.eis-calendar-weekdays {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 4px;
+    margin-bottom: 4px;
+}
+.eis-calendar-weekdays span {
+    text-align: center;
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .5px;
+    color: var(--eis-text-secondary);
+    padding: 6px 0;
+}
+
+.eis-planning-grid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 4px;
+}
+
+.eis-plan-day {
+    position: relative;
+    min-height: 74px;
+    background: #fff;
+    border: 1px solid var(--eis-border);
+    border-radius: var(--eis-radius-sm);
+    padding: 6px 6px 6px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    transition: all .15s;
+    overflow: hidden;
+}
+.eis-plan-day.is-empty {
+    background: #fafbfc;
+    border-color: transparent;
+}
+.eis-plan-day.is-past {
+    opacity: 0.55;
+}
+.eis-plan-day.is-today {
+    border-color: var(--eis-accent);
+    box-shadow: 0 0 0 2px rgba(30,126,52,0.15);
+}
+.eis-plan-day.is-weekend .eis-plan-day-num {
+    color: #c62828;
+}
+.eis-plan-day.has-appts {
+    cursor: pointer;
+}
+.eis-plan-day.has-appts:hover {
+    border-color: var(--eis-accent);
+    transform: translateY(-1px);
+    box-shadow: 0 3px 10px rgba(0,0,0,0.08);
+}
+
+.eis-plan-day-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 4px;
+}
+.eis-plan-day-num {
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--eis-text);
+    line-height: 1;
+}
+.eis-plan-day-count {
+    font-size: 10px;
+    font-weight: 700;
+    padding: 2px 5px;
+    border-radius: 3px;
+    background: #f0f2f5;
+    color: var(--eis-text-secondary);
+    font-family: var(--eis-font-mono);
+    white-space: nowrap;
+}
+
+.eis-plan-load-bar {
+    margin-top: auto;
+    height: 4px;
+    background: #eef1f3;
+    border-radius: 2px;
+    overflow: hidden;
+}
+.eis-plan-load-fill {
+    height: 100%;
+    background: var(--eis-success);
+    transition: width .3s;
+}
+
+/* Цвета загрузки */
+.eis-plan-day.load-free        .eis-plan-load-fill { background: #28a745; }
+.eis-plan-day.load-half        .eis-plan-load-fill { background: #fbc02d; }
+.eis-plan-day.load-almost-full .eis-plan-load-fill { background: #f57c00; }
+.eis-plan-day.load-overload    .eis-plan-load-fill { background: #c62828; }
+
+.eis-plan-day.load-free        .eis-plan-day-count { background: #e8f5e9; color: #1b5e20; }
+.eis-plan-day.load-half        .eis-plan-day-count { background: #fff8e1; color: #b28704; }
+.eis-plan-day.load-almost-full .eis-plan-day-count { background: #fff3e0; color: #e65100; }
+.eis-plan-day.load-overload    .eis-plan-day-count { background: #ffebee; color: #c62828; }
+
+/* Загрузка в модалке записи */
+.eis-assign-load {
+    padding: 10px 14px;
+    border-radius: var(--eis-radius-sm);
+    font-size: 13px;
+    font-weight: 600;
+    background: #f0f2f5;
+    color: var(--eis-text-secondary);
+    border: 1px solid var(--eis-border);
+}
+.eis-assign-load.free        { background: #e8f5e9; color: #1b5e20; border-color: #a5d6a7; }
+.eis-assign-load.half        { background: #fff8e1; color: #b28704; border-color: #ffe082; }
+.eis-assign-load.almost-full { background: #fff3e0; color: #e65100; border-color: #ffcc80; }
+.eis-assign-load.overload    { background: #ffebee; color: #c62828; border-color: #ef9a9a; }
+
+@media (max-width: 768px) {
+    .eis-plan-day { min-height: 56px; padding: 4px; }
+    .eis-plan-day-num { font-size: 11px; }
+    .eis-plan-day-count { font-size: 9px; padding: 1px 4px; }
+    .eis-planning-legend { gap: 10px; font-size: 11px; }
+    .eis-calendar-title { font-size: 15px; min-width: 130px; }
+    .eis-planning-toolbar { gap: 6px; }
+}
+
+@media (max-width: 480px) {
+    .eis-plan-day { min-height: 42px; }
+    .eis-plan-day-count { display: none; }
+    .eis-plan-day.has-appts::after {
+        content: '';
+        position: absolute;
+        bottom: 3px;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+        background: #c62828;
+    }
+}

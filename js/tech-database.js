@@ -1,5 +1,5 @@
 ﻿// ================================================================
-// БАЗА ТЕХОСМОТРОВ + РЕЕСТР ТС
+// БАЗА ТЕХОСМОТРОВ + РЕЕСТР ТС + КАЛЕНДАРЬ ТО
 // ================================================================
 
 let techDatabase = [];
@@ -17,9 +17,13 @@ function switchTechTab(tab) {
     document.querySelectorAll('.eis-tab-content').forEach(c => {
         c.classList.toggle('active', c.id === 'tab-' + tab);
     });
+
     if (tab === 'vehicles' && !vehiclesLoaded) {
         loadVehiclesFromSupabase();
         vehiclesLoaded = true;
+    }
+    if (tab === 'calendar') {
+        renderCalendarTab();
     }
 }
 
@@ -39,6 +43,10 @@ async function loadTechFromSupabase() {
     techDatabase = data || [];
     updateTechStats();
     applyTechFilters();
+
+    if (document.getElementById('tab-calendar')?.classList.contains('active')) {
+        renderCalendarTab();
+    }
 }
 
 function updateTechStats() {
@@ -270,7 +278,6 @@ async function deleteTechFromDB(row) {
     });
     if (!ok) return;
 
-    // полный снимок главной записи
     const { data: fullRow } = await supabaseClient
         .from('tech_inspections').select('*').eq('id', row.id).single();
 
@@ -460,7 +467,6 @@ async function saveVehicle() {
 
     btn.disabled = true; btn.textContent = 'Сохранение...';
 
-    // снимок до (только для update)
     let beforeVeh = null;
     if (id) {
         const { data: b } = await supabaseClient.from('vehicles').select('*').eq('id', id).single();
@@ -529,6 +535,243 @@ function extractStorageFileName(url, bucket) {
     return decodeURIComponent(parts[1]);
 }
 
+// ================================================================
+// КАЛЕНДАРЬ ТЕХОСМОТРОВ
+// ================================================================
+let calendarCurrentDate = new Date();
+let calendarEvents = {}; // { 'YYYY-MM-DD': [rows] }
+
+const CAL_MONTH_NAMES = [
+    'Январь', 'Февраль', 'Март', 'Апрель', 'Май', 'Июнь',
+    'Июль', 'Август', 'Сентябрь', 'Октябрь', 'Ноябрь', 'Декабрь'
+];
+
+function calFormatISO(date) {
+    const y = date.getFullYear();
+    const m = String(date.getMonth() + 1).padStart(2, '0');
+    const d = String(date.getDate()).padStart(2, '0');
+    return `${y}-${m}-${d}`;
+}
+
+function buildCalendarEvents() {
+    calendarEvents = {};
+    techDatabase.forEach(row => {
+        if (!row.valid_until) return;
+        const key = String(row.valid_until).slice(0, 10);
+        if (!calendarEvents[key]) calendarEvents[key] = [];
+        calendarEvents[key].push(row);
+    });
+}
+
+function getCalendarStatusForDate(isoDate) {
+    const d = parseDate(isoDate);
+    if (!d) return 'valid';
+    const today = new Date(); today.setHours(0, 0, 0, 0);
+    const diff = Math.ceil((d - today) / (1000 * 60 * 60 * 24));
+    if (diff < 0) return 'expired';
+    if (diff <= 7) return 'expiring';
+    if (diff <= 30) return 'month';
+    return 'valid';
+}
+
+function renderCalendar() {
+    const grid = document.getElementById('calendarGrid');
+    const label = document.getElementById('calendarMonthLabel');
+    if (!grid || !label) return;
+
+    const y = calendarCurrentDate.getFullYear();
+    const m = calendarCurrentDate.getMonth();
+    label.textContent = `${CAL_MONTH_NAMES[m]} ${y}`;
+
+    const firstDay = new Date(y, m, 1);
+    const lastDay = new Date(y, m + 1, 0);
+    const daysInMonth = lastDay.getDate();
+
+    let startWeekday = firstDay.getDay() - 1;
+    if (startWeekday < 0) startWeekday = 6;
+
+    const today = new Date(); today.setHours(0, 0, 0, 0);
+
+    let html = '';
+
+    for (let i = 0; i < startWeekday; i++) {
+        html += '<div class="eis-cal-day is-empty"></div>';
+    }
+
+    for (let day = 1; day <= daysInMonth; day++) {
+        const date = new Date(y, m, day);
+        const iso = calFormatISO(date);
+        const weekday = date.getDay();
+        const isWeekend = weekday === 0 || weekday === 6;
+        const isToday = date.getTime() === today.getTime();
+
+        const events = calendarEvents[iso] || [];
+        const hasEvents = events.length > 0;
+
+        let badgesHtml = '';
+        if (hasEvents) {
+            const status = getCalendarStatusForDate(iso);
+            const shown = events.slice(0, 3);
+            badgesHtml = shown.map(r =>
+                `<div class="eis-cal-badge status-${status}" title="${escapeHtmlTd(r.plate_number || '')} — ${escapeHtmlTd(r.vehicle_make_model || '')}">${escapeHtmlTd(r.plate_number || r.card_number || 'ТС')}</div>`
+            ).join('');
+            if (events.length > 3) {
+                badgesHtml += `<div class="eis-cal-more">+${events.length - 3} ещё</div>`;
+            }
+        }
+
+        const classes = [
+            'eis-cal-day',
+            isToday ? 'is-today' : '',
+            isWeekend ? 'is-weekend' : '',
+            hasEvents ? 'has-events' : ''
+        ].filter(Boolean).join(' ');
+
+        const clickAttr = hasEvents ? `onclick="openCalendarDayModal('${iso}')"` : '';
+
+        html += `<div class="${classes}" data-date="${iso}" ${clickAttr}>
+            <div class="eis-cal-num">${day}</div>
+            <div class="eis-cal-badges">${badgesHtml}</div>
+        </div>`;
+    }
+
+    const totalCells = startWeekday + daysInMonth;
+    const remainder = totalCells % 7;
+    if (remainder !== 0) {
+        for (let i = 0; i < 7 - remainder; i++) {
+            html += '<div class="eis-cal-day is-empty"></div>';
+        }
+    }
+
+    grid.innerHTML = html;
+}
+
+function calendarPrevMonth() {
+    calendarCurrentDate.setMonth(calendarCurrentDate.getMonth() - 1);
+    renderCalendar();
+}
+
+function calendarNextMonth() {
+    calendarCurrentDate.setMonth(calendarCurrentDate.getMonth() + 1);
+    renderCalendar();
+}
+
+function calendarToday() {
+    calendarCurrentDate = new Date();
+    renderCalendar();
+}
+
+function renderCalendarStats() {
+    let expired = 0, week = 0, month = 0, valid = 0;
+
+    techDatabase.forEach(row => {
+        if (!row.valid_until) return;
+        const status = getCalendarStatusForDate(row.valid_until);
+        if (status === 'expired') expired++;
+        else if (status === 'expiring') week++;
+        else if (status === 'month') month++;
+        else valid++;
+    });
+
+    const set = (id, v) => { const el = document.getElementById(id); if (el) el.textContent = v; };
+    set('calStatExpired', expired);
+    set('calStatWeek', week);
+    set('calStatMonth', month);
+    set('calStatValid', valid);
+}
+
+function renderCalendarUpcoming() {
+    const container = document.getElementById('calendarUpcoming');
+    const countEl = document.getElementById('calendarUpcomingCount');
+    if (!container) return;
+
+    const today = new Date(); today.setHours(0, 0, 0, 0);
+    const in30 = new Date(today); in30.setDate(in30.getDate() + 30);
+
+    const upcoming = techDatabase.filter(row => {
+        if (!row.valid_until) return false;
+        const d = parseDate(row.valid_until);
+        if (!d) return false;
+        return d >= today && d <= in30;
+    }).sort((a, b) => parseDate(a.valid_until) - parseDate(b.valid_until));
+
+    if (countEl) countEl.textContent = `ЗАПИСЕЙ: ${upcoming.length}`;
+
+    if (upcoming.length === 0) {
+        container.innerHTML = '<div class="eis-no-results">В ближайшие 30 дней истечений нет</div>';
+        return;
+    }
+
+    let html = '<div class="eis-admin-table-wrap"><table class="eis-admin-table"><thead><tr>';
+    html += '<th>Действительно до</th><th>Осталось</th><th>Гос.номер</th><th>ТС</th><th>Эксперт</th><th></th>';
+    html += '</tr></thead><tbody>';
+
+    upcoming.forEach(row => {
+        const d = parseDate(row.valid_until);
+        const diff = Math.ceil((d - today) / (1000 * 60 * 60 * 24));
+        let diffText, diffColor;
+        if (diff === 0) { diffText = 'сегодня'; diffColor = '#c62828'; }
+        else if (diff <= 7) { diffText = `${diff} дн.`; diffColor = '#f57c00'; }
+        else { diffText = `${diff} дн.`; diffColor = '#b28704'; }
+
+        html += `<tr>
+            <td data-label="До">${formatDate(row.valid_until)}</td>
+            <td data-label="Осталось" style="color:${diffColor};font-weight:700;">${diffText}</td>
+            <td data-label="Гос.номер"><strong>${escapeHtmlTd(row.plate_number || '—')}</strong></td>
+            <td data-label="ТС">${escapeHtmlTd(row.vehicle_make_model || '—')}</td>
+            <td data-label="Эксперт">${escapeHtmlTd(row.expert_name || '—')}</td>
+            <td><button class="eis-btn eis-btn-sm eis-btn-secondary" onclick="openTechDetailModal('${row.id}')">Открыть</button></td>
+        </tr>`;
+    });
+
+    html += '</tbody></table></div>';
+    container.innerHTML = html;
+}
+
+function openCalendarDayModal(iso) {
+    const events = calendarEvents[iso] || [];
+    if (events.length === 0) return;
+
+    const modal = document.getElementById('calendarDayModal');
+    const title = document.getElementById('cdTitle');
+    const body = document.getElementById('cdBody');
+    if (!modal || !body) return;
+
+    if (title) title.textContent = `Истечения на ${formatDate(iso)}`;
+
+    let html = '<div class="eis-admin-table-wrap"><table class="eis-admin-table"><thead><tr>';
+    html += '<th>№ карты</th><th>Гос.номер</th><th>ТС</th><th>Эксперт</th><th></th>';
+    html += '</tr></thead><tbody>';
+
+    events.forEach(r => {
+        html += `<tr>
+            <td data-label="№ карты"><strong>${escapeHtmlTd(r.card_number || '')}</strong></td>
+            <td data-label="Гос.номер">${escapeHtmlTd(r.plate_number || '—')}</td>
+            <td data-label="ТС">${escapeHtmlTd(r.vehicle_make_model || '—')}</td>
+            <td data-label="Эксперт">${escapeHtmlTd(r.expert_name || '—')}</td>
+            <td><button class="eis-btn eis-btn-sm eis-btn-primary"
+                        onclick="closeCalendarDayModal(); openTechDetailModal('${r.id}')">Открыть</button></td>
+        </tr>`;
+    });
+
+    html += '</tbody></table></div>';
+    body.innerHTML = html;
+
+    modal.style.display = 'flex';
+}
+
+function closeCalendarDayModal() {
+    const modal = document.getElementById('calendarDayModal');
+    if (modal) modal.style.display = 'none';
+}
+
+function renderCalendarTab() {
+    buildCalendarEvents();
+    renderCalendarStats();
+    renderCalendar();
+    renderCalendarUpcoming();
+}
+
 document.addEventListener('DOMContentLoaded', function () {
     if (!document.getElementById('techResults')) return;
 
@@ -536,6 +779,7 @@ document.addEventListener('DOMContentLoaded', function () {
         loadTechFromSupabase();
         const params = new URLSearchParams(window.location.search);
         if (params.get('tab') === 'vehicles') switchTechTab('vehicles');
+        if (params.get('tab') === 'calendar') switchTechTab('calendar');
     }, { once: true });
 
     ['techSearchQuery', 'techSearchDateFrom', 'techSearchDateTo', 'techSearchConclusion'].forEach(id => {
@@ -549,7 +793,11 @@ document.addEventListener('DOMContentLoaded', function () {
     });
 
     document.addEventListener('keydown', e => {
-        if (e.key === 'Escape') { closeTechDetailModal(); closeVehicleModal(); }
+        if (e.key === 'Escape') {
+            closeTechDetailModal();
+            closeVehicleModal();
+            closeCalendarDayModal();
+        }
     });
 });
 
@@ -572,3 +820,9 @@ window.openVehicleModal = openVehicleModal;
 window.closeVehicleModal = closeVehicleModal;
 window.saveVehicle = saveVehicle;
 window.deleteVehicleFromModal = deleteVehicleFromModal;
+window.calendarPrevMonth = calendarPrevMonth;
+window.calendarNextMonth = calendarNextMonth;
+window.calendarToday = calendarToday;
+window.openCalendarDayModal = openCalendarDayModal;
+window.closeCalendarDayModal = closeCalendarDayModal;
+window.renderCalendarTab = renderCalendarTab;
