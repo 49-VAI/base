@@ -1,20 +1,15 @@
 ﻿// ================================================================
 // БАЗА ТЕХОСМОТРОВ + РЕЕСТР ТС
-// ВАЖНО: файл должен быть в UTF-8
 // ================================================================
 
 let techDatabase = [];
 let techFiltered = [];
 let currentDetailId = null;
 let currentDetailRow = null;
-
 let vehicleDatabase = [];
 let vehicleFiltered = [];
 let vehiclesLoaded = false;
 
-// ================================================================
-// ВКЛАДКИ
-// ================================================================
 function switchTechTab(tab) {
     document.querySelectorAll('.eis-tab').forEach(t => {
         t.classList.toggle('active', t.dataset.tab === tab);
@@ -22,7 +17,6 @@ function switchTechTab(tab) {
     document.querySelectorAll('.eis-tab-content').forEach(c => {
         c.classList.toggle('active', c.id === 'tab-' + tab);
     });
-
     if (tab === 'vehicles' && !vehiclesLoaded) {
         loadVehiclesFromSupabase();
         vehiclesLoaded = true;
@@ -35,37 +29,21 @@ function switchTechTab(tab) {
 async function loadTechFromSupabase() {
     const container = document.getElementById('techResults');
     if (!container) return;
-
-    container.innerHTML = `
-        <div class="eis-loading">
-            <div class="eis-spinner"></div>
-            <span>Загрузка данных...</span>
-        </div>
-    `;
+    container.innerHTML = `<div class="eis-loading"><div class="eis-spinner"></div><span>Загрузка данных...</span></div>`;
 
     const { data, error } = await supabaseClient
-        .from('tech_inspections')
-        .select('*')
-        .eq('is_current', true)
-        .order('valid_until', { ascending: true });
+        .from('tech_inspections').select('*')
+        .eq('is_current', true).order('valid_until', { ascending: true });
 
-    if (error) {
-        container.innerHTML = `<div class="eis-no-results">Ошибка: ${escapeHtmlTd(error.message)}</div>`;
-        return;
-    }
-
+    if (error) { container.innerHTML = `<div class="eis-no-results">Ошибка: ${escapeHtmlTd(error.message)}</div>`; return; }
     techDatabase = data || [];
     updateTechStats();
     applyTechFilters();
 }
 
-// ================================================================
-// СТАТИСТИКА
-// ================================================================
 function updateTechStats() {
     const total = techDatabase.length;
     let valid = 0, expiring = 0, expired = 0, failed = 0;
-
     techDatabase.forEach(row => {
         const s = getTechStatus(row);
         if (s.status === 'valid') valid++;
@@ -73,34 +51,22 @@ function updateTechStats() {
         else if (s.status === 'expired') expired++;
         if (row.conclusion === 'impossible') failed++;
     });
-
     const setTxt = (id, v) => { const el = document.getElementById(id); if (el) el.textContent = v; };
-    setTxt('statTotal', total);
-    setTxt('statValid', valid);
-    setTxt('statExpiring', expiring);
-    setTxt('statExpired', expired);
-    setTxt('statFailed', failed);
+    setTxt('statTotal', total); setTxt('statValid', valid);
+    setTxt('statExpiring', expiring); setTxt('statExpired', expired); setTxt('statFailed', failed);
 }
 
-// ================================================================
-// СТАТУС
-// ================================================================
 function getTechStatus(row) {
     if (!row.valid_until) return { status: 'expired', text: 'НЕТ ДАННЫХ', class: 'eis-status-expired' };
     const date = parseDate(row.valid_until);
     if (!date) return { status: 'expired', text: 'НЕТ ДАННЫХ', class: 'eis-status-expired' };
-
     const today = new Date();
     const diffDays = Math.ceil((date - today) / (1000 * 60 * 60 * 24));
-
     if (diffDays < 0) return { status: 'expired', text: 'ПРОСРОЧЕНО', class: 'eis-status-expired' };
     if (diffDays <= 7) return { status: 'expiring', text: 'ИСТЕКАЕТ', class: 'eis-status-expiring' };
     return { status: 'valid', text: 'ДЕЙСТВИТЕЛЬНО', class: 'eis-status-valid' };
 }
 
-// ================================================================
-// ФИЛЬТРЫ КАРТ
-// ================================================================
 function applyTechFilters() {
     const q = (document.getElementById('techSearchQuery')?.value || '').toLowerCase().trim();
     const from = document.getElementById('techSearchDateFrom')?.value;
@@ -109,56 +75,34 @@ function applyTechFilters() {
 
     techFiltered = techDatabase.filter(row => {
         if (q) {
-            const hay = [
-                row.card_number, row.plate_number, row.vin,
-                row.vehicle_make_model, row.expert_name
-            ].filter(Boolean).join(' ').toLowerCase();
+            const hay = [row.card_number, row.plate_number, row.vin, row.vehicle_make_model, row.expert_name]
+                .filter(Boolean).join(' ').toLowerCase();
             if (!hay.includes(q)) return false;
         }
-        if (from) {
-            const d = parseDate(row.valid_until), f = parseDate(from);
-            if (d && f && d < f) return false;
-        }
-        if (to) {
-            const d = parseDate(row.valid_until), t = parseDate(to);
-            if (d && t && d > t) return false;
-        }
+        if (from) { const d = parseDate(row.valid_until), f = parseDate(from); if (d && f && d < f) return false; }
+        if (to) { const d = parseDate(row.valid_until), t = parseDate(to); if (d && t && d > t) return false; }
         if (conclusion && row.conclusion !== conclusion) return false;
         return true;
     });
-
     displayTechResults(techFiltered);
 }
 
-function resetTechSearch() {
-    document.getElementById('techSearchForm').reset();
-    applyTechFilters();
-}
-
+function resetTechSearch() { document.getElementById('techSearchForm').reset(); applyTechFilters(); }
 function filterByStatus(status) {
     techFiltered = status ? techDatabase.filter(r => getTechStatus(r).status === status) : techDatabase;
     displayTechResults(techFiltered);
 }
-
 function filterByConclusion(conclusion) {
     techFiltered = techDatabase.filter(r => r.conclusion === conclusion);
     displayTechResults(techFiltered);
 }
 
-// ================================================================
-// ТАБЛИЦА КАРТ
-// ================================================================
 function displayTechResults(rows) {
     const container = document.getElementById('techResults');
     const countEl = document.getElementById('techResultsCount');
     if (!container) return;
-
     if (countEl) countEl.textContent = `ЗАПИСЕЙ: ${rows.length}`;
-
-    if (rows.length === 0) {
-        container.innerHTML = '<div class="eis-no-results">Записи не найдены</div>';
-        return;
-    }
+    if (rows.length === 0) { container.innerHTML = '<div class="eis-no-results">Записи не найдены</div>'; return; }
 
     let html = '<div class="eis-admin-table-wrap"><table class="eis-admin-table"><thead><tr>';
     html += '<th>№ карты</th><th>Гос.номер</th><th>ТС</th><th>До</th><th>Эксперт</th><th>Заключение</th><th>Статус</th><th></th>';
@@ -168,7 +112,6 @@ function displayTechResults(rows) {
         const status = getTechStatus(row);
         const cText = row.conclusion === 'possible' ? 'Возможно' : row.conclusion === 'impossible' ? 'Невозможно' : '—';
         const cColor = row.conclusion === 'impossible' ? 'color:#c62828;font-weight:600' : row.conclusion === 'possible' ? 'color:#28a745' : '';
-
         html += `<tr>
             <td data-label="№ карты"><strong>${escapeHtmlTd(row.card_number || '')}</strong></td>
             <td data-label="Гос.номер">${escapeHtmlTd(row.plate_number || '—')}</td>
@@ -180,32 +123,18 @@ function displayTechResults(rows) {
             <td><button class="eis-btn eis-btn-sm eis-btn-secondary" onclick="openTechDetailModal('${row.id}')">Подробнее</button></td>
         </tr>`;
     });
-
     html += '</tbody></table></div>';
     container.innerHTML = html;
 }
 
-// ================================================================
-// МОДАЛКА ДЕТАЛЕЙ ТО (увеличенная)
-// ================================================================
 async function openTechDetailModal(id) {
-    // 1) Ищем запись: сначала в кэше, потом в БД (для старых версий)
     let row = techDatabase.find(r => r.id === id);
     if (!row) {
-        const { data, error } = await supabaseClient
-            .from('tech_inspections')
-            .select('*')
-            .eq('id', id)
-            .single();
-        if (error || !data) {
-            showToast('Запись не найдена', 'error');
-            return;
-        }
+        const { data, error } = await supabaseClient.from('tech_inspections').select('*').eq('id', id).single();
+        if (error || !data) { showToast('Запись не найдена', 'error'); return; }
         row = data;
     }
-
-    currentDetailId = id;
-    currentDetailRow = row;
+    currentDetailId = id; currentDetailRow = row;
     const status = getTechStatus(row);
     const isOld = row.is_current === false;
 
@@ -215,13 +144,9 @@ async function openTechDetailModal(id) {
         (isOld ? ' <span style="color:#888;font-size:12px;margin-left:8px;">(старая версия)</span>' : '');
     document.getElementById('tdPhoto').src = row.photo_url || '';
 
-    // 2) Основные поля
     const fields = [
-        ['Гос. номер', row.plate_number],
-        ['Марка, модель', row.vehicle_make_model],
-        ['VIN', row.vin],
-        ['Категория', row.category],
-        ['Год выпуска', row.year],
+        ['Гос. номер', row.plate_number], ['Марка, модель', row.vehicle_make_model],
+        ['VIN', row.vin], ['Категория', row.category], ['Год выпуска', row.year],
         ['СТС', [row.sts_series, row.sts_number].filter(Boolean).join(' ')],
         ['СТС выдан кем', row.sts_issued_by],
         ['СТС выдан когда', row.sts_issued_date ? formatDate(row.sts_issued_date) : ''],
@@ -233,21 +158,16 @@ async function openTechDetailModal(id) {
         ['Пункты', summarizeItems(row.items_states)]
     ];
 
-    const fieldsHtml = fields
-        .filter(f => f[1] !== null && f[1] !== undefined && f[1] !== '' && f[1] !== 0)
+    const fieldsHtml = fields.filter(f => f[1] !== null && f[1] !== undefined && f[1] !== '' && f[1] !== 0)
         .map(([label, val]) => `
             <div class="eis-data-field">
                 <div class="eis-data-label">${escapeHtmlTd(label)}</div>
                 <div class="eis-data-value">${escapeHtmlTd(String(val))}</div>
-            </div>
-        `).join('');
+            </div>`).join('');
 
-    // 3) История версий
     const versionsHtml = await buildVersionHistoryHtml(row.id);
-
     document.getElementById('tdFields').innerHTML = fieldsHtml + versionsHtml;
 
-    // 4) Кнопки
     document.getElementById('tdDownloadBtn').onclick = () => downloadTechPhoto(row);
     document.getElementById('tdRecheckBtn').onclick = () => window.location.href = 'tech.html?clone=' + row.id;
     document.getElementById('tdEditBtn').onclick = () => window.location.href = 'tech.html?edit=' + row.id;
@@ -256,101 +176,60 @@ async function openTechDetailModal(id) {
     document.getElementById('techDetailModal').style.display = 'flex';
 }
 
-// ================================================================
-// ИСТОРИЯ ВЕРСИЙ — строим цепочку по previous_id
-// ================================================================
 async function buildVersionHistoryHtml(currentId) {
-    const chain = [];
-    const visited = new Set();
-
-    // Идём вверх по previous_id от текущей
+    const chain = []; const visited = new Set();
     let walkId = currentId;
     while (walkId && !visited.has(walkId)) {
         visited.add(walkId);
-        const { data } = await supabaseClient
-            .from('tech_inspections')
+        const { data } = await supabaseClient.from('tech_inspections')
             .select('id, card_number, valid_until, expert_name, created_at, photo_url, previous_id, is_current')
-            .eq('id', walkId)
-            .single();
+            .eq('id', walkId).single();
         if (!data) break;
-        chain.push(data);
-        walkId = data.previous_id;
+        chain.push(data); walkId = data.previous_id;
     }
-
-    // Идём вниз — ищем всех, у кого previous_id указывает на любую из найденных
     let foundNewer = true;
     while (foundNewer) {
         foundNewer = false;
         const ids = chain.map(c => c.id);
-        const { data: newer } = await supabaseClient
-            .from('tech_inspections')
+        const { data: newer } = await supabaseClient.from('tech_inspections')
             .select('id, card_number, valid_until, expert_name, created_at, photo_url, previous_id, is_current')
             .in('previous_id', ids);
         if (newer && newer.length > 0) {
-            for (const n of newer) {
-                if (!visited.has(n.id)) {
-                    visited.add(n.id);
-                    chain.push(n);
-                    foundNewer = true;
-                }
-            }
+            for (const n of newer) if (!visited.has(n.id)) { visited.add(n.id); chain.push(n); foundNewer = true; }
         }
     }
-
     if (chain.length <= 1) return '';
-
-    // Сортируем по дате создания (старые сверху)
     chain.sort((a, b) => new Date(a.created_at) - new Date(b.created_at));
 
-    const items = chain.map((v, i) => {
+    const items = chain.map(v => {
         const isCurrent = v.id === currentId;
-        return `
-            <div class="eis-tech-version-item ${isCurrent ? 'is-current' : ''}">
-                <div>
-                    <strong>№ ${escapeHtmlTd(v.card_number || '')}</strong>
-                    <span style="color:#888;font-size:12px;"> · ${v.valid_until ? formatDate(v.valid_until) : '—'}</span>
-                    ${isCurrent ? '<span style="color:#1e7e34;font-weight:600;font-size:11px;"> (текущая)</span>' : ''}
-                </div>
-                <div style="display:flex;gap:6px;">
-                    ${v.photo_url ? `
-                        <button class="eis-btn eis-btn-sm eis-btn-secondary" onclick="viewVersionPhoto('${v.id}')">
-                            Фото
-                        </button>
-                    ` : ''}
-                    ${!isCurrent ? `
-                        <button class="eis-btn eis-btn-sm eis-btn-secondary" onclick="openTechDetailModal('${v.id}')">
-                            Открыть
-                        </button>
-                    ` : ''}
-                </div>
+        return `<div class="eis-tech-version-item ${isCurrent ? 'is-current' : ''}">
+            <div>
+                <strong>№ ${escapeHtmlTd(v.card_number || '')}</strong>
+                <span style="color:#888;font-size:12px;"> · ${v.valid_until ? formatDate(v.valid_until) : '—'}</span>
+                ${isCurrent ? '<span style="color:#1e7e34;font-weight:600;font-size:11px;"> (текущая)</span>' : ''}
             </div>
-        `;
+            <div style="display:flex;gap:6px;">
+                ${v.photo_url ? `<button class="eis-btn eis-btn-sm eis-btn-secondary" onclick="viewVersionPhoto('${v.id}')">Фото</button>` : ''}
+                ${!isCurrent ? `<button class="eis-btn eis-btn-sm eis-btn-secondary" onclick="openTechDetailModal('${v.id}')">Открыть</button>` : ''}
+            </div>
+        </div>`;
     }).join('');
 
-    return `
-        <div class="eis-tech-versions">
-            <div class="eis-audit-detail-title" style="margin-top:20px;">История версий (${chain.length})</div>
-            ${items}
-        </div>
-    `;
+    return `<div class="eis-tech-versions">
+        <div class="eis-audit-detail-title" style="margin-top:20px;">История версий (${chain.length})</div>
+        ${items}
+    </div>`;
 }
 
-// Открыть фото конкретной версии из истории
 async function viewVersionPhoto(id) {
-    const { data } = await supabaseClient
-        .from('tech_inspections')
-        .select('photo_url')
-        .eq('id', id)
-        .single();
-    if (data?.photo_url) {
-        openPhotoGallery([data.photo_url], 0);
-    }
+    const { data } = await supabaseClient.from('tech_inspections').select('photo_url').eq('id', id).single();
+    if (data?.photo_url) openPhotoGallery([data.photo_url], 0);
 }
 
 function closeTechDetailModal() {
     document.getElementById('techDetailModal').style.display = 'none';
-    currentDetailId = null;
-    currentDetailRow = null;
+    currentDetailId = null; currentDetailRow = null;
 }
 
 function openTechPhotoFull() {
@@ -361,10 +240,7 @@ function openTechPhotoFull() {
 function summarizeItems(states) {
     if (!states) return '—';
     let ok = 0, fail = 0;
-    Object.values(states).forEach(s => {
-        if (s === 'ok') ok++;
-        else if (s === 'fail') fail++;
-    });
+    Object.values(states).forEach(s => { if (s === 'ok') ok++; else if (s === 'fail') fail++; });
     return `${ok} ✓ / ${fail} ✕`;
 }
 
@@ -373,26 +249,16 @@ function downloadTechPhoto(row) {
     const link = document.createElement('a');
     link.href = row.photo_url;
     link.download = `ТО_${row.card_number || 'unknown'}.jpg`;
-    link.target = '_blank';
-    link.click();
+    link.target = '_blank'; link.click();
 }
 
 // ================================================================
-// УДАЛЕНИЕ КАРТЫ ТО
-// ================================================================
-// ================================================================
-// УДАЛЕНИЕ КАРТЫ ТО + ВСЕХ ЕЁ ВЕРСИЙ
+// УДАЛЕНИЕ ТО + ВСЕХ ВЕРСИЙ
 // ================================================================
 async function deleteTechFromDB(row) {
-    // 1) Собираем всю цепочку версий
     const chain = await collectVersionChain(row.id);
+    if (chain.length === 0) { showToast('Запись не найдена', 'error'); return; }
 
-    if (chain.length === 0) {
-        showToast('Запись не найдена', 'error');
-        return;
-    }
-
-    // 2) Спрашиваем подтверждение
     const versionsCount = chain.length;
     const msg = versionsCount > 1
         ? `Удалить карту № ${row.card_number} и ВСЕ её версии (${versionsCount} шт.)? Фото будут удалены из хранилища.`
@@ -400,119 +266,68 @@ async function deleteTechFromDB(row) {
 
     const ok = await showConfirm({
         title: versionsCount > 1 ? 'Удаление ТО со всеми версиями' : 'Удаление ТО',
-        message: msg,
-        confirmText: 'Удалить',
-        type: 'danger'
+        message: msg, confirmText: 'Удалить', type: 'danger'
     });
     if (!ok) return;
 
-    // 3) Удаляем все фото цепочки из Storage
-    const fileNames = chain
-        .map(v => extractStorageFileName(v.photo_url, 'tech-photos'))
-        .filter(Boolean);
+    // полный снимок главной записи
+    const { data: fullRow } = await supabaseClient
+        .from('tech_inspections').select('*').eq('id', row.id).single();
 
+    const fileNames = chain.map(v => extractStorageFileName(v.photo_url, 'tech-photos')).filter(Boolean);
     if (fileNames.length > 0) {
-        try {
-            await supabaseClient.storage.from('tech-photos').remove(fileNames);
-        } catch (e) {
-            console.warn('Не удалось удалить часть фото:', e);
-        }
+        try { await supabaseClient.storage.from('tech-photos').remove(fileNames); }
+        catch (e) { console.warn('Не удалось удалить часть фото:', e); }
     }
 
-    // 4) Удаляем все записи цепочки одним запросом
     const ids = chain.map(v => v.id);
-    const { error } = await supabaseClient
-        .from('tech_inspections')
-        .delete()
-        .in('id', ids);
+    const { error } = await supabaseClient.from('tech_inspections').delete().in('id', ids);
+    if (error) { showToast('Ошибка: ' + error.message, 'error'); return; }
 
-    if (error) {
-        showToast('Ошибка: ' + error.message, 'error');
-        return;
-    }
+    const summary = versionsCount > 1
+        ? `Удалил карту ТО № ${row.card_number} и её ${versionsCount - 1} версию(й) (${row.plate_number || '—'})`
+        : `Удалил карту ТО № ${row.card_number} (${row.plate_number || '—'})`;
 
-    // 5) Аудит — пишем одну запись на всю операцию
-    await logAction('tech_delete', 'tech_inspections', row.id, {
-        card_number: row.card_number,
-        versions_deleted: versionsCount,
-        deleted_ids: ids
-    });
+    await logDelete('tech_delete', 'tech_inspections', row.id, fullRow || row, summary);
 
-    showToast(
-        versionsCount > 1
-            ? `Удалено: карта + ${versionsCount - 1} версий`
-            : 'Запись удалена',
-        'success'
-    );
-
+    showToast(versionsCount > 1 ? `Удалено: карта + ${versionsCount - 1} версий` : 'Запись удалена', 'success');
     closeTechDetailModal();
     await loadTechFromSupabase();
 }
 
-// ================================================================
-// СБОР ЦЕПОЧКИ ВЕРСИЙ (вверх по previous_id + вниз по ссылкам)
-// ================================================================
 async function collectVersionChain(startId) {
-    const chain = [];
-    const visited = new Set();
-
-    // --- Идём ВВЕРХ: от текущей к самым старым ---
+    const chain = []; const visited = new Set();
     let walkId = startId;
     while (walkId && !visited.has(walkId)) {
         visited.add(walkId);
-        const { data } = await supabaseClient
-            .from('tech_inspections')
-            .select('id, card_number, photo_url, previous_id')
-            .eq('id', walkId)
-            .single();
+        const { data } = await supabaseClient.from('tech_inspections')
+            .select('id, card_number, photo_url, previous_id').eq('id', walkId).single();
         if (!data) break;
-        chain.push(data);
-        walkId = data.previous_id;
+        chain.push(data); walkId = data.previous_id;
     }
-
-    // --- Идём ВНИЗ: ищем всех, у кого previous_id указывает на уже найденных ---
     let foundNewer = true;
     while (foundNewer) {
         foundNewer = false;
         const ids = chain.map(c => c.id);
-        const { data: newer } = await supabaseClient
-            .from('tech_inspections')
-            .select('id, card_number, photo_url, previous_id')
-            .in('previous_id', ids);
-
+        const { data: newer } = await supabaseClient.from('tech_inspections')
+            .select('id, card_number, photo_url, previous_id').in('previous_id', ids);
         if (newer && newer.length > 0) {
-            for (const n of newer) {
-                if (!visited.has(n.id)) {
-                    visited.add(n.id);
-                    chain.push(n);
-                    foundNewer = true;
-                }
-            }
+            for (const n of newer) if (!visited.has(n.id)) { visited.add(n.id); chain.push(n); foundNewer = true; }
         }
     }
-
     return chain;
 }
 
 // ================================================================
-// РЕЕСТР ТС — ЗАГРУЗКА
+// РЕЕСТР ТС
 // ================================================================
 async function loadVehiclesFromSupabase() {
     const container = document.getElementById('vehicleResults');
     if (!container) return;
-
     container.innerHTML = `<div class="eis-loading"><div class="eis-spinner"></div><span>Загрузка...</span></div>`;
 
-    const { data, error } = await supabaseClient
-        .from('vehicles')
-        .select('*')
-        .order('plate_number', { ascending: true });
-
-    if (error) {
-        container.innerHTML = `<div class="eis-no-results">Ошибка: ${escapeHtmlTd(error.message)}</div>`;
-        return;
-    }
-
+    const { data, error } = await supabaseClient.from('vehicles').select('*').order('plate_number', { ascending: true });
+    if (error) { container.innerHTML = `<div class="eis-no-results">Ошибка: ${escapeHtmlTd(error.message)}</div>`; return; }
     vehicleDatabase = data || [];
     applyVehicleFilters();
 }
@@ -529,7 +344,6 @@ function applyVehicleFilters() {
         if (cat && (v.category || '').toLowerCase() !== cat) return false;
         return true;
     });
-
     displayVehicles(vehicleFiltered);
 }
 
@@ -543,13 +357,8 @@ function displayVehicles(rows) {
     const container = document.getElementById('vehicleResults');
     const countEl = document.getElementById('vehicleResultsCount');
     if (!container) return;
-
     if (countEl) countEl.textContent = `ЗАПИСЕЙ: ${rows.length}`;
-
-    if (rows.length === 0) {
-        container.innerHTML = '<div class="eis-no-results">Записи не найдены</div>';
-        return;
-    }
+    if (rows.length === 0) { container.innerHTML = '<div class="eis-no-results">Записи не найдены</div>'; return; }
 
     let html = '<div class="eis-admin-table-wrap"><table class="eis-admin-table"><thead><tr>';
     html += '<th>Гос.номер</th><th>Марка, модель</th><th>VIN</th><th>Категория</th><th>Год</th><th>Подразделение</th><th></th>';
@@ -568,25 +377,19 @@ function displayVehicles(rows) {
             </td>
         </tr>`;
     });
-
     html += '</tbody></table></div>';
     container.innerHTML = html;
 }
 
-// ================================================================
-// МОДАЛКА ТС
-// ================================================================
 function openVehicleModal(id) {
     const modal = document.getElementById('vehicleModal');
     if (!modal) return;
-
     document.getElementById('vehError').textContent = '';
     document.getElementById('vehDeleteBtn').style.display = 'none';
 
     if (id) {
         const v = vehicleDatabase.find(x => x.id === id);
         if (!v) { showToast('ТС не найдено', 'error'); return; }
-
         document.getElementById('vehicleModalTitle').textContent = 'Редактирование ТС';
         document.getElementById('vehId').value = v.id;
         document.getElementById('vehPlate').value = v.plate_number || '';
@@ -609,7 +412,6 @@ function openVehicleModal(id) {
         ['vehPlate', 'vehMakeModel', 'vehVIN', 'vehCategory', 'vehYear', 'vehSTSSeries', 'vehSTSNumber', 'vehSTSIssuedBy', 'vehSTSIssuedDate', 'vehMassWithoutLoad', 'vehMaxMass', 'vehEnginePower', 'vehOwnerUnit']
             .forEach(fid => document.getElementById(fid).value = '');
     }
-
     modal.style.display = 'flex';
 }
 
@@ -656,27 +458,34 @@ async function saveVehicle() {
         updated_at: new Date().toISOString()
     };
 
-    btn.disabled = true;
-    btn.textContent = 'Сохранение...';
+    btn.disabled = true; btn.textContent = 'Сохранение...';
+
+    // снимок до (только для update)
+    let beforeVeh = null;
+    if (id) {
+        const { data: b } = await supabaseClient.from('vehicles').select('*').eq('id', id).single();
+        beforeVeh = b;
+    }
 
     let result;
-    if (id) {
-        result = await supabaseClient.from('vehicles').update(payload).eq('id', id).select().single();
-    } else {
+    if (id) result = await supabaseClient.from('vehicles').update(payload).eq('id', id).select().single();
+    else {
         payload.created_by = window.currentUser?.id || null;
         result = await supabaseClient.from('vehicles').insert(payload).select().single();
     }
+    btn.disabled = false; btn.textContent = 'Сохранить';
 
-    btn.disabled = false;
-    btn.textContent = 'Сохранить';
+    if (result.error) { errEl.textContent = result.error.message; showToast('Ошибка: ' + result.error.message, 'error'); return; }
 
-    if (result.error) {
-        errEl.textContent = result.error.message;
-        showToast('Ошибка: ' + result.error.message, 'error');
-        return;
+    if (id && beforeVeh) {
+        await logUpdate('vehicle_update', 'vehicles', result.data.id, beforeVeh, result.data, {
+            summary_prefix: `Изменил ТС ${plate}`
+        });
+    } else {
+        await logCreate('vehicle_create', 'vehicles', result.data.id, result.data,
+            `Добавил ТС ${plate} — ${make}`);
     }
 
-    await logAction(id ? 'vehicle_update' : 'vehicle_create', 'vehicles', result.data.id, { plate_number: plate });
     showToast(id ? 'ТС обновлено' : 'ТС добавлено в реестр', 'success');
     closeVehicleModal();
     await loadVehiclesFromSupabase();
@@ -691,31 +500,26 @@ async function deleteVehicleFromModal() {
     const ok = await showConfirm({
         title: 'Удаление ТС',
         message: `Удалить "${v.plate_number} ${v.make_model}" из реестра?`,
-        confirmText: 'Удалить',
-        type: 'danger'
+        confirmText: 'Удалить', type: 'danger'
     });
     if (!ok) return;
 
+    const { data: fullRow } = await supabaseClient.from('vehicles').select('*').eq('id', id).single();
     const { error } = await supabaseClient.from('vehicles').delete().eq('id', id);
     if (error) { showToast('Ошибка: ' + error.message, 'error'); return; }
 
-    await logAction('vehicle_delete', 'vehicles', id, { plate_number: v.plate_number });
+    await logDelete('vehicle_delete', 'vehicles', id, fullRow || v,
+        `Удалил ТС ${v.plate_number} — ${v.make_model}`);
+
     showToast('ТС удалено из реестра', 'success');
     closeVehicleModal();
     await loadVehiclesFromSupabase();
 }
 
-// ================================================================
-// УТИЛИТЫ
-// ================================================================
 function escapeHtmlTd(str) {
     if (str === null || str === undefined) return '';
-    return String(str)
-        .replace(/&/g, '&amp;')
-        .replace(/</g, '&lt;')
-        .replace(/>/g, '&gt;')
-        .replace(/"/g, '&quot;')
-        .replace(/'/g, '&#39;');
+    return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
 }
 
 function extractStorageFileName(url, bucket) {
@@ -725,48 +529,30 @@ function extractStorageFileName(url, bucket) {
     return decodeURIComponent(parts[1]);
 }
 
-// ================================================================
-// ИНИЦИАЛИЗАЦИЯ
-// ================================================================
 document.addEventListener('DOMContentLoaded', function () {
     if (!document.getElementById('techResults')) return;
 
     document.addEventListener('user-ready', () => {
         loadTechFromSupabase();
-        // Проверяем параметр tab=vehicles
         const params = new URLSearchParams(window.location.search);
-        if (params.get('tab') === 'vehicles') {
-            switchTechTab('vehicles');
-        }
+        if (params.get('tab') === 'vehicles') switchTechTab('vehicles');
     }, { once: true });
 
     ['techSearchQuery', 'techSearchDateFrom', 'techSearchDateTo', 'techSearchConclusion'].forEach(id => {
         const el = document.getElementById(id);
-        if (el) {
-            el.addEventListener('input', applyTechFilters);
-            el.addEventListener('change', applyTechFilters);
-        }
+        if (el) { el.addEventListener('input', applyTechFilters); el.addEventListener('change', applyTechFilters); }
     });
 
     ['vehicleSearchQuery', 'vehicleSearchCategory'].forEach(id => {
         const el = document.getElementById(id);
-        if (el) {
-            el.addEventListener('input', applyVehicleFilters);
-            el.addEventListener('change', applyVehicleFilters);
-        }
+        if (el) { el.addEventListener('input', applyVehicleFilters); el.addEventListener('change', applyVehicleFilters); }
     });
 
     document.addEventListener('keydown', e => {
-        if (e.key === 'Escape') {
-            closeTechDetailModal();
-            closeVehicleModal();
-        }
+        if (e.key === 'Escape') { closeTechDetailModal(); closeVehicleModal(); }
     });
 });
 
-// ================================================================
-// ЭКСПОРТ
-// ================================================================
 window.switchTechTab = switchTechTab;
 window.loadTechFromSupabase = loadTechFromSupabase;
 window.applyTechFilters = applyTechFilters;

@@ -4,9 +4,6 @@
 
 let vuDatabase = [];
 
-// ================================================================
-// ЗАГРУЗКА ВСЕХ ВУ ИЗ SUPABASE
-// ================================================================
 async function loadVUFromSupabase() {
     const resultsContainer = document.getElementById('results');
     if (!resultsContainer) return;
@@ -20,9 +17,7 @@ async function loadVUFromSupabase() {
 
     try {
         const { data, error } = await supabaseClient
-            .from('military_ids')
-            .select('*')
-            .order('created_at', { ascending: false });
+            .from('military_ids').select('*').order('created_at', { ascending: false });
 
         if (error) throw error;
 
@@ -63,25 +58,18 @@ async function loadVUFromSupabase() {
     }
 }
 
-// ================================================================
-// ОТОБРАЖЕНИЕ РЕЗУЛЬТАТОВ
-// ================================================================
 function displayResults(results) {
     const resultsContainer = document.getElementById('results');
     const resultsCount = document.getElementById('resultsCount');
-
     if (!resultsContainer) return;
 
-    if (resultsCount) {
-        resultsCount.textContent = `ЗАПИСЕЙ: ${results.length}`;
-    }
+    if (resultsCount) resultsCount.textContent = `ЗАПИСЕЙ: ${results.length}`;
 
     if (results.length === 0) {
         resultsContainer.innerHTML = '<div class="eis-no-results">Записи не найдены</div>';
         return;
     }
 
-    // Определяем — может ли текущий пользователь редактировать
     const canEdit = window.currentProfile && [
         'inspector_odps', 'inspector_reo',
         'chief_odps', 'chief_reo', 'chief_cuipp', 'chief_vai'
@@ -102,45 +90,21 @@ function displayResults(results) {
                         ${canEdit ? `
                             <div class="eis-vu-actions">
                                 <button class="eis-btn eis-btn-sm eis-btn-secondary"
-                                        onclick="openEditVUModal('${vu.id}')">
-                                    Изменить
-                                </button>
+                                        onclick="openEditVUModal('${vu.id}')">Изменить</button>
                                 <button class="eis-btn eis-btn-sm eis-btn-danger"
-                                        onclick="deleteVU('${vu.id}', '${vu.vuNumber}')">
-                                    Удалить
-                                </button>
+                                        onclick="deleteVU('${vu.id}', '${vu.vuNumber}')">Удалить</button>
                             </div>
                         ` : ''}
                     </div>
                 </div>
 
                 <div class="eis-vu-data">
-                    <div class="eis-data-field">
-                        <div class="eis-data-label">ФИО</div>
-                        <div class="eis-data-value">${vu.fio}</div>
-                    </div>
-                    <div class="eis-data-field">
-                        <div class="eis-data-label">Звание</div>
-                        <div class="eis-data-value">${vu.rank}</div>
-                    </div>
-                    <div class="eis-data-field">
-                        <div class="eis-data-label">Дата выдачи</div>
-                        <div class="eis-data-value">${formatDate(vu.issueDate)}</div>
-                    </div>
-                    <div class="eis-data-field">
-                        <div class="eis-data-label">Действительно до</div>
-                        <div class="eis-data-value">${formatDate(vu.expiryDate)}</div>
-                    </div>
-                    <div class="eis-data-field">
-                        <div class="eis-data-label">Кем выдано</div>
-                        <div class="eis-data-value">${vu.issuedBy}</div>
-                    </div>
-                    ${isArchived ? `
-                    <div class="eis-data-field">
-                        <div class="eis-data-label">Состояние</div>
-                        <div class="eis-data-value" style="color: #888;">АРХИВ</div>
-                    </div>
-                    ` : ''}
+                    <div class="eis-data-field"><div class="eis-data-label">ФИО</div><div class="eis-data-value">${vu.fio}</div></div>
+                    <div class="eis-data-field"><div class="eis-data-label">Звание</div><div class="eis-data-value">${vu.rank}</div></div>
+                    <div class="eis-data-field"><div class="eis-data-label">Дата выдачи</div><div class="eis-data-value">${formatDate(vu.issueDate)}</div></div>
+                    <div class="eis-data-field"><div class="eis-data-label">Действительно до</div><div class="eis-data-value">${formatDate(vu.expiryDate)}</div></div>
+                    <div class="eis-data-field"><div class="eis-data-label">Кем выдано</div><div class="eis-data-value">${vu.issuedBy}</div></div>
+                    ${isArchived ? `<div class="eis-data-field"><div class="eis-data-label">Состояние</div><div class="eis-data-value" style="color: #888;">АРХИВ</div></div>` : ''}
                 </div>
 
                 ${(vu.photos.vu.length > 0 || vu.photos.exam.length > 0) ? `
@@ -150,16 +114,13 @@ function displayResults(results) {
                         <img src="${vu.photos.vu[0]}" alt="ВУ">
                         <div class="eis-document-label">ВУ</div>
                         ${vu.photos.vu.length > 1 ? `<div class="eis-photo-counter">1/${vu.photos.vu.length}</div>` : ''}
-                    </div>
-                    ` : ''}
-
+                    </div>` : ''}
                     ${vu.photos.exam.length > 0 ? `
                     <div class="eis-document-thumb" onclick="openPhotoGallery(${JSON.stringify(vu.photos.exam).replace(/"/g, '&quot;')}, 0)">
                         <img src="${vu.photos.exam[0]}" alt="Бланки">
                         <div class="eis-document-label">БЛАНКИ</div>
                         ${vu.photos.exam.length > 1 ? `<div class="eis-photo-counter">1/${vu.photos.exam.length}</div>` : ''}
-                    </div>
-                    ` : ''}
+                    </div>` : ''}
                 </div>
                 ` : ''}
             </div>
@@ -169,9 +130,6 @@ function displayResults(results) {
     resultsContainer.innerHTML = html;
 }
 
-// ================================================================
-// ПОИСК
-// ================================================================
 function searchVU() {
     const searchFIO = document.getElementById('searchFIO').value.toLowerCase().trim();
     const searchVU = document.getElementById('searchVU').value.toLowerCase().trim();
@@ -182,7 +140,6 @@ function searchVU() {
 
     let filtered = vuDatabase.filter(vu => {
         if (searchStatus !== 'archived' && vu.state === 'Архив') return false;
-
         if (searchFIO && !vu.fio.toLowerCase().includes(searchFIO)) return false;
         if (searchVU && !vu.vuNumber.toLowerCase().includes(searchVU)) return false;
         if (searchIssued && !vu.issuedBy.toLowerCase().includes(searchIssued)) return false;
@@ -192,18 +149,15 @@ function searchVU() {
             const d = parseDate(vu.issueDate);
             if (from && d && d < from) return false;
         }
-
         if (searchDateTo) {
             const to = parseDate(searchDateTo);
             const d = parseDate(vu.issueDate);
             if (to && d && d > to) return false;
         }
-
         if (searchStatus) {
             const st = getVUStatus(vu.expiryDate, vu.state).status;
             if (st !== searchStatus) return false;
         }
-
         return true;
     });
 
@@ -216,22 +170,13 @@ function resetSearch() {
     displayResults(active);
 }
 
-// ================================================================
-// РЕДАКТИРОВАНИЕ / УДАЛЕНИЕ / АРХИВАЦИЯ ВУ
-// ================================================================
-
-// Открыть модалку редактирования
 function openEditVUModal(vuId) {
     const vu = vuDatabase.find(v => v.id === vuId);
-    if (!vu) {
-        showToast('Запись не найдена', 'error');
-        return;
-    }
+    if (!vu) { showToast('Запись не найдена', 'error'); return; }
 
     const modal = document.getElementById('editVUModal');
     if (!modal) return;
 
-    // Заполняем поля
     document.getElementById('evId').value = vu.id;
     document.getElementById('evNumber').value = vu.vuNumber || '';
     document.getElementById('evRank').value = vu.rank || '';
@@ -242,21 +187,16 @@ function openEditVUModal(vuId) {
     document.getElementById('evExpiryDate').value = vu.expiryDate || '';
     document.getElementById('evIssuedBy').value = vu.issuedBy || '';
     document.getElementById('evStatus').value = vu.status || 'active';
-
-    // Ошибка сброс
     document.getElementById('evError').textContent = '';
 
-    // Показать модалку
     modal.style.display = 'flex';
 }
 
-// Закрыть модалку
 function closeEditVUModal() {
     const modal = document.getElementById('editVUModal');
     if (modal) modal.style.display = 'none';
 }
 
-// Сохранить изменения
 async function saveEditVU() {
     const errEl = document.getElementById('evError');
     const btn = document.getElementById('evSaveBtn');
@@ -273,7 +213,6 @@ async function saveEditVU() {
     const issuedBy = document.getElementById('evIssuedBy').value.trim();
     const status = document.getElementById('evStatus').value;
 
-    // Валидация
     if (!number) { errEl.textContent = 'Укажите номер ВУ'; return; }
     if (!lastName) { errEl.textContent = 'Укажите фамилию'; return; }
     if (!firstName) { errEl.textContent = 'Укажите имя'; return; }
@@ -283,13 +222,8 @@ async function saveEditVU() {
     btn.disabled = true;
     btn.textContent = 'Сохранение...';
 
-    // Проверяем уникальность номера, если он изменился
     const { data: existing } = await supabaseClient
-        .from('military_ids')
-        .select('id')
-        .eq('vu_number', number)
-        .neq('id', id)
-        .maybeSingle();
+        .from('military_ids').select('id').eq('vu_number', number).neq('id', id).maybeSingle();
 
     if (existing) {
         errEl.textContent = `ВУ с номером ${number} уже существует в базе`;
@@ -298,18 +232,15 @@ async function saveEditVU() {
         return;
     }
 
+    const { data: before } = await supabaseClient
+        .from('military_ids').select('*').eq('id', id).single();
+
     const { error } = await supabaseClient
         .from('military_ids')
         .update({
-            vu_number: number,
-            rank: rank,
-            last_name: lastName,
-            first_name: firstName,
+            vu_number: number, rank, last_name: lastName, first_name: firstName,
             middle_name: middleName || null,
-            issue_date: issueDate,
-            expiry_date: expiryDate,
-            issued_by: issuedBy,
-            status: status,
+            issue_date: issueDate, expiry_date: expiryDate, issued_by: issuedBy, status,
             updated_at: new Date().toISOString()
         })
         .eq('id', id);
@@ -323,9 +254,12 @@ async function saveEditVU() {
         return;
     }
 
-    await logAction('vu_update', 'military_ids', id, {
-        vu_number: number,
-        fio: `${lastName} ${firstName} ${middleName}`.trim()
+    const { data: after } = await supabaseClient
+        .from('military_ids').select('*').eq('id', id).single();
+
+    // logUpdate сам строит человеческий summary из changes
+    await logUpdate('vu_update', 'military_ids', id, before, after, {
+        summary_prefix: `Изменил ВУ ${number} (${lastName} ${firstName})`
     });
 
     closeEditVUModal();
@@ -333,7 +267,6 @@ async function saveEditVU() {
     await loadVUFromSupabase();
 }
 
-// Быстрая смена статуса архив/актив
 async function toggleArchiveVU(vuId) {
     const vu = vuDatabase.find(v => v.id === vuId);
     if (!vu) return;
@@ -353,27 +286,23 @@ async function toggleArchiveVU(vuId) {
 
     const { error } = await supabaseClient
         .from('military_ids')
-        .update({
-            status: newStatus,
-            updated_at: new Date().toISOString()
-        })
+        .update({ status: newStatus, updated_at: new Date().toISOString() })
         .eq('id', vuId);
 
-    if (error) {
-        showToast('Ошибка: ' + error.message, 'error');
-        return;
-    }
+    if (error) { showToast('Ошибка: ' + error.message, 'error'); return; }
 
+    // logAction с готовой строкой summary
     await logAction('vu_status_change', 'military_ids', vuId, {
-        vu_number: vu.vuNumber,
-        new_status: newStatus
+        kind: 'update',
+        summary: `${isArchived ? 'Разархивировал' : 'Архивировал'} ВУ ${vu.vuNumber} (${vu.fio})`,
+        changes: [{ field: 'status', from: vu.status, to: newStatus }],
+        changed_count: 1
     });
 
     showToast(`ВУ ${vu.vuNumber} ${isArchived ? 'разархивировано' : 'архивировано'}`, 'success');
     await loadVUFromSupabase();
 }
 
-// Удалить ВУ
 async function deleteVU(vuId, vuNumber) {
     const vu = vuDatabase.find(v => v.id === vuId);
 
@@ -386,82 +315,60 @@ async function deleteVU(vuId, vuNumber) {
 
     if (!ok) return;
 
-    // Пытаемся удалить фото из Storage
+    const { data: fullRow } = await supabaseClient
+        .from('military_ids').select('*').eq('id', vuId).single();
+
     if (vu && vu.photoUrl) {
         try {
             const fileName = extractFileNameFromUrl(vu.photoUrl);
             if (fileName) {
-                await supabaseClient.storage
-                    .from('vu-photos')
-                    .remove([fileName]);
+                await supabaseClient.storage.from('vu-photos').remove([fileName]);
             }
         } catch (e) {
             console.warn('Не удалось удалить фото из Storage:', e);
-            // не критично — продолжаем
         }
     }
 
-    // Удаляем запись
     const { error } = await supabaseClient
-        .from('military_ids')
-        .delete()
-        .eq('id', vuId);
+        .from('military_ids').delete().eq('id', vuId);
 
-    if (error) {
-        showToast('Ошибка: ' + error.message, 'error');
-        return;
-    }
+    if (error) { showToast('Ошибка: ' + error.message, 'error'); return; }
 
-    await logAction('vu_delete', 'military_ids', vuId, {
-        vu_number: vuNumber
-    });
+    // 5-м аргументом СТРОКА-фраза
+    await logDelete('vu_delete', 'military_ids', vuId, fullRow || vu,
+        `Удалил ВУ ${vuNumber}${vu?.fio ? ' (' + vu.fio + ')' : ''}`);
 
     showToast(`ВУ ${vuNumber} удалён`, 'success');
     await loadVUFromSupabase();
 }
 
-// Извлечь имя файла из публичной ссылки Supabase Storage
 function extractFileNameFromUrl(url) {
     if (!url) return null;
     try {
         const parts = url.split('/vu-photos/');
         if (parts.length < 2) return null;
         return decodeURIComponent(parts[1]);
-    } catch (e) {
-        return null;
-    }
+    } catch (e) { return null; }
 }
 
-// ================================================================
-// ПОДПИСКА НА СОБЫТИЯ
-// ================================================================
 document.addEventListener('DOMContentLoaded', function () {
-    // Загрузка — только на index.html
     if (document.getElementById('results')) {
-        // Ждём готовности пользователя (guard)
         document.addEventListener('user-ready', () => {
             loadVUFromSupabase();
         }, { once: true });
 
-        // Подписка на поиск
         const searchInputs = document.querySelectorAll('#searchForm .eis-input, #searchForm .eis-select');
         searchInputs.forEach(input => {
             input.addEventListener('input', searchVU);
             input.addEventListener('change', searchVU);
         });
 
-        // ESC закрывает модалку редактирования
         document.addEventListener('keydown', (e) => {
-            if (e.key === 'Escape') {
-                closeEditVUModal();
-            }
+            if (e.key === 'Escape') closeEditVUModal();
         });
     }
 });
 
-// ================================================================
-// ЭКСПОРТ
-// ================================================================
 window.loadVUFromSupabase = loadVUFromSupabase;
 window.displayResults = displayResults;
 window.searchVU = searchVU;

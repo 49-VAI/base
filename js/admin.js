@@ -4,11 +4,11 @@
 
 let allUsers = [];
 let currentResetUserId = null;
+let currentResetUsername = '';
+let auditFullCache = [];
+let auditFilteredCache = [];
 let auditLogCache = [];
 
-// ================================================================
-// СТАТИСТИКА
-// ================================================================
 async function loadStats() {
     const tables = [
         { key: 'statUsers', table: 'profiles' },
@@ -18,48 +18,29 @@ async function loadStats() {
         { key: 'statProtocols', table: 'protocols' },
         { key: 'statAudit', table: 'audit_log' }
     ];
-
     for (const t of tables) {
         const { count, error } = await supabaseClient
-            .from(t.table)
-            .select('*', { count: 'exact', head: true });
-
+            .from(t.table).select('*', { count: 'exact', head: true });
         const el = document.getElementById(t.key);
-        if (el) {
-            el.textContent = error ? '—' : (count ?? 0);
-        }
+        if (el) el.textContent = error ? '—' : (count ?? 0);
     }
 }
 
 // ================================================================
-// ПОЛЬЗОВАТЕЛИ
+// ПОЛЬЗОВАТЕЛИ (без изменений)
 // ================================================================
 async function loadUsers() {
     const container = document.getElementById('usersContainer');
     if (!container) return;
-
-    container.innerHTML = `
-        <div class="eis-loading">
-            <div class="eis-spinner"></div>
-            <span>Загрузка пользователей...</span>
-        </div>
-    `;
+    container.innerHTML = `<div class="eis-loading"><div class="eis-spinner"></div><span>Загрузка...</span></div>`;
 
     const { data, error } = await supabaseClient
-        .from('profiles')
-        .select('*')
-        .order('created_at', { ascending: false });
+        .from('profiles').select('*').order('created_at', { ascending: false });
 
     if (error) {
-        container.innerHTML = `
-            <div class="eis-no-results">
-                <div style="font-size: 32px; margin-bottom: 12px;">⚠️</div>
-                <div>${error.message}</div>
-            </div>
-        `;
+        container.innerHTML = `<div class="eis-no-results">⚠️ ${error.message}</div>`;
         return;
     }
-
     allUsers = data || [];
     renderUsers();
 }
@@ -67,11 +48,7 @@ async function loadUsers() {
 function renderUsers() {
     const container = document.getElementById('usersContainer');
     if (!container) return;
-
-    if (allUsers.length === 0) {
-        container.innerHTML = '<div class="eis-no-results">Пользователей нет</div>';
-        return;
-    }
+    if (allUsers.length === 0) { container.innerHTML = '<div class="eis-no-results">Пользователей нет</div>'; return; }
 
     let html = '<div class="eis-admin-table-wrap"><table class="eis-admin-table"><thead><tr>';
     html += '<th>Логин</th><th>ФИО</th><th>Звание</th><th>Должность</th><th>Роль</th><th>Создан</th><th>Действия</th>';
@@ -84,67 +61,37 @@ function renderUsers() {
 
         html += `<tr>
             <td><strong>${escapeHtml(u.username)}</strong></td>
-            <td>${escapeHtml(u.full_name)}</td>
+            <td>${escapeHtml(u.full_name || '')}</td>
             <td>${escapeHtml(u.rank || '')}</td>
             <td>${escapeHtml(u.position || '—')}</td>
             <td><span class="eis-role-badge ${roleClass}">${escapeHtml(roleLabel)}</span></td>
             <td>${created}</td>
             <td class="eis-admin-actions">
-                <button class="eis-btn eis-btn-sm eis-btn-secondary" onclick="openEditUserModal('${u.id}')">
-                    Изменить
-                </button>
-                <button class="eis-btn eis-btn-sm eis-btn-secondary" onclick="openResetPasswordModal('${u.id}', '${escapeHtml(u.username)}')">
-                    Сбросить пароль
-                </button>
+                <button class="eis-btn eis-btn-sm eis-btn-secondary" onclick="openEditUserModal('${u.id}')">Изменить</button>
+                <button class="eis-btn eis-btn-sm eis-btn-secondary" onclick="openResetPasswordModal('${u.id}', '${escapeHtml(u.username)}')">Сбросить пароль</button>
             </td>
         </tr>`;
     });
-
     html += '</tbody></table></div>';
     container.innerHTML = html;
 }
 
-function renderRoleOptions(currentRole) {
-    const roles = [
-        ['cadet', 'Курсант'],
-        ['inspector_odps', 'Инспектор ОДПС'],
-        ['inspector_reo', 'Инспектор РЭО'],
-        ['chief_odps', 'Начальник ОДПС'],
-        ['chief_reo', 'Начальник РЭО'],
-        ['chief_cuipp', 'Начальник ЦУиПП'],
-        ['chief_vai', 'Начальник ВАИ']
-    ];
-
-    return roles.map(([val, label]) =>
-        `<option value="${val}" ${val === currentRole ? 'selected' : ''}>${label}</option>`
-    ).join('');
-}
-
 // ================================================================
-// РЕДАКТИРОВАНИЕ ПОЛЬЗОВАТЕЛЯ
+// РЕДАКТИРОВАНИЕ / СОЗДАНИЕ / УДАЛЕНИЕ ПОЛЬЗОВАТЕЛЯ
 // ================================================================
 function openEditUserModal(userId) {
     const user = allUsers.find(u => u.id === userId);
-    if (!user) {
-        showToast('Пользователь не найден', 'error');
-        return;
-    }
-
+    if (!user) { showToast('Пользователь не найден', 'error'); return; }
     const modal = document.getElementById('editUserModal');
     if (!modal) return;
 
-    // Заполняем поля
     document.getElementById('euId').value = user.id;
     document.getElementById('euUsername').value = user.username || '';
     document.getElementById('euFullName').value = user.full_name || '';
     document.getElementById('euRank').value = user.rank || 'Ефрейтор';
     document.getElementById('euPosition').value = user.position || '';
     document.getElementById('euRole').value = user.role || 'cadet';
-
-    // Ошибку сбрасываем
     document.getElementById('euError').textContent = '';
-
-    // Показываем
     modal.style.display = 'flex';
 }
 
@@ -165,125 +112,76 @@ async function saveEditUser() {
     const position = document.getElementById('euPosition').value.trim();
     const role = document.getElementById('euRole').value;
 
-    // Валидация
-    if (!username || username.length < 3) {
-        errEl.textContent = 'Логин должен быть не менее 3 символов';
-        return;
-    }
+    if (!username || username.length < 3) { errEl.textContent = 'Логин не менее 3 символов'; return; }
+    if (!/^[a-z0-9_]+$/i.test(username)) { errEl.textContent = 'Логин: только латиница, цифры и _'; return; }
+    if (!fullName) { errEl.textContent = 'Укажите ФИО'; return; }
 
-    if (!/^[a-z0-9_]+$/i.test(username)) {
-        errEl.textContent = 'Логин: только латиница, цифры и _';
-        return;
-    }
-
-    if (!fullName) {
-        errEl.textContent = 'Укажите ФИО';
-        return;
-    }
-
-    // Защита: не позволяем снять с себя роль chief_vai
     const targetUser = allUsers.find(u => u.id === id);
     const isMe = id === window.currentUser?.id;
-
     if (isMe && targetUser?.role === 'chief_vai' && role !== 'chief_vai') {
         errEl.textContent = 'Нельзя снять с себя роль Начальника ВАИ';
         return;
     }
 
-    // Проверка уникальности логина
     const { data: existing } = await supabaseClient
-        .from('profiles')
-        .select('id')
-        .eq('username', username)
-        .neq('id', id)
-        .maybeSingle();
+        .from('profiles').select('id').eq('username', username).neq('id', id).maybeSingle();
+    if (existing) { errEl.textContent = `Логин "${username}" уже занят`; return; }
 
-    if (existing) {
-        errEl.textContent = `Логин "${username}" уже занят`;
-        return;
-    }
+    const { data: before } = await supabaseClient.from('profiles').select('*').eq('id', id).single();
 
     btn.disabled = true;
     btn.textContent = 'Сохранение...';
 
-    // Если логин изменился — сначала меняем email через RPC
     const oldUsername = targetUser?.username || '';
     if (username !== oldUsername) {
-        const { data: rpcData, error: rpcError } = await supabaseClient.rpc('admin_update_user_login', {
-            p_user_id: id,
-            p_new_username: username
+        const { error: rpcError } = await supabaseClient.rpc('admin_update_user_login', {
+            p_user_id: id, p_new_username: username
         });
-
         if (rpcError) {
-            btn.disabled = false;
-            btn.textContent = 'Сохранить';
+            btn.disabled = false; btn.textContent = 'Сохранить';
             errEl.textContent = 'Ошибка смены логина: ' + rpcError.message;
-            showToast('Ошибка смены логина: ' + rpcError.message, 'error');
+            showToast('Ошибка: ' + rpcError.message, 'error');
             return;
         }
-
-        console.log('Логин/email изменены:', rpcData);
     }
 
-    // Обновляем остальные поля профиля
-    const { error } = await supabaseClient
-        .from('profiles')
-        .update({
-            full_name: fullName,
-            rank: rank,
-            position: position,
-            role: role,
-            updated_at: new Date().toISOString()
-        })
-        .eq('id', id);
+    const { error } = await supabaseClient.from('profiles').update({
+        full_name: fullName, rank, position, role,
+        updated_at: new Date().toISOString()
+    }).eq('id', id);
 
-    btn.disabled = false;
-    btn.textContent = 'Сохранить';
+    btn.disabled = false; btn.textContent = 'Сохранить';
 
-    if (error) {
-        errEl.textContent = 'Ошибка: ' + error.message;
-        showToast('Ошибка: ' + error.message, 'error');
-        return;
-    }
+    if (error) { errEl.textContent = 'Ошибка: ' + error.message; showToast('Ошибка: ' + error.message, 'error'); return; }
 
-    // Логируем
-    await logAction('admin_user_update', 'profiles', id, {
-        username: username,
-        role: role,
-		login_changed: username !== oldUsername
+    const { data: after } = await supabaseClient.from('profiles').select('*').eq('id', id).single();
+
+    // Если логин изменился, но поле username в snapshot не поменялось (т.к. RPC),
+    // вручную добавим в extra
+    await logUpdate('admin_user_update', 'profiles', id, before, after, {
+        target_user: fullName || username,
+        login_changed: username !== oldUsername
     });
 
-    // Если редактировали себя — перезагрузим страницу
     if (isMe) {
         showToast('Профиль обновлён. Перезагрузка...', 'success');
         setTimeout(() => window.location.reload(), 800);
         return;
     }
-
     closeEditUserModal();
     await loadUsers();
     await loadAuditLog();
     showToast(`Пользователь "${username}" обновлён`, 'success');
 }
 
-// Удаление из модалки
 async function deleteUserFromModal() {
     const id = document.getElementById('euId').value;
     const username = document.getElementById('euUsername').value.trim();
-
-    // Закрываем модалку редактирования
     closeEditUserModal();
-
-    // Небольшая задержка, чтобы модалки не накладывались
     await new Promise(r => setTimeout(r, 250));
-
-    // Вызываем существующий deleteUser
     await deleteUser(id, username);
 }
 
-// ================================================================
-// СОЗДАНИЕ ПОЛЬЗОВАТЕЛЯ
-// ================================================================
 function openCreateUserModal() {
     document.getElementById('createUserForm').reset();
     document.getElementById('cuError').textContent = '';
@@ -306,54 +204,29 @@ async function submitCreateUser() {
     const role = document.getElementById('cuRole').value;
     const position = document.getElementById('cuPosition').value.trim();
 
-    if (!username || !password || !fullName || !role) {
-        errEl.textContent = 'Заполните обязательные поля';
-        showToast('Заполните обязательные поля', 'warning');
-        return;
-    }
+    if (!username || !password || !fullName || !role) { errEl.textContent = 'Заполните обязательные поля'; return; }
+    if (username.length < 3) { errEl.textContent = 'Логин не менее 3 символов'; return; }
+    if (!/^[a-z0-9_]+$/i.test(username)) { errEl.textContent = 'Логин: только латиница, цифры и _'; return; }
+    if (password.length < 6) { errEl.textContent = 'Пароль не менее 6 символов'; return; }
 
-    if (username.length < 3) {
-        errEl.textContent = 'Логин должен быть не менее 3 символов';
-        showToast('Логин должен быть не менее 3 символов', 'warning');
-        return;
-    }
-
-    if (!/^[a-z0-9_]+$/i.test(username)) {
-        errEl.textContent = 'Логин может содержать только латиницу, цифры и _';
-        showToast('Логин: только латиница, цифры и _', 'warning');
-        return;
-    }
-
-    if (password.length < 6) {
-        errEl.textContent = 'Пароль должен быть не менее 6 символов';
-        showToast('Пароль должен быть не менее 6 символов', 'warning');
-        return;
-    }
-
-    btn.disabled = true;
-    btn.textContent = 'Создание...';
-
+    btn.disabled = true; btn.textContent = 'Создание...';
     const { data, error } = await supabaseClient.rpc('admin_create_user', {
-        p_username: username,
-        p_password: password,
-        p_full_name: fullName,
-        p_rank: rank,
-        p_position: position,
-        p_role: role
+        p_username: username, p_password: password,
+        p_full_name: fullName, p_rank: rank,
+        p_position: position, p_role: role
     });
+    btn.disabled = false; btn.textContent = 'Создать';
 
-    btn.disabled = false;
-    btn.textContent = 'Создать';
+    if (error) { errEl.textContent = error.message; showToast('Ошибка: ' + error.message, 'error'); return; }
 
-    if (error) {
-        errEl.textContent = error.message;
-        showToast('Ошибка: ' + error.message, 'error');
-        return;
+    let snapshot = { username, full_name: fullName, rank, role, position };
+    if (data?.user_id) {
+        const { data: prof } = await supabaseClient.from('profiles').select('*').eq('id', data.user_id).single();
+        if (prof) snapshot = prof;
     }
 
-    await logAction('admin_user_create', 'profiles', data?.user_id, {
-        username, role
-    });
+    await logCreate('admin_user_create', 'profiles', data?.user_id, snapshot,
+        `Создал пользователя «${username}» (${fullName}, ${ROLE_LABELS[role] || role})`);
 
     closeCreateUserModal();
     await loadUsers();
@@ -362,45 +235,30 @@ async function submitCreateUser() {
     showToast(`Пользователь "${username}" создан`, 'success');
 }
 
-// ================================================================
-// УДАЛЕНИЕ ПОЛЬЗОВАТЕЛЯ (confirm + RPC + лог)
-// ================================================================
 async function deleteUser(userId, username) {
-    if (userId === window.currentUser?.id) {
-        showToast('Нельзя удалить себя', 'warning');
-        return;
-    }
+    if (userId === window.currentUser?.id) { showToast('Нельзя удалить себя', 'warning'); return; }
 
     const ok = await showConfirm({
         title: 'Удаление пользователя',
         message: `Удалить пользователя "${username}"? Это действие необратимо.`,
-        confirmText: 'Удалить',
-        type: 'danger'
+        confirmText: 'Удалить', type: 'danger'
     });
-
     if (!ok) return;
 
-    const { data, error } = await supabaseClient.rpc('admin_delete_user', {
-        p_user_id: userId
-    });
+    const { data: before } = await supabaseClient.from('profiles').select('*').eq('id', userId).single();
+    const { error } = await supabaseClient.rpc('admin_delete_user', { p_user_id: userId });
+    if (error) { showToast('Ошибка: ' + error.message, 'error'); return; }
 
-    if (error) {
-        showToast('Ошибка: ' + error.message, 'error');
-        return;
-    }
+    await logDelete('admin_user_delete', 'profiles', userId, before,
+        `Удалил пользователя «${username}»`);
 
-    await logAction('admin_user_delete', 'profiles', userId, { username });
-    await loadUsers();
-    await loadStats();
-    await loadAuditLog();
+    await loadUsers(); await loadStats(); await loadAuditLog();
     showToast('Пользователь удалён', 'success');
 }
 
-// ================================================================
-// СБРОС ПАРОЛЯ
-// ================================================================
 function openResetPasswordModal(userId, username) {
     currentResetUserId = userId;
+    currentResetUsername = username;
     document.getElementById('rpNewPassword').value = '';
     document.getElementById('rpError').textContent = '';
     document.getElementById('resetPasswordModal').style.display = 'flex';
@@ -408,36 +266,26 @@ function openResetPasswordModal(userId, username) {
 
 function closeResetPasswordModal() {
     document.getElementById('resetPasswordModal').style.display = 'none';
-    currentResetUserId = null;
+    currentResetUserId = null; currentResetUsername = '';
 }
 
 async function submitResetPassword() {
     if (!currentResetUserId) return;
-
-    const errEl = document.getElementById('rpError');
-    errEl.textContent = '';
-
+    const errEl = document.getElementById('rpError'); errEl.textContent = '';
     const newPass = document.getElementById('rpNewPassword').value;
-    if (newPass.length < 6) {
-        errEl.textContent = 'Пароль должен быть не менее 6 символов';
-        showToast('Пароль должен быть не менее 6 символов', 'warning');
-        return;
-    }
+    if (newPass.length < 6) { errEl.textContent = 'Пароль не менее 6 символов'; return; }
 
     const { error } = await supabaseClient.rpc('admin_reset_password', {
-        p_user_id: currentResetUserId,
-        p_new_password: newPass
+        p_user_id: currentResetUserId, p_new_password: newPass
+    });
+    if (error) { errEl.textContent = error.message; showToast('Ошибка: ' + error.message, 'error'); return; }
+
+    await logAction('admin_password_reset', 'profiles', currentResetUserId, {
+        kind: 'other',
+        summary: `Сбросил пароль пользователю «${currentResetUsername}»`
     });
 
-    if (error) {
-        errEl.textContent = error.message;
-        showToast('Ошибка: ' + error.message, 'error');
-        return;
-    }
-
-    await logAction('admin_password_reset', 'profiles', currentResetUserId, {});
-    closeResetPasswordModal();
-    await loadAuditLog();
+    closeResetPasswordModal(); await loadAuditLog();
     showToast('Пароль сброшен', 'success');
 }
 
@@ -448,73 +296,132 @@ async function loadAuditLog() {
     const container = document.getElementById('auditContainer');
     if (!container) return;
 
-    auditLogCache = [];
-
-    container.innerHTML = `
-        <div class="eis-loading">
-            <div class="eis-spinner"></div>
-            <span>Загрузка...</span>
-        </div>
-    `;
+    auditFullCache = [];
+    container.innerHTML = `<div class="eis-loading"><div class="eis-spinner"></div><span>Загрузка...</span></div>`;
 
     const { data, error } = await supabaseClient
-        .from('audit_log')
-        .select('*')
-        .order('created_at', { ascending: false })
-        .limit(100);
+        .from('audit_log').select('*')
+        .order('created_at', { ascending: false }).limit(500);
 
-    if (error) {
-        container.innerHTML = `<div class="eis-no-results">Ошибка: ${error.message}</div>`;
-        return;
-    }
-
-    if (!data || data.length === 0) {
-        container.innerHTML = '<div class="eis-no-results">Записей пока нет</div>';
-        return;
-    }
+    if (error) { container.innerHTML = `<div class="eis-no-results">Ошибка: ${escapeHtml(error.message)}</div>`; return; }
+    if (!data || data.length === 0) { container.innerHTML = '<div class="eis-no-results">Записей пока нет</div>'; return; }
 
     const userIds = [...new Set(data.map(r => r.user_id).filter(Boolean))];
     let userMap = {};
-
-    if (userIds.length > 0) {
+    if (userIds.length) {
         const { data: profiles } = await supabaseClient
-            .from('profiles')
-            .select('id, username, full_name, rank')
+            .from('profiles').select('id, username, full_name, rank, role, position')
             .in('id', userIds);
-
-        (profiles || []).forEach(p => {
-            userMap[p.id] = p;
-        });
+        (profiles || []).forEach(p => { userMap[p.id] = p; });
     }
 
+    auditFullCache = data.map(row => ({ ...row, _profile: userMap[row.user_id] || null }));
+    fillAuditFilters();
+    applyAuditFilters();
+}
+
+function fillAuditFilters() {
+    const userSel = document.getElementById('auditFilterUser');
+    const actionSel = document.getElementById('auditFilterAction');
+    const entitySel = document.getElementById('auditFilterEntity');
+    if (!userSel || !actionSel || !entitySel) return;
+
+    const usersMap = {};
+    auditFullCache.forEach(r => {
+        if (r.user_id) {
+            const p = r._profile || {};
+            usersMap[r.user_id] = p.full_name || p.username || r.user_id.slice(0, 8);
+        }
+    });
+    userSel.innerHTML = '<option value="">Все пользователи</option>' +
+        Object.entries(usersMap).sort((a, b) => a[1].localeCompare(b[1]))
+            .map(([id, name]) => `<option value="${id}">${escapeHtml(name)}</option>`).join('');
+
+    const actions = [...new Set(auditFullCache.map(r => r.action).filter(Boolean))].sort();
+    actionSel.innerHTML = '<option value="">Все действия</option>' +
+        actions.map(a => `<option value="${a}">${escapeHtml(humanizeAction(a))}</option>`).join('');
+
+    const entities = [...new Set(auditFullCache.map(r => r.entity_type).filter(Boolean))].sort();
+    entitySel.innerHTML = '<option value="">Все объекты</option>' +
+        entities.map(e => `<option value="${e}">${escapeHtml(e)}</option>`).join('');
+}
+
+function resetAuditFilters() {
+    document.getElementById('auditFilterUser').value = '';
+    document.getElementById('auditFilterAction').value = '';
+    document.getElementById('auditFilterEntity').value = '';
+    document.getElementById('auditFilterQuery').value = '';
+    applyAuditFilters();
+}
+
+function applyAuditFilters() {
+    const userId = document.getElementById('auditFilterUser')?.value || '';
+    const action = document.getElementById('auditFilterAction')?.value || '';
+    const entity = document.getElementById('auditFilterEntity')?.value || '';
+    const q = (document.getElementById('auditFilterQuery')?.value || '').toLowerCase().trim();
+
+    auditFilteredCache = auditFullCache.filter(r => {
+        if (userId && r.user_id !== userId) return false;
+        if (action && r.action !== action) return false;
+        if (entity && r.entity_type !== entity) return false;
+        if (q) {
+            const d = r.details || {};
+            const haystack = [
+                d.summary, d.vu_number, d.reg_number, d.card_number, d.username,
+                d.plate_number, d.target_username, d.target_fio, d.target_user,
+                r._profile?.full_name, r._profile?.username
+            ].filter(Boolean).join(' ').toLowerCase();
+            if (!haystack.includes(q)) return false;
+        }
+        return true;
+    });
+
+    renderAuditTable();
+}
+
+function renderAuditTable() {
+    const container = document.getElementById('auditContainer');
+    if (!container) return;
+
+    if (auditFilteredCache.length === 0) {
+        container.innerHTML = '<div class="eis-no-results">По фильтрам ничего не найдено</div>';
+        return;
+    }
+
+    auditLogCache = auditFilteredCache;
+
     let html = '<div class="eis-admin-table-wrap"><table class="eis-admin-table"><thead><tr>';
-    html += '<th>Время</th><th>Пользователь</th><th>Действие</th><th>Объект</th><th>Детали</th><th></th>';
+    html += '<th>Время</th><th>Кто</th><th>Что сделал</th><th></th>';
     html += '</tr></thead><tbody>';
 
-    data.forEach((row, index) => {
-        const u = userMap[row.user_id];
-        const userName = u ? `${u.rank || ''} ${u.full_name || u.username}`.trim() : '—';
-        const time = row.created_at ? new Date(row.created_at).toLocaleString('ru-RU') : '—';
-        const action = humanizeAction(row.action);
-        const details = row.details ? JSON.stringify(row.details) : '';
+    auditFilteredCache.forEach((row, index) => {
+        const p = row._profile || {};
+        const userName = p.full_name
+            ? `${p.rank ? p.rank + ' ' : ''}${p.full_name}`
+            : (p.username || '—');
 
-        // Сохраняем запись в кэш по индексу
-        auditLogCache[index] = {
-            ...row,
-            _userName: userName,
-            _actionHuman: action
-        };
+        const time = row.created_at
+            ? new Date(row.created_at).toLocaleString('ru-RU', {
+                day: '2-digit', month: '2-digit', year: '2-digit',
+                hour: '2-digit', minute: '2-digit'
+            })
+            : '—';
+
+        const summary = row.details?.summary || '—';
+        const action = humanizeAction(row.action);
 
         html += `<tr>
             <td class="eis-audit-time">${time}</td>
-            <td>${escapeHtml(userName)}</td>
-            <td><span class="eis-audit-action">${escapeHtml(action)}</span></td>
-            <td>${escapeHtml(row.entity_type || '—')}${row.entity_id ? ' #' + escapeHtml(String(row.entity_id).slice(0, 8)) : ''}</td>
-            <td class="eis-audit-details">${escapeHtml(details)}</td>
             <td>
-                <button class="eis-btn eis-btn-sm eis-btn-secondary" onclick="openAuditDetailModal(${index})">
-                    Подробнее
-                </button>
+                <div style="font-weight:600;font-size:13px;">${escapeHtml(userName)}</div>
+                <div style="font-size:11px;color:#888;margin-top:2px;">${escapeHtml(p.position || '')}</div>
+            </td>
+            <td>
+                <div style="font-size:11px;color:#666;text-transform:uppercase;letter-spacing:0.4px;margin-bottom:2px;">${escapeHtml(action)}</div>
+                <div style="font-size:13px;line-height:1.4;">${escapeHtml(summary)}</div>
+            </td>
+            <td>
+                <button class="eis-btn eis-btn-sm eis-btn-secondary" onclick="openAuditDetailModal(${index})">Детали</button>
             </td>
         </tr>`;
     });
@@ -525,94 +432,157 @@ async function loadAuditLog() {
 
 function humanizeAction(action) {
     const map = {
-        'vu_create': '📄 Создание ВУ',
-        'vu_update': '✏️ Редактирование ВУ',
-        'vu_status_change': '📦 Смена статуса ВУ',
-        'vu_delete': '🗑 Удаление ВУ',
-
-        'exam_create': '🎓 Создание экзамена',
-
-        'tech_create': '📄 Создание ТО',
-        'tech_update': '✏️ Редактирование ТО',
-        'tech_delete': '🗑 Удаление ТО',
-
-        'vehicle_create': '🚗 Добавление ТС в реестр',
-        'vehicle_update': '✏️ Редактирование ТС',
-        'vehicle_delete': '🗑 Удаление ТС из реестра',
-
-        'protocol_create': '📋 Создание протокола',
-        'protocol_update': '✏️ Редактирование протокола',
-        'protocol_delete': '🗑 Удаление протокола',
-        'admin_user_create': '👤 Создание пользователя',
-        'admin_user_update': '✏️ Редактирование пользователя',
-        'admin_user_delete': '🗑 Удаление пользователя',
-        'admin_role_change': '🔄 Смена роли',
-        'admin_password_reset': '🔐 Сброс пароля'
+        'vu_create': 'Создание ВУ',
+        'vu_update': 'Редактирование ВУ',
+        'vu_status_change': 'Смена статуса ВУ',
+        'vu_delete': 'Удаление ВУ',
+        'exam_create': 'Создание экзамена',
+        'tech_create': 'Создание ТО',
+        'tech_update': 'Редактирование ТО',
+        'tech_delete': 'Удаление ТО',
+        'vehicle_create': 'Добавление ТС',
+        'vehicle_update': 'Редактирование ТС',
+        'vehicle_delete': 'Удаление ТС',
+        'protocol_create': 'Создание протокола',
+        'protocol_update': 'Редактирование протокола',
+        'protocol_delete': 'Удаление протокола',
+        'staff_update': 'Изменение личного дела',
+        'staff_manage': 'Управление составом',
+        'admin_user_create': 'Создание пользователя',
+        'admin_user_update': 'Редактирование пользователя',
+        'admin_user_delete': 'Удаление пользователя',
+        'admin_role_change': 'Смена роли',
+        'admin_password_reset': 'Сброс пароля'
     };
     return map[action] || action;
 }
 
 // ================================================================
-// МОДАЛКА ПОДРОБНОЙ ИНФОРМАЦИИ О ЗАПИСИ АУДИТА
+// МОДАЛКА ДЕТАЛЕЙ
 // ================================================================
 function openAuditDetailModal(index) {
     const row = auditLogCache[index];
-    if (!row) {
-        showToast('Запись не найдена', 'error');
-        return;
-    }
-
+    if (!row) { showToast('Запись не найдена', 'error'); return; }
     const modal = document.getElementById('auditDetailModal');
     if (!modal) return;
 
-    const time = row.created_at
+    const d = row.details || {};
+    const p = row._profile || {};
+
+    document.getElementById('adAction').textContent = humanizeAction(row.action);
+    document.getElementById('adActionCode').textContent = row.action || '—';
+
+    const userName = p.full_name
+        ? `${p.rank ? p.rank + ' ' : ''}${p.full_name}`
+        : (p.username || '—');
+    const timeFull = row.created_at
         ? new Date(row.created_at).toLocaleString('ru-RU', {
             day: '2-digit', month: '2-digit', year: 'numeric',
             hour: '2-digit', minute: '2-digit', second: '2-digit'
         })
         : '—';
 
-    document.getElementById('adAction').textContent = row._actionHuman || row.action;
-    document.getElementById('adActionCode').textContent = row.action || '—';
+    // Контекст
+    document.getElementById('adFields').innerHTML = `
+        <div class="eis-audit-detail-row">
+            <div class="eis-audit-detail-label">Что сделал</div>
+            <div class="eis-audit-detail-value" style="font-size:14px;">${escapeHtml(d.summary || '—')}</div>
+        </div>
+        <div class="eis-audit-detail-row">
+            <div class="eis-audit-detail-label">Кто</div>
+            <div class="eis-audit-detail-value">${escapeHtml(userName)}${p.position ? ' — ' + escapeHtml(p.position) : ''}</div>
+        </div>
+        <div class="eis-audit-detail-row">
+            <div class="eis-audit-detail-label">Когда</div>
+            <div class="eis-audit-detail-value">${escapeHtml(timeFull)}</div>
+        </div>
+    `;
 
-    const fields = [
-        ['ID записи', row.id || '—'],
-        ['Время', time],
-        ['Пользователь', row._userName || '—'],
-        ['UUID пользователя', row.user_id || '—'],
-        ['Тип объекта', row.entity_type || '—'],
-        ['ID объекта', row.entity_id || '—']
-    ];
-
-    let fieldsHtml = '';
-    fields.forEach(([label, value]) => {
-        fieldsHtml += `
-            <div class="eis-audit-detail-row">
-                <div class="eis-audit-detail-label">${escapeHtml(label)}</div>
-                <div class="eis-audit-detail-value">${escapeHtml(String(value))}</div>
-            </div>
-        `;
-    });
-    document.getElementById('adFields').innerHTML = fieldsHtml;
-
-    const detailsEl = document.getElementById('adDetails');
-    if (row.details && Object.keys(row.details).length > 0) {
-        detailsEl.innerHTML = `<pre>${escapeHtml(JSON.stringify(row.details, null, 2))}</pre>`;
+    // Изменения — таблица «было → стало» на русском
+    const changesSection = document.getElementById('adChangesSection');
+    if (d.changes && Array.isArray(d.changes) && d.changes.length > 0) {
+        document.getElementById('adChangesTitle').textContent = 'Что изменилось';
+        document.getElementById('adChangesCount').textContent = `${d.changes.length} пол.`;
+        document.getElementById('adChanges').innerHTML = buildChangesTable(d.changes);
+        changesSection.style.display = '';
     } else {
-        detailsEl.innerHTML = '<div style="color: #888; font-style: italic;">Нет дополнительных данных</div>';
+        changesSection.style.display = 'none';
     }
 
-    const copyBtn = document.getElementById('adCopyBtn');
-    copyBtn.onclick = () => {
-        const text = JSON.stringify(row, null, 2);
-        navigator.clipboard.writeText(text).then(() => {
-            showToast('JSON скопирован в буфер обмена', 'success');
-        }).catch(() => {
-            showToast('Не удалось скопировать', 'error');
-        });
+    // Снимок созданной записи
+    const createdSection = document.getElementById('adCreatedSection');
+    if (d.snapshot && d.kind === 'create') {
+        document.getElementById('adCreated').innerHTML = buildSnapshotTable(d.snapshot);
+        createdSection.style.display = '';
+    } else {
+        createdSection.style.display = 'none';
+    }
+
+    // Снимок удалённой записи
+    const deletedSection = document.getElementById('adDeletedSection');
+    if (d.snapshot && d.kind === 'delete') {
+        document.getElementById('adDeleted').innerHTML = buildSnapshotTable(d.snapshot);
+        deletedSection.style.display = '';
+    } else {
+        deletedSection.style.display = 'none';
+    }
+
+    // Сырой JSON — скрыт по умолчанию
+    document.getElementById('adDetails').innerHTML =
+        `<pre>${escapeHtml(JSON.stringify(row.details || {}, null, 2))}</pre>`;
+    document.getElementById('adDetails').style.display = 'none';
+    document.getElementById('adRawToggle').textContent = '▶';
+    document.getElementById('adExtraSection').style.display = 'none';
+
+    document.getElementById('adCopyBtn').onclick = () => {
+        navigator.clipboard.writeText(JSON.stringify(row, null, 2)).then(
+            () => showToast('Скопировано', 'success'),
+            () => showToast('Не удалось скопировать', 'error')
+        );
     };
 
     modal.style.display = 'flex';
+}
+
+function buildChangesTable(changes) {
+    let html = '<table class="eis-audit-changes-table"><thead><tr>';
+    html += '<th>Поле</th><th>Было</th><th>Стало</th></tr></thead><tbody>';
+
+    changes.forEach(c => {
+        html += `<tr>
+            <td class="eis-audit-field-name">${escapeHtml(fieldLabel(c.field))}</td>
+            <td><span class="eis-audit-old">${escapeHtml(humanValue(c.field, c.from))}</span></td>
+            <td><span class="eis-audit-new">${escapeHtml(humanValue(c.field, c.to))}</span></td>
+        </tr>`;
+    });
+    html += '</tbody></table>';
+    return html;
+}
+
+function buildSnapshotTable(obj) {
+    const entries = Object.entries(obj).filter(([k, v]) => v !== null && v !== '');
+    if (entries.length === 0) return '<div style="color:#888;font-style:italic;">Нет данных</div>';
+
+    let html = '<table class="eis-audit-changes-table"><thead><tr>';
+    html += '<th style="width:40%;">Поле</th><th>Значение</th></tr></thead><tbody>';
+
+    entries.forEach(([k, v]) => {
+        html += `<tr>
+            <td class="eis-audit-field-name">${escapeHtml(fieldLabel(k))}</td>
+            <td>${escapeHtml(humanValue(k, v))}</td>
+        </tr>`;
+    });
+    html += '</tbody></table>';
+    return html;
+}
+
+function toggleRawAuditJson() {
+    const el = document.getElementById('adDetails');
+    const tg = document.getElementById('adRawToggle');
+    if (!el) return;
+    const isHidden = el.style.display === 'none';
+    el.style.display = isHidden ? 'block' : 'none';
+    if (tg) tg.textContent = isHidden ? '▼' : '▶';
 }
 
 function closeAuditDetailModal() {
@@ -620,17 +590,11 @@ function closeAuditDetailModal() {
     if (modal) modal.style.display = 'none';
 }
 
-// ================================================================
-// УТИЛИТЫ
-// ================================================================
 function escapeHtml(str) {
     if (str === null || str === undefined) return '';
     return String(str)
-        .replace(/&/g, '&amp;')
-        .replace(/</g, '&lt;')
-        .replace(/>/g, '&gt;')
-        .replace(/"/g, '&quot;')
-        .replace(/'/g, '&#39;');
+        .replace(/&/g, '&amp;').replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
 }
 
 // ================================================================
@@ -647,28 +611,23 @@ document.addEventListener('DOMContentLoaded', function () {
 
     document.querySelectorAll('.eis-modal-form').forEach(modal => {
         modal.addEventListener('click', (e) => {
-            if (e.target === modal) {
-                modal.style.display = 'none';
-            }
+            if (e.target === modal) modal.style.display = 'none';
         });
     });
 
     document.addEventListener('keydown', (e) => {
         if (e.key === 'Escape') {
-            closeCreateUserModal();
-            closeResetPasswordModal();
-            closeAuditDetailModal();
-            closeEditUserModal();
+            closeCreateUserModal(); closeResetPasswordModal();
+            closeAuditDetailModal(); closeEditUserModal();
         }
     });
 });
 
-// ================================================================
-// ЭКСПОРТ
-// ================================================================
 window.loadStats = loadStats;
 window.loadUsers = loadUsers;
 window.loadAuditLog = loadAuditLog;
+window.applyAuditFilters = applyAuditFilters;
+window.resetAuditFilters = resetAuditFilters;
 window.openCreateUserModal = openCreateUserModal;
 window.closeCreateUserModal = closeCreateUserModal;
 window.submitCreateUser = submitCreateUser;
@@ -676,13 +635,10 @@ window.openResetPasswordModal = openResetPasswordModal;
 window.closeResetPasswordModal = closeResetPasswordModal;
 window.submitResetPassword = submitResetPassword;
 window.deleteUser = deleteUser;
-
-// Редактирование пользователя
 window.openEditUserModal = openEditUserModal;
 window.closeEditUserModal = closeEditUserModal;
 window.saveEditUser = saveEditUser;
 window.deleteUserFromModal = deleteUserFromModal;
-
-// Audit log — детали
 window.openAuditDetailModal = openAuditDetailModal;
 window.closeAuditDetailModal = closeAuditDetailModal;
+window.toggleRawAuditJson = toggleRawAuditJson;

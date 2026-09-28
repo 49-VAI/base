@@ -1,30 +1,19 @@
 // ================================================================
 // БАЗА НАРУШЕНИЙ — ЕИС ВАИ
-// Поиск по кнопке "Найти" + просмотр, редактирование, удаление
 // ================================================================
 
 let finesDatabase = [];
 let finesFiltered = [];
 let currentFineRow = null;
 
-// ================================================================
-// ЗАГРУЗКА ИЗ SUPABASE (только в память)
-// ================================================================
 async function loadFinesFromSupabase() {
     const container = document.getElementById('finesResults');
     if (!container) return;
 
-    container.innerHTML = `
-        <div class="eis-loading">
-            <div class="eis-spinner"></div>
-            <span>Загрузка данных...</span>
-        </div>
-    `;
+    container.innerHTML = `<div class="eis-loading"><div class="eis-spinner"></div><span>Загрузка данных...</span></div>`;
 
     const { data, error } = await supabaseClient
-        .from('protocols')
-        .select('*')
-        .order('created_at', { ascending: false });
+        .from('protocols').select('*').order('created_at', { ascending: false });
 
     if (error) {
         container.innerHTML = `<div class="eis-no-results">Ошибка: ${escapeHtmlF(error.message)}</div>`;
@@ -36,9 +25,6 @@ async function loadFinesFromSupabase() {
     showFinesHint();
 }
 
-// ================================================================
-// ЗАГЛУШКА "ВВЕДИТЕ ДАННЫЕ"
-// ================================================================
 function showFinesHint() {
     const container = document.getElementById('finesResults');
     const countEl = document.getElementById('finesResultsCount');
@@ -58,9 +44,6 @@ function showFinesHint() {
     `;
 }
 
-// ================================================================
-// СВОДКА
-// ================================================================
 function updateFinesStats() {
     const total = finesDatabase.length;
 
@@ -83,9 +66,6 @@ function updateFinesStats() {
     setTxt('statMonthProtocols', monthly);
 }
 
-// ================================================================
-// ПРОВЕРКА КРИТЕРИЕВ
-// ================================================================
 function hasAnySearchCriteria() {
     const ids = [
         'fineSearchFIO', 'fineSearchLicense', 'fineSearchBirthDate',
@@ -98,9 +78,6 @@ function hasAnySearchCriteria() {
     });
 }
 
-// ================================================================
-// ЗАПУСК ПОИСКА ПО КНОПКЕ
-// ================================================================
 function runFinesSearch() {
     if (!hasAnySearchCriteria()) {
         showToast('Заполните хотя бы одно поле для поиска', 'warning');
@@ -111,24 +88,14 @@ function runFinesSearch() {
     const btn = document.getElementById('fineSearchBtn');
     const origHtml = btn ? btn.innerHTML : '';
 
-    if (btn) {
-        btn.disabled = true;
-        btn.innerHTML = 'Поиск...';
-    }
+    if (btn) { btn.disabled = true; btn.innerHTML = 'Поиск...'; }
 
-    // Небольшая задержка, чтобы пользователь увидел смену текста
     setTimeout(() => {
         applyFinesFilters();
-        if (btn) {
-            btn.disabled = false;
-            btn.innerHTML = origHtml;
-        }
+        if (btn) { btn.disabled = false; btn.innerHTML = origHtml; }
     }, 200);
 }
 
-// ================================================================
-// ФИЛЬТРАЦИЯ
-// ================================================================
 function applyFinesFilters() {
     if (!hasAnySearchCriteria()) {
         finesFiltered = [];
@@ -151,21 +118,12 @@ function applyFinesFilters() {
                 .filter(Boolean).join(' ').toLowerCase();
             if (!hay.includes(fio)) return false;
         }
-        if (license) {
-            if (!(row.driver_license || '').toLowerCase().includes(license)) return false;
-        }
-        if (birthDate) {
-            if ((row.violator_birth_date || '') !== birthDate) return false;
-        }
-        if (plate) {
-            if (!(row.vehicle_plate || '').toLowerCase().includes(plate)) return false;
-        }
-        if (regNumber) {
-            if (!(row.reg_number || '').toLowerCase().includes(regNumber)) return false;
-        }
-        if (article) {
-            if (!(row.article_number || '').includes(article)) return false;
-        }
+        if (license && !(row.driver_license || '').toLowerCase().includes(license)) return false;
+        if (birthDate && (row.violator_birth_date || '') !== birthDate) return false;
+        if (plate && !(row.vehicle_plate || '').toLowerCase().includes(plate)) return false;
+        if (regNumber && !(row.reg_number || '').toLowerCase().includes(regNumber)) return false;
+        if (article && !(row.article_number || '').includes(article)) return false;
+
         if (dateFrom || dateTo) {
             const pd = parseDate(row.protocol_date);
             if (pd) {
@@ -185,9 +143,6 @@ function applyFinesFilters() {
     displayFines(finesFiltered);
 }
 
-// ================================================================
-// СБРОС
-// ================================================================
 function resetFinesSearch() {
     const f = document.getElementById('finesSearchForm');
     if (f) f.reset();
@@ -196,9 +151,6 @@ function resetFinesSearch() {
     showToast('Форма поиска очищена', 'info');
 }
 
-// ================================================================
-// ТАБЛИЦА
-// ================================================================
 function displayFines(rows) {
     const container = document.getElementById('finesResults');
     const countEl = document.getElementById('finesResultsCount');
@@ -225,7 +177,7 @@ function displayFines(rows) {
         const fio = [row.violator_last_name, row.violator_first_name, row.violator_middle_name]
             .filter(Boolean).join(' ') || '—';
         const article = [
-            'ч. ' +row.article_part,
+            'ч. ' + row.article_part,
             row.article_number ? 'ст. ' + row.article_number : ''
         ].filter(Boolean).join(' ') || '—';
         const ts = [row.vehicle_make, row.vehicle_plate].filter(Boolean).join(' · ') || '—';
@@ -250,35 +202,23 @@ function truncate(str, max) {
     return str.length > max ? str.slice(0, max) + '…' : str;
 }
 
-// ================================================================
-// СБОР СПИСКА ФОТО ИЗ ВСЕХ ИСТОЧНИКОВ (с дедупликацией)
-// ================================================================
 function getFinePhotoList(row) {
     if (!row) return [];
-
     const list = [];
 
-    // 1) JSONB photos — основной источник (там обе страницы)
     let p = row.photos;
-    if (typeof p === 'string') {
-        try { p = JSON.parse(p); } catch (_) { p = null; }
-    }
+    if (typeof p === 'string') { try { p = JSON.parse(p); } catch (_) { p = null; } }
     if (p) {
         if (Array.isArray(p.page1)) list.push(...p.page1);
         if (Array.isArray(p.page2)) list.push(...p.page2);
     }
 
-    // 2) Отдельные колонки — добавляем как fallback
     if (row.photo_url) list.push(row.photo_url);
     if (row.photo_url_2) list.push(row.photo_url_2);
 
-    // 3) Убираем дубли и пустые
     return [...new Set(list.filter(Boolean))];
 }
 
-// ================================================================
-// МОДАЛКА ДЕТАЛЕЙ
-// ================================================================
 function openFineDetail(id) {
     const row = finesDatabase.find(r => r.id === id);
     if (!row) { showToast('Запись не найдена', 'error'); return; }
@@ -288,27 +228,23 @@ function openFineDetail(id) {
     const fio = [row.violator_last_name, row.violator_first_name, row.violator_middle_name]
         .filter(Boolean).join(' ') || '—';
     const article = [
-        'ч. ' +row.article_part,
+        'ч. ' + row.article_part,
         row.article_number ? 'ст. ' + row.article_number : ''
     ].filter(Boolean).join(' ') || '—';
 
     document.getElementById('fdTitle').textContent = 'Протокол — ' + fio;
     document.getElementById('fdRegNumber').textContent =
-        '№ ' + (row.reg_number || '—') +
-        ' от ' + (row.protocol_date ? formatDate(row.protocol_date) : '—');
+        '№ ' + (row.reg_number || '—') + ' от ' + (row.protocol_date ? formatDate(row.protocol_date) : '—');
 
-    // === Фото ===
     const photosWrap = document.getElementById('fdPhotosWrap');
     const photoList = getFinePhotoList(row);
 
     if (photosWrap) {
         if (photoList.length === 0) {
             photosWrap.className = 'eis-fine-photos single';
-            photosWrap.innerHTML = `
-                <div class="eis-fine-photo" style="cursor:default;min-height:200px;">
-                    <div style="color:#888;font-size:13px;">Фото протокола отсутствует</div>
-                </div>
-            `;
+            photosWrap.innerHTML = `<div class="eis-fine-photo" style="cursor:default;min-height:200px;">
+                <div style="color:#888;font-size:13px;">Фото протокола отсутствует</div>
+            </div>`;
         } else {
             photosWrap.className = 'eis-fine-photos' + (photoList.length === 1 ? ' single' : '');
             photosWrap.innerHTML = photoList.map((url, idx) => `
@@ -321,7 +257,6 @@ function openFineDetail(id) {
         }
     }
 
-    // === Поля ===
     const fields = [
         ['Рег. номер', row.reg_number],
         ['Дата составления', row.protocol_date ? formatDate(row.protocol_date) : ''],
@@ -370,7 +305,6 @@ function openFineDetail(id) {
     const fieldsEl = document.getElementById('fdFields');
     if (fieldsEl) fieldsEl.innerHTML = fieldsHtml;
 
-    // === Кнопки ===
     const dlBtn = document.getElementById('fdDownloadBtn');
     if (dlBtn) {
         const n = photoList.length;
@@ -398,9 +332,6 @@ function closeFineDetail() {
     currentFineRow = null;
 }
 
-// ================================================================
-// ОТКРЫТИЕ ГАЛЕРЕИ (с указанием индекса)
-// ================================================================
 function openFinePhotoFull(index) {
     if (!currentFineRow) return;
     const list = getFinePhotoList(currentFineRow);
@@ -408,15 +339,9 @@ function openFinePhotoFull(index) {
     openPhotoGallery(list, index || 0);
 }
 
-// ================================================================
-// СКАЧИВАНИЕ ВСЕХ ФОТО
-// ================================================================
 function downloadFine(row) {
     const list = getFinePhotoList(row);
-    if (list.length === 0) {
-        showToast('Нет файлов для скачивания', 'warning');
-        return;
-    }
+    if (list.length === 0) { showToast('Нет файлов для скачивания', 'warning'); return; }
 
     const base = row.reg_number || 'protocol';
 
@@ -434,16 +359,11 @@ function downloadFine(row) {
     });
 
     showToast(
-        list.length > 1
-            ? `Скачивание ${list.length} файлов...`
-            : 'Скачивание файла...',
+        list.length > 1 ? `Скачивание ${list.length} файлов...` : 'Скачивание файла...',
         'info'
     );
 }
 
-// ================================================================
-// РЕДАКТИРОВАНИЕ ПРОТОКОЛА
-// ================================================================
 function openEditFineModal() {
     if (!currentFineRow) { showToast('Запись не найдена', 'error'); return; }
     const row = currentFineRow;
@@ -494,7 +414,6 @@ function openEditFineModal() {
     const errEl = document.getElementById('efError');
     if (errEl) errEl.textContent = '';
 
-    // Скрываем детальную модалку, показываем редактирование
     closeFineDetail();
     document.getElementById('editFineModal').style.display = 'flex';
 }
@@ -523,18 +442,16 @@ async function saveEditFine() {
     if (!violation) { if (errEl) errEl.textContent = 'Укажите существо нарушения'; return; }
     if (!articleNum) { if (errEl) errEl.textContent = 'Укажите номер статьи КоАП РФ'; return; }
 
-    // Проверка уникальности номера
     const { data: existing } = await supabaseClient
-        .from('protocols')
-        .select('id')
-        .eq('reg_number', regNumber)
-        .neq('id', id)
-        .maybeSingle();
+        .from('protocols').select('id').eq('reg_number', regNumber).neq('id', id).maybeSingle();
 
     if (existing) {
         if (errEl) errEl.textContent = `Протокол ${regNumber} уже существует в базе`;
         return;
     }
+
+    const { data: before } = await supabaseClient
+        .from('protocols').select('*').eq('id', id).single();
 
     const getVal = (fid) => {
         const el = document.getElementById(fid);
@@ -583,10 +500,7 @@ async function saveEditFine() {
 
     if (btn) { btn.disabled = true; btn.textContent = 'Сохранение...'; }
 
-    const { error } = await supabaseClient
-        .from('protocols')
-        .update(payload)
-        .eq('id', id);
+    const { error } = await supabaseClient.from('protocols').update(payload).eq('id', id);
 
     if (btn) { btn.disabled = false; btn.textContent = 'Сохранить'; }
 
@@ -596,29 +510,23 @@ async function saveEditFine() {
         return;
     }
 
-    await logAction('protocol_update', 'protocols', id, {
-        reg_number: regNumber,
-        fio: `${lastName} ${firstName}`
+    const { data: after } = await supabaseClient
+        .from('protocols').select('*').eq('id', id).single();
+
+    await logUpdate('protocol_update', 'protocols', id, before, after, {
+        summary_prefix: `Изменил протокол ${regNumber} (${lastName} ${firstName})`
     });
 
-    // Обновляем кэш
     const idx = finesDatabase.findIndex(r => r.id === id);
     if (idx !== -1) finesDatabase[idx] = { ...finesDatabase[idx], ...payload };
 
     closeEditFineModal();
     showToast(`Протокол ${regNumber} обновлён`, 'success');
 
-    // Перерисовываем результаты
-    if (finesFiltered.length > 0) {
-        applyFinesFilters();
-    } else {
-        displayFines(finesDatabase);
-    }
+    if (finesFiltered.length > 0) applyFinesFilters();
+    else displayFines(finesDatabase);
 }
 
-// ================================================================
-// УДАЛЕНИЕ ПРОТОКОЛА
-// ================================================================
 async function deleteFine() {
     if (!currentFineRow) return;
     const row = currentFineRow;
@@ -636,7 +544,6 @@ async function deleteFine() {
     if (btn) { btn.disabled = true; btn.textContent = 'Удаление...'; }
 
     try {
-        // 1. Собираем имена файлов из photos
         const photos = row.photos || {};
         const fileNames = [];
 
@@ -661,43 +568,28 @@ async function deleteFine() {
             if (parts.length >= 2) fileNames.push(decodeURIComponent(parts[1]));
         }
 
-        // 2. Удаляем файлы из Storage (игнорируем ошибки)
         if (fileNames.length > 0) {
             try {
                 await supabaseClient.storage.from('protocol-photos').remove([...new Set(fileNames)]);
-            } catch (e) {
-                console.warn('Не удалось удалить часть файлов:', e);
-            }
+            } catch (e) { console.warn('Не удалось удалить часть файлов:', e); }
         }
 
-        // 3. Удаляем запись
-        const { error } = await supabaseClient
-            .from('protocols')
-            .delete()
-            .eq('id', row.id);
-
+        const { error } = await supabaseClient.from('protocols').delete().eq('id', row.id);
         if (error) throw new Error(error.message);
 
-        // 4. Логируем
-        await logAction('protocol_delete', 'protocols', row.id, {
-            reg_number: row.reg_number,
-            fio: `${row.violator_last_name || ''} ${row.violator_first_name || ''}`.trim()
-        });
+        // 5-м аргументом СТРОКА
+        await logDelete('protocol_delete', 'protocols', row.id, row,
+            `Удалил протокол ${row.reg_number} (${row.violator_last_name || ''} ${row.violator_first_name || ''})`.trim());
 
-        // 5. Убираем из кэша
         finesDatabase = finesDatabase.filter(r => r.id !== row.id);
         finesFiltered = finesFiltered.filter(r => r.id !== row.id);
 
         closeFineDetail();
         updateFinesStats();
 
-        if (finesFiltered.length > 0) {
-            displayFines(finesFiltered);
-        } else if (hasAnySearchCriteria()) {
-            displayFines(finesFiltered);
-        } else {
-            showFinesHint();
-        }
+        if (finesFiltered.length > 0) displayFines(finesFiltered);
+        else if (hasAnySearchCriteria()) displayFines(finesFiltered);
+        else showFinesHint();
 
         showToast(`Протокол ${row.reg_number} удалён`, 'success');
 
@@ -708,51 +600,29 @@ async function deleteFine() {
     }
 }
 
-// ================================================================
-// УТИЛИТЫ
-// ================================================================
 function escapeHtmlF(str) {
     if (str === null || str === undefined) return '';
-    return String(str)
-        .replace(/&/g, '&amp;')
-        .replace(/</g, '&lt;')
-        .replace(/>/g, '&gt;')
-        .replace(/"/g, '&quot;')
-        .replace(/'/g, '&#39;');
+    return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
 }
 
-// ================================================================
-// ИНИЦИАЛИЗАЦИЯ
-// ================================================================
 document.addEventListener('DOMContentLoaded', function () {
     if (!document.getElementById('finesResults')) return;
 
-    document.addEventListener('user-ready', () => {
-        loadFinesFromSupabase();
-    }, { once: true });
+    document.addEventListener('user-ready', () => { loadFinesFromSupabase(); }, { once: true });
 
-    // Поиск по Enter в любом поле формы
     const form = document.getElementById('finesSearchForm');
     if (form) {
         form.addEventListener('keydown', (e) => {
-            if (e.key === 'Enter') {
-                e.preventDefault();
-                runFinesSearch();
-            }
+            if (e.key === 'Enter') { e.preventDefault(); runFinesSearch(); }
         });
     }
 
     document.addEventListener('keydown', e => {
-        if (e.key === 'Escape') {
-            closeFineDetail();
-            closeEditFineModal();
-        }
+        if (e.key === 'Escape') { closeFineDetail(); closeEditFineModal(); }
     });
 });
 
-// ================================================================
-// ЭКСПОРТ
-// ================================================================
 window.loadFinesFromSupabase = loadFinesFromSupabase;
 window.runFinesSearch = runFinesSearch;
 window.applyFinesFilters = applyFinesFilters;
@@ -762,8 +632,6 @@ window.closeFineDetail = closeFineDetail;
 window.openFinePhotoFull = openFinePhotoFull;
 window.downloadFine = downloadFine;
 window.getFinePhotoList = getFinePhotoList;
-
-// Редактирование / удаление
 window.openEditFineModal = openEditFineModal;
 window.closeEditFineModal = closeEditFineModal;
 window.saveEditFine = saveEditFine;

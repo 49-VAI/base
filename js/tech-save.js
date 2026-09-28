@@ -1,14 +1,10 @@
 // ================================================================
 // СОХРАНЕНИЕ ТО В БАЗУ + РЕЕСТР ТС + РЕЖИМЫ EDIT/CLONE
-// ВАЖНО: файл в UTF-8
 // ================================================================
 
 let techEditMode = null;
 let techVehiclesCache = [];
 
-// ================================================================
-// ИНИЦИАЛИЗАЦИЯ
-// ================================================================
 document.addEventListener('DOMContentLoaded', async function () {
     if (!document.getElementById('techCanvas')) return;
 
@@ -22,17 +18,12 @@ document.addEventListener('DOMContentLoaded', async function () {
     else if (cloneId) await loadTechForClone(cloneId);
 });
 
-// ================================================================
-// ЗАГРУЗКА ВЫПАДАЮЩЕГО СПИСКА ТС
-// ================================================================
 async function loadVehicleSelect() {
     const sel = document.getElementById('techVehicleSelect');
     if (!sel) return;
 
     const { data, error } = await supabaseClient
-        .from('vehicles')
-        .select('*')
-        .order('plate_number', { ascending: true });
+        .from('vehicles').select('*').order('plate_number', { ascending: true });
 
     if (error) { console.warn('Не удалось загрузить ТС:', error); return; }
 
@@ -47,9 +38,6 @@ async function loadVehicleSelect() {
     });
 }
 
-// ================================================================
-// ПОДСТАНОВКА ДАННЫХ ТС В ФОРМУ
-// ================================================================
 function onVehicleSelected(id) {
     if (!id) return;
     const v = techVehiclesCache.find(x => x.id === id);
@@ -77,15 +65,9 @@ function onVehicleSelected(id) {
     showToast('Данные ТС подставлены', 'success');
 }
 
-// ================================================================
-// ЗАГРУЗКА ДЛЯ РЕДАКТИРОВАНИЯ
-// ================================================================
 async function loadTechForEdit(id) {
     const { data, error } = await supabaseClient
-        .from('tech_inspections')
-        .select('*')
-        .eq('id', id)
-        .single();
+        .from('tech_inspections').select('*').eq('id', id).single();
 
     if (error || !data) { showToast('Запись не найдена', 'error'); return; }
 
@@ -104,15 +86,9 @@ async function loadTechForEdit(id) {
     }
 }
 
-// ================================================================
-// ЗАГРУЗКА ДЛЯ ПОВТОРНОГО ОСМОТРА
-// ================================================================
 async function loadTechForClone(id) {
     const { data, error } = await supabaseClient
-        .from('tech_inspections')
-        .select('*')
-        .eq('id', id)
-        .single();
+        .from('tech_inspections').select('*').eq('id', id).single();
 
     if (error || !data) { showToast('Запись не найдена', 'error'); return; }
 
@@ -190,9 +166,6 @@ function cancelTechEdit() {
     window.location.href = 'tech-database.html';
 }
 
-// ================================================================
-// ВАЛИДАЦИЯ
-// ================================================================
 function validateTechForm() {
     const problems = [];
     const cardNumber = document.getElementById('techCardNumber')?.value.trim();
@@ -202,33 +175,32 @@ function validateTechForm() {
     if (!cardNumber) problems.push('Регистрационный номер карты');
     if (!validUntil) problems.push('Срок действия');
     if (!expertName) problems.push('ФИО эксперта');
+    if (validUntil && !/^\d{2}\.\d{2}\.\d{4}$/.test(validUntil)) problems.push('Срок действия — формат ДД.ММ.ГГГГ');
 
-    if (validUntil && !/^\d{2}\.\d{2}\.\d{4}$/.test(validUntil)) {
-        problems.push('Срок действия — формат ДД.ММ.ГГГГ');
-    }
     return problems;
 }
 
-// ================================================================
-// СОХРАНЕНИЕ В БД
-// ================================================================
 async function saveTechToDB() {
     const saveBtn = document.querySelector('.eis-actions-bar .eis-btn-success');
     const origText = saveBtn ? saveBtn.textContent : '';
 
     const problems = validateTechForm();
-    if (problems.length > 0) {
-        showToast('Заполните: ' + problems.join(', '), 'warning');
-        return;
-    }
+    if (problems.length > 0) { showToast('Заполните: ' + problems.join(', '), 'warning'); return; }
 
     if (saveBtn) { saveBtn.disabled = true; saveBtn.textContent = 'Сохранение...'; }
 
     let uploadedFileName = null;
     let oldPhotoUrl = techEditMode?.oldPhotoUrl || null;
+    let beforeSnapshot = null;
 
     try {
         const cardNumber = document.getElementById('techCardNumber').value.trim();
+
+        if (techEditMode && techEditMode.id) {
+            const { data: b } = await supabaseClient
+                .from('tech_inspections').select('*').eq('id', techEditMode.id).single();
+            beforeSnapshot = b;
+        }
 
         const wasActive = signatureData.techExpert?.active;
         if (signatureData.techExpert) signatureData.techExpert.active = false;
@@ -253,53 +225,49 @@ async function saveTechToDB() {
             result = await supabaseClient
                 .from('tech_inspections')
                 .update({ ...payload, updated_at: new Date().toISOString() })
-                .eq('id', techEditMode.id)
-                .select()
-                .single();
+                .eq('id', techEditMode.id).select().single();
         } else {
             payload.previous_id = techEditMode?.previousId || null;
             result = await supabaseClient
-                .from('tech_inspections')
-                .insert(payload)
-                .select()
-                .single();
+                .from('tech_inspections').insert(payload).select().single();
         }
 
         if (result.error) throw new Error(result.error.message);
 
-        // Если это UPDATE — удаляем старый файл
         if (techEditMode?.id && oldPhotoUrl && oldPhotoUrl !== photoUrl) {
             const oldFname = extractStorageFileName(oldPhotoUrl, 'tech-photos');
             if (oldFname) {
-                try {
-                    await supabaseClient.storage.from('tech-photos').remove([oldFname]);
-                } catch (e) {
-                    console.warn('Не удалось удалить старый файл:', e);
-                }
+                try { await supabaseClient.storage.from('tech-photos').remove([oldFname]); }
+                catch (e) { console.warn('Не удалось удалить старый файл:', e); }
             }
         }
 
-        // Если это CLONE — старую версию помечаем как неактуальную
         if (techEditMode?.previousId) {
             await supabaseClient
-                .from('tech_inspections')
-                .update({ is_current: false })
-                .eq('id', techEditMode.previousId);
+                .from('tech_inspections').update({ is_current: false }).eq('id', techEditMode.previousId);
         }
 
-        await logAction(
-            techEditMode?.id ? 'tech_update' : 'tech_create',
-            'tech_inspections',
-            result.data.id,
-            { card_number: cardNumber, plate_number: payload.plate_number }
-        );
+        // ЛОГИРОВАНИЕ
+        if (techEditMode && techEditMode.id && beforeSnapshot) {
+            const { data: after } = await supabaseClient
+                .from('tech_inspections').select('*').eq('id', techEditMode.id).single();
+            await logUpdate('tech_update', 'tech_inspections', techEditMode.id, beforeSnapshot, after, {
+                summary_prefix: `Изменил карту ТО № ${cardNumber} (${payload.plate_number || '—'})`
+            });
+        } else {
+            const isClone = !!techEditMode?.previousId;
+            await logCreate('tech_create', 'tech_inspections', result.data.id, result.data,
+                isClone
+                    ? `Повторный осмотр: новая карта ТО № ${cardNumber} (${payload.plate_number || '—'})`
+                    : `Создал карту ТО № ${cardNumber} (${payload.plate_number || '—'})`
+            );
+        }
 
         showToast('Сохранено', 'success');
         setTimeout(() => window.location.href = 'tech-database.html', 800);
 
     } catch (e) {
         console.error('[tech-save]', e);
-        // Подчищаем только что загруженный файл, если запись не сохранилась
         if (uploadedFileName && !techEditMode?.id) {
             try { await supabaseClient.storage.from('tech-photos').remove([uploadedFileName]); } catch (_) { }
         }
@@ -351,24 +319,17 @@ function collectTechData(photoUrl) {
     };
 }
 
-// ================================================================
-// ЗАГРУЗКА ФОТО
-// ================================================================
 async function uploadTechPhoto(canvas, cardNumber) {
     const safeNumber = String(cardNumber).replace(/\D/g, '') || 'unknown';
     const fileName = `tech_${safeNumber}_${Date.now()}.jpg`;
     const blob = await compressCanvasToJpeg(canvas, 1600, 0.85);
 
     const { error } = await supabaseClient.storage
-        .from('tech-photos')
-        .upload(fileName, blob, { contentType: 'image/jpeg', upsert: false });
+        .from('tech-photos').upload(fileName, blob, { contentType: 'image/jpeg', upsert: false });
 
     if (error) throw new Error('Не удалось загрузить фото: ' + error.message);
 
-    const { data: { publicUrl } } = supabaseClient.storage
-        .from('tech-photos')
-        .getPublicUrl(fileName);
-
+    const { data: { publicUrl } } = supabaseClient.storage.from('tech-photos').getPublicUrl(fileName);
     return { fileName, publicUrl };
 }
 
@@ -376,10 +337,7 @@ function compressCanvasToJpeg(sourceCanvas, maxWidth = 1600, quality = 0.85) {
     return new Promise((resolve, reject) => {
         const srcW = sourceCanvas.width, srcH = sourceCanvas.height;
         let dstW = srcW, dstH = srcH;
-        if (srcW > maxWidth) {
-            dstW = maxWidth;
-            dstH = Math.round(srcH * (maxWidth / srcW));
-        }
+        if (srcW > maxWidth) { dstW = maxWidth; dstH = Math.round(srcH * (maxWidth / srcW)); }
         const off = document.createElement('canvas');
         off.width = dstW; off.height = dstH;
         const ctx = off.getContext('2d');
@@ -399,9 +357,6 @@ function extractStorageFileName(url, bucket) {
     return decodeURIComponent(parts[1]);
 }
 
-// ================================================================
-// ЭКСПОРТ
-// ================================================================
 window.saveTechToDB = saveTechToDB;
 window.cancelTechEdit = cancelTechEdit;
 window.loadTechForEdit = loadTechForEdit;

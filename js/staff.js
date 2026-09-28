@@ -51,16 +51,14 @@ const RANK_ORDER = [
     'Ст. прапорщик', 'Прапорщик', 'Старшина', 'Ст. сержант', 'Сержант', 'Мл. сержант', 'Ефрейтор'
 ];
 
-let staffList = [];       // только те, кто в составе
-let allProfiles = [];     // все профили (для управления составом)
+let staffList = [];
+let allProfiles = [];
 let currentStaff = null;
 let pendingPdfFile = null;
 let pendingPdfRemove = false;
-let manageSelection = {}; // id -> bool (в составе или нет)
+let manageSelection = {};
 
-function isChief() {
-    return CHIEF_ROLES.includes(window.currentProfile?.role);
-}
+function isChief() { return CHIEF_ROLES.includes(window.currentProfile?.role); }
 
 function getInitials(fullName) {
     if (!fullName) return '—';
@@ -71,62 +69,39 @@ function getInitials(fullName) {
 function renderEpauletteImg(rank, cls = '') {
     const src = RANK_IMAGES[rank];
     if (!src) return '';
-    return `<img src="${src}" alt="${escapeHtml(rank || '')}"
-                 class="eis-epaulette-img ${cls}"
-                 onerror="this.style.display='none'">`;
+    return `<img src="${src}" alt="${escapeHtml(rank || '')}" class="eis-epaulette-img ${cls}" onerror="this.style.display='none'">`;
 }
 
 function renderPlateImg(vehicleId) {
     const v = STAFF_VEHICLES.find(x => x.id === vehicleId);
     if (!v) return '';
-    return `<img src="${v.image}" alt="${v.plate}" class="eis-plate-img"
-                 onerror="this.style.display='none'">`;
+    return `<img src="${v.image}" alt="${v.plate}" class="eis-plate-img" onerror="this.style.display='none'">`;
 }
 
-function getVehicle(id) {
-    return STAFF_VEHICLES.find(v => v.id === id) || null;
-}
+function getVehicle(id) { return STAFF_VEHICLES.find(v => v.id === id) || null; }
 
-function getDept(key) {
-    return DEPARTMENTS.find(d => d.key === key) || DEPARTMENTS[DEPARTMENTS.length - 1];
-}
-
-// ================================================================
-// ЗАГРУЗКА
-// ================================================================
 async function loadStaff() {
     const container = document.getElementById('staffContainer');
     if (!container) return;
 
     if (!isChief()) {
-        container.innerHTML = `
-            <div class="eis-no-results">
-                <div style="font-size:32px;margin-bottom:12px;">🔒</div>
-                <div style="font-weight:700;">Доступ только для начальства</div>
-            </div>
-        `;
+        container.innerHTML = `<div class="eis-no-results">
+            <div style="font-size:32px;margin-bottom:12px;">🔒</div>
+            <div style="font-weight:700;">Доступ только для начальства</div>
+        </div>`;
         return;
     }
 
-    container.innerHTML = `
-        <div class="eis-loading">
-            <div class="eis-spinner"></div>
-            <span>Загрузка состава...</span>
-        </div>
-    `;
+    container.innerHTML = `<div class="eis-loading"><div class="eis-spinner"></div><span>Загрузка состава...</span></div>`;
 
     const { data, error } = await supabaseClient
-        .from('profiles')
-        .select('*')
-        .eq('in_staff', true);
+        .from('profiles').select('*').eq('in_staff', true);
 
     if (error) {
-        container.innerHTML = `
-            <div class="eis-no-results">
-                <div style="font-size:32px;margin-bottom:12px;">⚠️</div>
-                <div>${escapeHtml(error.message)}</div>
-            </div>
-        `;
+        container.innerHTML = `<div class="eis-no-results">
+            <div style="font-size:32px;margin-bottom:12px;">⚠️</div>
+            <div>${escapeHtml(error.message)}</div>
+        </div>`;
         return;
     }
 
@@ -143,27 +118,19 @@ async function loadStaff() {
     renderStaff();
 }
 
-// ================================================================
-// ОТРИСОВКА
-// ================================================================
 function renderStaff() {
     const container = document.getElementById('staffContainer');
     if (!container) return;
 
     if (staffList.length === 0) {
-        container.innerHTML = `
-            <div class="eis-no-results">
-                <div style="font-size:32px;margin-bottom:12px;">👥</div>
-                <div style="font-weight:700;margin-bottom:6px;">Состав пуст</div>
-                <div style="font-size:13px;color:#888;">
-                    Нажмите «Управление составом», чтобы добавить сотрудников
-                </div>
-            </div>
-        `;
+        container.innerHTML = `<div class="eis-no-results">
+            <div style="font-size:32px;margin-bottom:12px;">👥</div>
+            <div style="font-weight:700;margin-bottom:6px;">Состав пуст</div>
+            <div style="font-size:13px;color:#888;">Нажмите «Управление составом», чтобы добавить сотрудников</div>
+        </div>`;
         return;
     }
 
-    // Группировка по отделам
     const grouped = {};
     DEPARTMENTS.forEach(d => grouped[d.key] = []);
     staffList.forEach(s => {
@@ -171,7 +138,6 @@ function renderStaff() {
         grouped[key].push(s);
     });
 
-    // Сортировка: sort_order → rank → имя
     Object.values(grouped).forEach(arr => {
         arr.sort((a, b) => {
             const ao = a.sort_order || 9999;
@@ -189,26 +155,22 @@ function renderStaff() {
     DEPARTMENTS.forEach(dept => {
         const list = grouped[dept.key];
         if (!list || list.length === 0) return;
-
-        html += `
-            <div class="eis-staff-dept">
-                <div class="eis-staff-dept-head">
-                    <span class="eis-staff-dept-bar" style="background:${dept.color}"></span>
-                    <span class="eis-staff-dept-title">${escapeHtml(dept.short)}</span>
-                    <span class="eis-staff-dept-count">${list.length}</span>
-                </div>
-                <div class="eis-staff-list">
-                    ${list.map((p, i) => renderStaffRow(p, i, list.length, dept)).join('')}
-                </div>
+        html += `<div class="eis-staff-dept">
+            <div class="eis-staff-dept-head">
+                <span class="eis-staff-dept-bar" style="background:${dept.color}"></span>
+                <span class="eis-staff-dept-title">${escapeHtml(dept.short)}</span>
+                <span class="eis-staff-dept-count">${list.length}</span>
             </div>
-        `;
+            <div class="eis-staff-list">
+                ${list.map((p, i) => renderStaffRow(p, i, list.length, dept)).join('')}
+            </div>
+        </div>`;
     });
 
     container.innerHTML = html;
 }
 
 function renderStaffRow(person, index, total, dept) {
-    const initials = getInitials(person.full_name);
     const fio = person.full_name || person.username || '—';
     const rank = person.rank || '';
     const position = person.position || ROLE_LABELS[person.role] || person.role || '';
@@ -216,68 +178,46 @@ function renderStaffRow(person, index, total, dept) {
     const isMe = person.id === window.currentUser?.id;
     const hasPdf = !!person.personal_file_url;
 
-    return `
-        <div class="eis-staff-row ${isMe ? 'is-me' : ''}" data-id="${person.id}">
-            <div class="eis-staff-row-bar" style="background:${dept.color}"></div>
-
-            <div class="eis-staff-row-avatar">
-                <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-                    <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
-                </svg>
-            </div>
-
-            <div class="eis-staff-row-info">
-                <div class="eis-staff-row-name">
-                    ${escapeHtml(fio)}
-                    ${isMe ? '<span class="eis-staff-row-me">вы</span>' : ''}
+    return `<div class="eis-staff-row ${isMe ? 'is-me' : ''}" data-id="${person.id}">
+        <div class="eis-staff-row-bar" style="background:${dept.color}"></div>
+        <div class="eis-staff-row-avatar">
+            <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
+            </svg>
+        </div>
+        <div class="eis-staff-row-info">
+            <div class="eis-staff-row-name">${escapeHtml(fio)} ${isMe ? '<span class="eis-staff-row-me">вы</span>' : ''}</div>
+            ${rank ? `<div class="eis-staff-row-rank">${escapeHtml(rank)}</div>` : ''}
+            <div class="eis-staff-row-pos">${escapeHtml(position)}</div>
+        </div>
+        <div class="eis-staff-row-epaulette">${renderEpauletteImg(rank)}</div>
+        <div class="eis-staff-row-extra">
+            ${person.callsign ? `
+                <div class="eis-staff-row-callsign">
+                    <span class="eis-staff-row-callsign-label">Позывной</span>
+                    <span class="eis-staff-row-callsign-value">«${escapeHtml(person.callsign)}»</span>
                 </div>
-                ${rank ? `<div class="eis-staff-row-rank">${escapeHtml(rank)}</div>` : ''}
-                <div class="eis-staff-row-pos">${escapeHtml(position)}</div>
-            </div>
-
-            <div class="eis-staff-row-epaulette">
-                ${renderEpauletteImg(rank)}
-            </div>
-
-            <div class="eis-staff-row-extra">
-                ${person.callsign ? `
-                    <div class="eis-staff-row-callsign">
-                        <span class="eis-staff-row-callsign-label">Позывной</span>
-                        <span class="eis-staff-row-callsign-value">«${escapeHtml(person.callsign)}»</span>
-                    </div>
-                ` : `<div class="eis-staff-row-callsign is-empty">Без позывного</div>`}
-
-                ${vehicle ? `
-                    <div class="eis-staff-row-vehicle">
-                        <div class="eis-staff-row-vehicle-make">${escapeHtml(vehicle.make)}</div>
-                        <div class="eis-staff-row-vehicle-plate">${renderPlateImg(person.vehicle_id)}</div>
-                    </div>
-                ` : `<div class="eis-staff-row-vehicle is-empty">Техника не закреплена</div>`}
-            </div>
-
-            <div class="eis-staff-row-actions">
-                <div class="eis-staff-row-move">
-                    <button class="eis-staff-move-btn" title="Выше" ${index === 0 ? 'disabled' : ''}
-                            onclick="moveStaff('${person.id}', -1)">↑</button>
-                    <button class="eis-staff-move-btn" title="Ниже" ${index === total - 1 ? 'disabled' : ''}
-                            onclick="moveStaff('${person.id}', 1)">↓</button>
+            ` : `<div class="eis-staff-row-callsign is-empty">Без позывного</div>`}
+            ${vehicle ? `
+                <div class="eis-staff-row-vehicle">
+                    <div class="eis-staff-row-vehicle-make">${escapeHtml(vehicle.make)}</div>
+                    <div class="eis-staff-row-vehicle-plate">${renderPlateImg(person.vehicle_id)}</div>
                 </div>
-                <div class="eis-staff-row-actions-main">
-                    ${hasPdf ? `
-                        <button class="eis-btn eis-btn-sm eis-btn-secondary"
-                                onclick="openStaffPdf('${person.id}')">📄 Дело</button>
-                    ` : ''}
-                    <button class="eis-btn eis-btn-sm eis-btn-primary"
-                            onclick="openStaffModal('${person.id}')">Изменить</button>
-                </div>
+            ` : `<div class="eis-staff-row-vehicle is-empty">Техника не закреплена</div>`}
+        </div>
+        <div class="eis-staff-row-actions">
+            <div class="eis-staff-row-move">
+                <button class="eis-staff-move-btn" title="Выше" ${index === 0 ? 'disabled' : ''} onclick="moveStaff('${person.id}', -1)">↑</button>
+                <button class="eis-staff-move-btn" title="Ниже" ${index === total - 1 ? 'disabled' : ''} onclick="moveStaff('${person.id}', 1)">↓</button>
+            </div>
+            <div class="eis-staff-row-actions-main">
+                ${hasPdf ? `<button class="eis-btn eis-btn-sm eis-btn-secondary" onclick="openStaffPdf('${person.id}')">📄 Дело</button>` : ''}
+                <button class="eis-btn eis-btn-sm eis-btn-primary" onclick="openStaffModal('${person.id}')">Изменить</button>
             </div>
         </div>
-    `;
+    </div>`;
 }
 
-// ================================================================
-// ПЕРЕМЕЩЕНИЕ
-// ================================================================
 async function moveStaff(id, delta) {
     const person = staffList.find(p => p.id === id);
     if (!person) return;
@@ -298,7 +238,6 @@ async function moveStaff(id, delta) {
     const swapIdx = idx + delta;
     if (swapIdx < 0 || swapIdx >= group.length) return;
 
-    // Нормализуем
     group.forEach((p, i) => p.sort_order = (i + 1) * 100);
 
     const tmp = group[idx].sort_order;
@@ -316,14 +255,9 @@ async function moveStaff(id, delta) {
         await Promise.all(group.map(p =>
             supabaseClient.from('profiles').update({ sort_order: p.sort_order }).eq('id', p.id)
         ));
-    } catch (e) {
-        console.warn('Ошибка сохранения порядка:', e);
-    }
+    } catch (e) { console.warn('Ошибка сохранения порядка:', e); }
 }
 
-// ================================================================
-// МОДАЛКА РЕДАКТИРОВАНИЯ ЛИЧНОГО ДЕЛА
-// ================================================================
 function fillVehicleSelect() {
     const sel = document.getElementById('sfVehicle');
     if (!sel) return;
@@ -380,21 +314,18 @@ function renderPdfCurrent() {
         return;
     }
     if (pendingPdfFile) {
-        wrap.innerHTML = `
-            <div class="eis-staff-pdf-current-file">
-                <span>📄 ${escapeHtml(pendingPdfFile.name)}</span>
-                <button type="button" class="eis-staff-pdf-remove" onclick="cancelPendingPdf()">×</button>
-            </div>`;
+        wrap.innerHTML = `<div class="eis-staff-pdf-current-file">
+            <span>📄 ${escapeHtml(pendingPdfFile.name)}</span>
+            <button type="button" class="eis-staff-pdf-remove" onclick="cancelPendingPdf()">×</button>
+        </div>`;
         return;
     }
     if (currentStaff?.personal_file_url) {
         const name = currentStaff.personal_file_name || 'Личное дело.pdf';
-        wrap.innerHTML = `
-            <div class="eis-staff-pdf-current-file is-saved">
-                <a href="${currentStaff.personal_file_url}" target="_blank" rel="noopener">📄 ${escapeHtml(name)}</a>
-                <button type="button" class="eis-staff-pdf-remove" title="Удалить файл"
-                        onclick="markPendingPdfRemove()">×</button>
-            </div>`;
+        wrap.innerHTML = `<div class="eis-staff-pdf-current-file is-saved">
+            <a href="${currentStaff.personal_file_url}" target="_blank" rel="noopener">📄 ${escapeHtml(name)}</a>
+            <button type="button" class="eis-staff-pdf-remove" title="Удалить файл" onclick="markPendingPdfRemove()">×</button>
+        </div>`;
         return;
     }
     wrap.innerHTML = '<div class="eis-staff-pdf-empty">Файл не загружен</div>';
@@ -403,16 +334,8 @@ function renderPdfCurrent() {
 function onStaffPdfSelected(input) {
     const file = input.files[0];
     if (!file) return;
-    if (file.type !== 'application/pdf') {
-        showToast('Только PDF файлы', 'warning');
-        input.value = '';
-        return;
-    }
-    if (file.size > 20 * 1024 * 1024) {
-        showToast('Файл больше 20 МБ', 'warning');
-        input.value = '';
-        return;
-    }
+    if (file.type !== 'application/pdf') { showToast('Только PDF файлы', 'warning'); input.value = ''; return; }
+    if (file.size > 20 * 1024 * 1024) { showToast('Файл больше 20 МБ', 'warning'); input.value = ''; return; }
     pendingPdfFile = file;
     pendingPdfRemove = false;
     renderPdfCurrent();
@@ -450,13 +373,13 @@ async function saveStaff() {
     const department = document.getElementById('sfDepartment').value;
     const vehicleId = document.getElementById('sfVehicle').value;
 
-    if (callsign && callsign.length > 30) {
-        errEl.textContent = 'Позывной длиннее 30 символов';
-        return;
-    }
+    if (callsign && callsign.length > 30) { errEl.textContent = 'Позывной длиннее 30 символов'; return; }
 
     btn.disabled = true;
     btn.textContent = 'Сохранение...';
+
+    const { data: before } = await supabaseClient
+        .from('profiles').select('*').eq('id', currentStaff.id).single();
 
     let newFileUrl = currentStaff.personal_file_url || null;
     let newFileName = currentStaff.personal_file_name || null;
@@ -468,11 +391,8 @@ async function saveStaff() {
             newFileUrl = null;
             newFileName = null;
         }
-
         if (pendingPdfFile) {
-            if (currentStaff.personal_file_url) {
-                newFileToDelete = extractFileNameFromUrl(currentStaff.personal_file_url);
-            }
+            if (currentStaff.personal_file_url) newFileToDelete = extractFileNameFromUrl(currentStaff.personal_file_url);
             const uploaded = await uploadPersonalPdf(pendingPdfFile, currentStaff.id);
             newFileUrl = uploaded.url;
             newFileName = pendingPdfFile.name;
@@ -497,9 +417,13 @@ async function saveStaff() {
             catch (e) { console.warn('Не удалось удалить старый файл:', e); }
         }
 
-        await logAction('staff_update', 'profiles', currentStaff.id, {
-            callsign, department, vehicle_id: vehicleId,
-            pdf_changed: !!pendingPdfFile || pendingPdfRemove
+        const { data: after } = await supabaseClient
+            .from('profiles').select('*').eq('id', currentStaff.id).single();
+
+        await logUpdate('staff_update', 'profiles', currentStaff.id, before, after, {
+            target_fio: currentStaff.full_name || currentStaff.username,
+            pdf_changed: !!pendingPdfFile || pendingPdfRemove,
+            summary_prefix: `Изменил личное дело ${currentStaff.full_name || currentStaff.username}`
         });
 
         const idx = staffList.findIndex(p => p.id === currentStaff.id);
@@ -526,23 +450,16 @@ async function saveStaff() {
     }
 }
 
-// ================================================================
-// ЗАГРУЗКА PDF
-// ================================================================
 async function uploadPersonalPdf(file, personId) {
     const safe = String(personId).replace(/[^a-zA-Z0-9]/g, '');
     const fileName = `personal_${safe}_${Date.now()}.pdf`;
 
     const { error } = await supabaseClient.storage
-        .from('personal-files')
-        .upload(fileName, file, { contentType: 'application/pdf', upsert: false });
+        .from('personal-files').upload(fileName, file, { contentType: 'application/pdf', upsert: false });
 
     if (error) throw new Error('Ошибка загрузки PDF: ' + error.message);
 
-    const { data: { publicUrl } } = supabaseClient.storage
-        .from('personal-files')
-        .getPublicUrl(fileName);
-
+    const { data: { publicUrl } } = supabaseClient.storage.from('personal-files').getPublicUrl(fileName);
     return { url: publicUrl, fileName };
 }
 
@@ -553,15 +470,11 @@ function extractFileNameFromUrl(url) {
     return decodeURIComponent(parts[1]);
 }
 
-// ================================================================
-// ПРОСМОТР PDF
-// ================================================================
 function openStaffPdf(id) {
     const person = staffList.find(p => p.id === id);
     if (!person || !person.personal_file_url) return;
 
-    document.getElementById('pdfTitle').textContent =
-        'Личное дело — ' + (person.full_name || person.username || '');
+    document.getElementById('pdfTitle').textContent = 'Личное дело — ' + (person.full_name || person.username || '');
     document.getElementById('pdfFrame').src = person.personal_file_url;
     document.getElementById('pdfDownloadLink').href = person.personal_file_url;
     document.getElementById('pdfDownloadLink').download =
@@ -575,31 +488,22 @@ function closeStaffPdfModal() {
     document.getElementById('pdfFrame').src = 'about:blank';
 }
 
-// ================================================================
-// УПРАВЛЕНИЕ СОСТАВОМ
-// ================================================================
 async function openManageStaffModal() {
     document.getElementById('manageStaffSearch').value = '';
-    document.getElementById('manageStaffList').innerHTML =
-        '<div class="eis-loading"><div class="eis-spinner"></div><span>Загрузка...</span></div>';
+    document.getElementById('manageStaffList').innerHTML = '<div class="eis-loading"><div class="eis-spinner"></div><span>Загрузка...</span></div>';
     document.getElementById('manageStaffModal').style.display = 'flex';
 
     const { data, error } = await supabaseClient
-        .from('profiles')
-        .select('*')
-        .order('full_name', { ascending: true });
+        .from('profiles').select('*').order('full_name', { ascending: true });
 
     if (error) {
-        document.getElementById('manageStaffList').innerHTML =
-            `<div class="eis-no-results">Ошибка: ${escapeHtml(error.message)}</div>`;
+        document.getElementById('manageStaffList').innerHTML = `<div class="eis-no-results">Ошибка: ${escapeHtml(error.message)}</div>`;
         return;
     }
 
     allProfiles = data || [];
     manageSelection = {};
-    allProfiles.forEach(p => {
-        manageSelection[p.id] = !!p.in_staff;
-    });
+    allProfiles.forEach(p => { manageSelection[p.id] = !!p.in_staff; });
 
     renderManageStaffList();
 }
@@ -610,7 +514,6 @@ function renderManageStaffList() {
 
     const q = (document.getElementById('manageStaffSearch')?.value || '').toLowerCase().trim();
 
-    // Группируем по отделам
     const grouped = {};
     DEPARTMENTS.forEach(d => grouped[d.key] = []);
 
@@ -620,14 +523,11 @@ function renderManageStaffList() {
         grouped[key].push(p);
     });
 
-    // Фильтрация
     Object.keys(grouped).forEach(k => {
         grouped[k] = grouped[k].filter(p => {
             if (!q) return true;
-            const hay = [
-                p.full_name, p.username, p.rank, p.position,
-                ROLE_LABELS[p.role] || p.role
-            ].filter(Boolean).join(' ').toLowerCase();
+            const hay = [p.full_name, p.username, p.rank, p.position, ROLE_LABELS[p.role] || p.role]
+                .filter(Boolean).join(' ').toLowerCase();
             return hay.includes(q);
         });
     });
@@ -639,39 +539,30 @@ function renderManageStaffList() {
         const list = grouped[dept.key];
         if (!list || list.length === 0) return;
 
-        html += `
-            <div class="eis-manage-group">
-                <div class="eis-manage-group-title" style="border-left-color:${dept.color}">
-                    ${escapeHtml(dept.short)}
-                    <span class="eis-manage-group-count">${list.length}</span>
-                </div>
-                ${list.map(p => {
+        html += `<div class="eis-manage-group">
+            <div class="eis-manage-group-title" style="border-left-color:${dept.color}">
+                ${escapeHtml(dept.short)}
+                <span class="eis-manage-group-count">${list.length}</span>
+            </div>
+            ${list.map(p => {
             const checked = manageSelection[p.id];
             if (checked) totalSelected++;
             const initials = getInitials(p.full_name);
             const roleLabel = ROLE_LABELS[p.role] || p.role;
             const fio = p.full_name || p.username || '—';
-            return `
-                        <label class="eis-manage-row ${checked ? 'is-checked' : ''}" data-id="${p.id}">
-                            <input type="checkbox" ${checked ? 'checked' : ''}
-                                   onchange="toggleManageSelection('${p.id}', this.checked)">
-                            <div class="eis-manage-row-avatar">${escapeHtml(initials)}</div>
-                            <div class="eis-manage-row-info">
-                                <div class="eis-manage-row-name">${escapeHtml(fio)}</div>
-                                <div class="eis-manage-row-sub">
-                                    ${p.rank ? escapeHtml(p.rank) + ' · ' : ''}${escapeHtml(roleLabel)}
-                                </div>
-                            </div>
-                        </label>
-                    `;
+            return `<label class="eis-manage-row ${checked ? 'is-checked' : ''}" data-id="${p.id}">
+                    <input type="checkbox" ${checked ? 'checked' : ''} onchange="toggleManageSelection('${p.id}', this.checked)">
+                    <div class="eis-manage-row-avatar">${escapeHtml(initials)}</div>
+                    <div class="eis-manage-row-info">
+                        <div class="eis-manage-row-name">${escapeHtml(fio)}</div>
+                        <div class="eis-manage-row-sub">${p.rank ? escapeHtml(p.rank) + ' · ' : ''}${escapeHtml(roleLabel)}</div>
+                    </div>
+                </label>`;
         }).join('')}
-            </div>
-        `;
+        </div>`;
     });
 
-    if (!html) {
-        html = '<div class="eis-no-results">Никого не найдено</div>';
-    }
+    if (!html) html = '<div class="eis-no-results">Никого не найдено</div>';
 
     container.innerHTML = html;
     document.getElementById('manageStaffCounter').textContent = `Выбрано: ${totalSelected}`;
@@ -679,11 +570,9 @@ function renderManageStaffList() {
 
 function toggleManageSelection(id, checked) {
     manageSelection[id] = checked;
-    // Перерисуем счётчик без полной перерисовки списка
     const total = Object.values(manageSelection).filter(Boolean).length;
     document.getElementById('manageStaffCounter').textContent = `Выбрано: ${total}`;
 
-    // Подсветка строки
     const row = document.querySelector(`.eis-manage-row[data-id="${id}"]`);
     if (row) row.classList.toggle('is-checked', checked);
 }
@@ -703,20 +592,29 @@ async function saveManageStaff() {
             const shouldBe = !!manageSelection[p.id];
             const currently = !!p.in_staff;
             if (shouldBe !== currently) {
-                updates.push({ id: p.id, in_staff: shouldBe });
+                updates.push({ id: p.id, in_staff: shouldBe, full_name: p.full_name, username: p.username });
             }
         });
 
         if (updates.length > 0) {
-            // Обновляем по одному (безопаснее, чем .in с разными значениями)
             await Promise.all(updates.map(u =>
                 supabaseClient.from('profiles').update({ in_staff: u.in_staff }).eq('id', u.id)
             ));
         }
 
+        const added = updates.filter(u => u.in_staff).length;
+        const removed = updates.filter(u => !u.in_staff).length;
+
         await logAction('staff_manage', 'profiles', null, {
-            added: updates.filter(u => u.in_staff).length,
-            removed: updates.filter(u => !u.in_staff).length
+            kind: 'update',
+            summary: `Обновил состав подразделения: добавлено ${added}, исключено ${removed}`,
+            changes: updates.map(u => ({
+                field: 'in_staff',
+                from: !u.in_staff,
+                to: u.in_staff,
+                person: u.full_name || u.username
+            })),
+            changed_count: updates.length
         });
 
         closeManageStaffModal();
@@ -731,19 +629,12 @@ async function saveManageStaff() {
     }
 }
 
-// ================================================================
-// УТИЛИТЫ
-// ================================================================
 function escapeHtml(str) {
     if (str === null || str === undefined) return '';
-    return String(str)
-        .replace(/&/g, '&amp;').replace(/</g, '&lt;')
+    return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;')
         .replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
 }
 
-// ================================================================
-// ИНИЦИАЛИЗАЦИЯ
-// ================================================================
 document.addEventListener('DOMContentLoaded', function () {
     if (!document.getElementById('staffContainer')) return;
 
@@ -775,9 +666,6 @@ document.addEventListener('DOMContentLoaded', function () {
     });
 });
 
-// ================================================================
-// ЭКСПОРТ
-// ================================================================
 window.loadStaff = loadStaff;
 window.openStaffModal = openStaffModal;
 window.closeStaffModal = closeStaffModal;

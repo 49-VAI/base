@@ -25,30 +25,12 @@
                     </div>
                     <div class="eis-panel-body">
                         <div class="eis-admin-stats" id="statsGrid">
-                            <div class="eis-stat-card">
-                                <div class="eis-stat-value" id="statUsers">—</div>
-                                <div class="eis-stat-label">Пользователей</div>
-                            </div>
-                            <div class="eis-stat-card">
-                                <div class="eis-stat-value" id="statVU">—</div>
-                                <div class="eis-stat-label">ВУ в базе</div>
-                            </div>
-                            <div class="eis-stat-card">
-                                <div class="eis-stat-value" id="statExams">—</div>
-                                <div class="eis-stat-label">Экзаменов</div>
-                            </div>
-                            <div class="eis-stat-card">
-                                <div class="eis-stat-value" id="statTech">—</div>
-                                <div class="eis-stat-label">Техосмотров</div>
-                            </div>
-                            <div class="eis-stat-card">
-                                <div class="eis-stat-value" id="statProtocols">—</div>
-                                <div class="eis-stat-label">Протоколов</div>
-                            </div>
-                            <div class="eis-stat-card">
-                                <div class="eis-stat-value" id="statAudit">—</div>
-                                <div class="eis-stat-label">Записей в логе</div>
-                            </div>
+                            <div class="eis-stat-card"><div class="eis-stat-value" id="statUsers">—</div><div class="eis-stat-label">Пользователей</div></div>
+                            <div class="eis-stat-card"><div class="eis-stat-value" id="statVU">—</div><div class="eis-stat-label">ВУ в базе</div></div>
+                            <div class="eis-stat-card"><div class="eis-stat-value" id="statExams">—</div><div class="eis-stat-label">Экзаменов</div></div>
+                            <div class="eis-stat-card"><div class="eis-stat-value" id="statTech">—</div><div class="eis-stat-label">Техосмотров</div></div>
+                            <div class="eis-stat-card"><div class="eis-stat-value" id="statProtocols">—</div><div class="eis-stat-label">Протоколов</div></div>
+                            <div class="eis-stat-card"><div class="eis-stat-value" id="statAudit">—</div><div class="eis-stat-label">Записей в логе</div></div>
                         </div>
                     </div>
                 </div>
@@ -57,21 +39,12 @@
                     <div class="eis-panel-header">
                         <span class="eis-panel-title">Пользователи</span>
                         <div class="eis-panel-actions">
-                            <button type="button" class="eis-btn eis-btn-primary eis-btn-sm" onclick="openCreateUserModal()">
-                                + Создать пользователя
-                            </button>
-                            <button type="button" class="eis-btn eis-btn-secondary eis-btn-sm" onclick="loadUsers()">
-                                Обновить
-                            </button>
+                            <button type="button" class="eis-btn eis-btn-primary eis-btn-sm" onclick="openCreateUserModal()">+ Создать пользователя</button>
+                            <button type="button" class="eis-btn eis-btn-secondary eis-btn-sm" onclick="loadUsers()">Обновить</button>
                         </div>
                     </div>
                     <div class="eis-panel-body">
-                        <div id="usersContainer">
-                            <div class="eis-loading">
-                                <div class="eis-spinner"></div>
-                                <span>Загрузка...</span>
-                            </div>
-                        </div>
+                        <div id="usersContainer"><div class="eis-loading"><div class="eis-spinner"></div><span>Загрузка...</span></div></div>
                     </div>
                 </div>
 
@@ -79,17 +52,42 @@
                     <div class="eis-panel-header">
                         <span class="eis-panel-title">Журнал действий</span>
                         <div class="eis-panel-actions">
-                            <button type="button" class="eis-btn eis-btn-secondary eis-btn-sm" onclick="loadAuditLog()">
-                                Обновить
-                            </button>
+                            <button type="button" class="eis-btn eis-btn-secondary eis-btn-sm" onclick="loadAuditLog()">Обновить</button>
                         </div>
                     </div>
                     <div class="eis-panel-body">
-                        <div id="auditContainer">
-                            <div class="eis-loading">
-                                <div class="eis-spinner"></div>
-                                <span>Загрузка...</span>
+                        <div class="eis-form-row" style="grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 10px; margin-bottom: 14px;">
+                            <div class="eis-form-group" style="margin-bottom: 0;">
+                                <label class="eis-form-label">Кто</label>
+                                <select class="eis-select" id="auditFilterUser" onchange="applyAuditFilters()">
+                                    <option value="">Все пользователи</option>
+                                </select>
                             </div>
+                            <div class="eis-form-group" style="margin-bottom: 0;">
+                                <label class="eis-form-label">Действие</label>
+                                <select class="eis-select" id="auditFilterAction" onchange="applyAuditFilters()">
+                                    <option value="">Все действия</option>
+                                </select>
+                            </div>
+                            <div class="eis-form-group" style="margin-bottom: 0;">
+                                <label class="eis-form-label">Раздел</label>
+                                <select class="eis-select" id="auditFilterEntity" onchange="applyAuditFilters()">
+                                    <option value="">Все</option>
+                                </select>
+                            </div>
+                            <div class="eis-form-group" style="margin-bottom: 0;">
+                                <label class="eis-form-label">Поиск</label>
+                                <input type="text" class="eis-input" id="auditFilterQuery"
+                                       placeholder="Номер, ФИО, гос.номер..." oninput="applyAuditFilters()">
+                            </div>
+                            <div class="eis-form-group" style="margin-bottom: 0;">
+                                <label class="eis-form-label">&nbsp;</label>
+                                <button type="button" class="eis-btn eis-btn-secondary" onclick="resetAuditFilters()">Сбросить</button>
+                            </div>
+                        </div>
+
+                        <div id="auditContainer">
+                            <div class="eis-loading"><div class="eis-spinner"></div><span>Загрузка...</span></div>
                         </div>
                     </div>
                 </div>
@@ -109,23 +107,12 @@
             <div class="eis-modal-form-body">
                 <form id="createUserForm">
                     <div class="eis-form-row">
-                        <div class="eis-form-group">
-                            <label class="eis-form-label">Логин *</label>
-                            <input type="text" class="eis-input" id="cuUsername" required autocomplete="off" placeholder="Например: Aleksandr_Kravchenko">
-                        </div>
-                        <div class="eis-form-group">
-                            <label class="eis-form-label">Пароль * (мин. 6)</label>
-                            <input type="text" class="eis-input" id="cuPassword" required minlength="6" autocomplete="new-password">
-                        </div>
+                        <div class="eis-form-group"><label class="eis-form-label">Логин *</label><input type="text" class="eis-input" id="cuUsername" required autocomplete="off" placeholder="Например: Aleksandr_Kravchenko"></div>
+                        <div class="eis-form-group"><label class="eis-form-label">Пароль * (мин. 6)</label><input type="text" class="eis-input" id="cuPassword" required minlength="6" autocomplete="new-password"></div>
                     </div>
-
                     <div class="eis-form-row">
-                        <div class="eis-form-group">
-                            <label class="eis-form-label">ФИО *</label>
-                            <input type="text" class="eis-input" id="cuFullName" placeholder="Иванов Иван Иванович" required>
-                        </div>
+                        <div class="eis-form-group"><label class="eis-form-label">ФИО *</label><input type="text" class="eis-input" id="cuFullName" placeholder="Иванов Иван Иванович" required></div>
                     </div>
-
                     <div class="eis-form-row">
                         <div class="eis-form-group">
                             <label class="eis-form-label">Звание</label>
@@ -158,12 +145,7 @@
                             </select>
                         </div>
                     </div>
-
-                    <div class="eis-form-group">
-                        <label class="eis-form-label">Должность</label>
-                        <input type="text" class="eis-input" id="cuPosition" placeholder="Инспектор ОТНиЭР">
-                    </div>
-
+                    <div class="eis-form-group"><label class="eis-form-label">Должность</label><input type="text" class="eis-input" id="cuPosition" placeholder="Инспектор ОТНиЭР"></div>
                     <div class="eis-auth-error" id="cuError"></div>
                 </form>
             </div>
@@ -182,10 +164,7 @@
                 <span class="eis-modal-form-close" onclick="closeResetPasswordModal()">×</span>
             </div>
             <div class="eis-modal-form-body">
-                <div class="eis-form-group">
-                    <label class="eis-form-label">Новый пароль (мин. 6)</label>
-                    <input type="text" class="eis-input" id="rpNewPassword" required minlength="6">
-                </div>
+                <div class="eis-form-group"><label class="eis-form-label">Новый пароль (мин. 6)</label><input type="text" class="eis-input" id="rpNewPassword" required minlength="6"></div>
                 <div class="eis-auth-error" id="rpError"></div>
             </div>
             <div class="eis-modal-form-footer">
@@ -195,9 +174,9 @@
         </div>
     </div>
 
-    <!-- Модалка подробной информации о логе -->
+    <!-- Модалка деталей лога -->
     <div class="eis-modal-form" id="auditDetailModal">
-        <div class="eis-modal-form-content" style="max-width: 700px;">
+        <div class="eis-modal-form-content" style="max-width: 900px;">
             <div class="eis-modal-form-header">
                 <div>
                     <h3 id="adAction" style="margin: 0;">Действие</h3>
@@ -208,25 +187,46 @@
                 <span class="eis-modal-form-close" onclick="closeAuditDetailModal()">×</span>
             </div>
             <div class="eis-modal-form-body">
+
                 <div class="eis-audit-detail-section">
-                    <div class="eis-audit-detail-title">Основные поля</div>
+                    <div class="eis-audit-detail-title">Контекст операции</div>
                     <div id="adFields"></div>
                 </div>
 
-                <div class="eis-audit-detail-section">
+                <div class="eis-audit-detail-section" id="adChangesSection" style="display:none;">
                     <div class="eis-audit-detail-title">
-                        Дополнительные данные (details)
+                        <span id="adChangesTitle">Что изменилось</span>
+                        <span class="eis-audit-badge-count" id="adChangesCount"></span>
                     </div>
-                    <div id="adDetails" class="eis-audit-detail-json"></div>
+                    <div id="adChanges"></div>
                 </div>
+
+                <div class="eis-audit-detail-section" id="adCreatedSection" style="display:none;">
+                    <div class="eis-audit-detail-title">Созданная запись</div>
+                    <div id="adCreated"></div>
+                </div>
+
+                <div class="eis-audit-detail-section" id="adDeletedSection" style="display:none;">
+                    <div class="eis-audit-detail-title">Удалённая запись</div>
+                    <div id="adDeleted"></div>
+                </div>
+
+                <div class="eis-audit-detail-section" id="adExtraSection" style="display:none;">
+                    <div class="eis-audit-detail-title">Дополнительно</div>
+                    <div id="adExtra"></div>
+                </div>
+
+                <div class="eis-audit-detail-section">
+                    <div class="eis-audit-detail-title" style="cursor:pointer;" onclick="toggleRawAuditJson()">
+                        <span id="adRawToggle">▶</span> Технические данные (JSON)
+                    </div>
+                    <div id="adDetails" class="eis-audit-detail-json" style="display:none;"></div>
+                </div>
+
             </div>
             <div class="eis-modal-form-footer">
-                <button type="button" class="eis-btn eis-btn-secondary" onclick="closeAuditDetailModal()">
-                    Закрыть
-                </button>
-                <button type="button" class="eis-btn eis-btn-primary" id="adCopyBtn">
-                    Скопировать JSON
-                </button>
+                <button type="button" class="eis-btn eis-btn-secondary" onclick="closeAuditDetailModal()">Закрыть</button>
+                <button type="button" class="eis-btn eis-btn-primary" id="adCopyBtn">Скопировать JSON</button>
             </div>
         </div>
     </div>
@@ -240,12 +240,8 @@
             </div>
             <div class="eis-modal-form-body">
                 <input type="hidden" id="euId">
-
                 <div class="eis-form-row">
-                    <div class="eis-form-group">
-                        <label class="eis-form-label">Логин *</label>
-                        <input type="text" class="eis-input" id="euUsername" required autocomplete="off">
-                    </div>
+                    <div class="eis-form-group"><label class="eis-form-label">Логин *</label><input type="text" class="eis-input" id="euUsername" required autocomplete="off"></div>
                     <div class="eis-form-group">
                         <label class="eis-form-label">Роль *</label>
                         <select class="eis-select" id="euRole" required>
@@ -259,12 +255,7 @@
                         </select>
                     </div>
                 </div>
-
-                <div class="eis-form-group">
-                    <label class="eis-form-label">ФИО *</label>
-                    <input type="text" class="eis-input" id="euFullName" placeholder="Иванов Иван Иванович" required>
-                </div>
-
+                <div class="eis-form-group"><label class="eis-form-label">ФИО *</label><input type="text" class="eis-input" id="euFullName" placeholder="Иванов Иван Иванович" required></div>
                 <div class="eis-form-row">
                     <div class="eis-form-group">
                         <label class="eis-form-label">Звание</label>
@@ -284,25 +275,15 @@
                             <option value="Полковник">Полковник</option>
                         </select>
                     </div>
-                    <div class="eis-form-group">
-                        <label class="eis-form-label">Должность</label>
-                        <input type="text" class="eis-input" id="euPosition" placeholder="Инспектор ОТНиЭР">
-                    </div>
+                    <div class="eis-form-group"><label class="eis-form-label">Должность</label><input type="text" class="eis-input" id="euPosition" placeholder="Инспектор ОТНиЭР"></div>
                 </div>
-
                 <div class="eis-auth-error" id="euError"></div>
             </div>
             <div class="eis-modal-form-footer eis-modal-form-footer-split">
-                <button type="button" class="eis-btn eis-btn-danger" onclick="deleteUserFromModal()">
-                    Удалить
-                </button>
+                <button type="button" class="eis-btn eis-btn-danger" onclick="deleteUserFromModal()">Удалить</button>
                 <div class="eis-modal-form-footer-right">
-                    <button type="button" class="eis-btn eis-btn-secondary" onclick="closeEditUserModal()">
-                        Отмена
-                    </button>
-                    <button type="button" class="eis-btn eis-btn-primary" id="euSaveBtn" onclick="saveEditUser()">
-                        Сохранить
-                    </button>
+                    <button type="button" class="eis-btn eis-btn-secondary" onclick="closeEditUserModal()">Отмена</button>
+                    <button type="button" class="eis-btn eis-btn-primary" id="euSaveBtn" onclick="saveEditUser()">Сохранить</button>
                 </div>
             </div>
         </div>
