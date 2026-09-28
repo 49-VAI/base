@@ -97,7 +97,8 @@ async function generateVU() {
         }
 
         if (rank) {
-            fitText(ctx, rank, 218, 149, 341, 30, fontFamily, 'normal', color, 'left', 'italic');
+            const rankLower = rank.charAt(0).toLowerCase() + rank.slice(1);
+            fitText(ctx, rankLower, 218, 149, 341, 30, fontFamily, 'normal', color, 'left', 'italic');
         }
 
         if (lastName) {
