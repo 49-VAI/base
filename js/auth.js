@@ -65,7 +65,13 @@ const FIELD_LABELS = {
 
     username: 'логин', full_name: 'ФИО', position: 'должность', role: 'роль',
     callsign: 'позывной', vehicle_id: 'закреплённая техника',
-    personal_file_name: 'личное дело', in_staff: 'в составе', sort_order: 'порядок'
+    personal_file_name: 'личное дело', in_staff: 'в составе', sort_order: 'порядок',
+
+    scheduled_date: 'дата записи',
+    scheduled_time: 'время записи',
+    plate_number: 'гос. номер ТС',
+    make_model: 'марка, модель',
+    notes: 'примечание',
 };
 
 function fieldLabel(key) { return FIELD_LABELS[key] || key; }

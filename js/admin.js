@@ -452,7 +452,9 @@ function humanizeAction(action) {
         'admin_user_update': 'Редактирование пользователя',
         'admin_user_delete': 'Удаление пользователя',
         'admin_role_change': 'Смена роли',
-        'admin_password_reset': 'Сброс пароля'
+        'admin_password_reset': 'Сброс пароля',
+        'tech_appointment_create': 'Запись на ТО',
+        'tech_appointment_delete': 'Отмена записи на ТО'
     };
     return map[action] || action;
 }
