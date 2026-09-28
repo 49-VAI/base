@@ -49,6 +49,14 @@
                             </div>
 
                             <div class="eis-form-group">
+                                <label class="eis-form-label">Тип службы</label>
+                                <select class="eis-select" id="createServiceType" onchange="generateVU()">
+                                    <option value="srochnaya">Срочная служба</option>
+                                    <option value="kontraktnaya">Контрактная служба</option>
+                                </select>
+                            </div>
+
+                            <div class="eis-form-group">
                                 <label class="eis-form-label">Фамилия</label>
                                 <input type="text" class="eis-input" id="createLastName" placeholder="Иванов" oninput="generateVU()">
                             </div>
@@ -130,6 +138,7 @@
                                 <div class="eis-data-label">Звание</div>
                                 <div class="eis-data-value" id="cvRank">—</div>
                             </div>
+
                             <div class="eis-data-field">
                                 <div class="eis-data-label">Дата выдачи</div>
                                 <div class="eis-data-value" id="cvIssueDate">—</div>

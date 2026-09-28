@@ -19,7 +19,17 @@ const VU_CONFIG = {
         'Гвардии ст. лейтенант': 'backgrounds/starshiy_leytenant.png',
         'Гвардии капитан': 'backgrounds/kapitan.png',
         'Гвардии майор': 'backgrounds/mayor.png'
-    }
+    },
+    // Тип службы → путь к картинке штампа
+    serviceStamps: {
+        'srochnaya': 'backgrounds/stamp_srochnaya.png',
+        'kontraktnaya': 'backgrounds/stamp_kontraktnaya.png'
+    },
+    // Позиция и размер штампа (верхний левый угол + размеры)
+    stampRect: { x: 371, y: 616, w: 216, h: 78 },
+    // Диапазон случайного поворота, градусы
+    stampAngleMin: -7,
+    stampAngleMax: 10
 };
 
 // ========== ВСПОМОГАТЕЛЬНАЯ ФУНКЦИЯ ДЛЯ ТЕКСТА ==========
@@ -43,6 +53,22 @@ function fitText(ctx, text, x, y, maxWidth, initialSize, fontFamily, fontWeight,
     ctx.fillText(text, x, y);
 }
 
+// ========== ПСЕВДОСЛУЧАЙНЫЙ УГОЛ ПОВОРОТА ШТАМПА ==========
+// Одинаковый для одной и той же пары (номер ВУ + фамилия),
+// но выглядит случайным в диапазоне [-7°; +10°].
+function getStampAngle(seed) {
+    const str = String(seed || '');
+    let h = 0;
+    for (let i = 0; i < str.length; i++) {
+        h = ((h << 5) - h) + str.charCodeAt(i);
+        h |= 0;
+    }
+    const t = Math.abs(Math.sin(h) * 10000) % 1;
+    const min = VU_CONFIG.stampAngleMin;
+    const max = VU_CONFIG.stampAngleMax;
+    return (min + t * (max - min)) * Math.PI / 180; // радианы
+}
+
 // ========== ГЕНЕРАЦИЯ ВУ ==========
 async function generateVU() {
     const canvas = document.getElementById('vuCanvas');
@@ -52,6 +78,7 @@ async function generateVU() {
 
     const vuNumber = document.getElementById('createVUNumber').value.trim();
     const rank = document.getElementById('createRank').value;
+    const serviceType = document.getElementById('createServiceType')?.value || '';
     const lastName = document.getElementById('createLastName').value.trim();
     const firstName = document.getElementById('createFirstName').value.trim();
     const middleName = document.getElementById('createMiddleName').value.trim();
@@ -137,6 +164,31 @@ async function generateVU() {
             }
         }
     }
+
+    // ========== ШТАМП «СРОЧНАЯ / КОНТРАКТНАЯ» ==========
+    if (serviceType && VU_CONFIG.serviceStamps[serviceType]) {
+        try {
+            const stampImg = await loadImage(VU_CONFIG.serviceStamps[serviceType]);
+            const { x, y, w, h } = VU_CONFIG.stampRect;
+
+            // Центр штампа — вокруг него вращаем
+            const cx = x + w / 2;
+            const cy = y + h / 2;
+
+            // Детерминированный «случайный» угол
+            const seed = (vuNumber || '') + '|' + (lastName || '');
+            const angle = getStampAngle(seed);
+
+            ctx.save();
+            ctx.translate(cx, cy);
+            ctx.rotate(angle);
+            ctx.globalAlpha = 0.9;
+            ctx.drawImage(stampImg, -w / 2, -h / 2, w, h);
+            ctx.restore();
+        } catch (error) {
+            console.warn('Ошибка загрузки штампа:', error);
+        }
+    }
 }
 
 // ================================================================
@@ -151,6 +203,7 @@ async function saveVU() {
 
     const vuNumber = document.getElementById('createVUNumber').value.trim();
     const rank = document.getElementById('createRank').value;
+    const serviceType = document.getElementById('createServiceType')?.value || '';
     const lastName = document.getElementById('createLastName').value.trim();
     const firstName = document.getElementById('createFirstName').value.trim();
     const middleName = document.getElementById('createMiddleName').value.trim();
@@ -174,6 +227,7 @@ async function saveVU() {
     const preview = {
         vuNumber,
         rank,
+        serviceType,
         fio,
         lastName,
         firstName,
@@ -218,6 +272,14 @@ function openConfirmVUModal(preview) {
     document.getElementById('cvIssueDate').textContent = formatDateForDisplay(preview.issueDate);
     document.getElementById('cvExpiryDate').textContent = formatDateForDisplay(preview.expiryDate);
     document.getElementById('cvIssuedBy').textContent = preview.issuedBy;
+
+    const cvService = document.getElementById('cvServiceType');
+    if (cvService) {
+        cvService.textContent =
+            preview.serviceType === 'srochnaya' ? 'Срочная служба' :
+                preview.serviceType === 'kontraktnaya' ? 'Контрактная служба' :
+                    '—';
+    }
 
     const img = document.getElementById('cvPhoto');
     if (img) {
