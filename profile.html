@@ -26,6 +26,15 @@
                             <span class="eis-panel-title">Профиль</span>
                         </div>
                         <div class="eis-panel-body">
+                            <div class="eis-profile-identity">
+                                <div class="eis-profile-avatar" id="profAvatar">—</div>
+                                <div class="eis-profile-identity-info">
+                                    <div class="eis-profile-name" id="profNameShort">—</div>
+                                    <div class="eis-profile-role" id="profRoleShort">—</div>
+                                </div>
+                                <div class="eis-profile-epaulette" id="profEpaulette"></div>
+                            </div>
+
                             <div class="eis-form-group">
                                 <label class="eis-form-label">Логин</label>
                                 <input type="text" class="eis-input" id="profUsername" readonly>
@@ -36,44 +45,89 @@
                                 <input type="text" class="eis-input" id="profFullName" readonly>
                             </div>
 
-                            <div class="eis-form-group">
-                                <label class="eis-form-label">Звание</label>
-                                <input type="text" class="eis-input" id="profRank" readonly>
+                            <div class="eis-form-row">
+                                <div class="eis-form-group">
+                                    <label class="eis-form-label">Звание</label>
+                                    <input type="text" class="eis-input" id="profRank" readonly>
+                                </div>
+                                <div class="eis-form-group">
+                                    <label class="eis-form-label">Позывной</label>
+                                    <input type="text" class="eis-input" id="profCallsign" readonly>
+                                </div>
                             </div>
 
-                            <div class="eis-form-group">
-                                <label class="eis-form-label">Должность</label>
-                                <input type="text" class="eis-input" id="profPosition" readonly>
+                           
+
+                            <div class="eis-form-row">
+                                <div class="eis-form-group">
+                                    <label class="eis-form-label">Отдел</label>
+                                    <input type="text" class="eis-input" id="profDepartment" readonly>
+                                </div>
+                                <div class="eis-form-group">
+                                    <label class="eis-form-label">Должность</label>
+                                    <input type="text" class="eis-input" id="profPosition" readonly>
+                                </div>
                             </div>
 
-                            <div class="eis-form-group">
-                                <label class="eis-form-label">Подразделение</label>
-                                <input type="text" class="eis-input" id="profVaiUnit" readonly>
+                            <div class="eis-form-group" id="profVehicleGroup" style="display:none;">
+                                <label class="eis-form-label">Закреплённая техника</label>
+                                <div class="eis-profile-vehicle">
+                                    <div class="eis-profile-vehicle-make" id="profVehicleMake">—</div>
+                                    <div class="eis-profile-vehicle-plate" id="profVehiclePlate"></div>
+                                </div>
                             </div>
                         </div>
                     </div>
 
-                    <!-- Смена пароля -->
-                    <div class="eis-panel">
-                        <div class="eis-panel-header">
-                            <span class="eis-panel-title">Смена пароля</span>
+                    <div>
+                        <!-- Личное дело -->
+                        <div class="eis-panel" id="profPersonalFilePanel" style="display:none;">
+                            <div class="eis-panel-header">
+                                <span class="eis-panel-title">Личное дело</span>
+                            </div>
+                            <div class="eis-panel-body">
+                                <div class="eis-profile-pdf">
+                                    <div class="eis-profile-pdf-icon">📄</div>
+                                    <div class="eis-profile-pdf-info">
+                                        <div class="eis-profile-pdf-title" id="profPdfName">Личное дело.pdf</div>
+                                        <div class="eis-profile-pdf-sub">PDF документ</div>
+                                    </div>
+                                </div>
+                                <div class="eis-actions-bar" style="margin-top:14px; margin-bottom:0;">
+                                    <a class="eis-btn eis-btn-primary" id="profPdfOpen" href="#" target="_blank" rel="noopener">
+                                        Открыть
+                                    </a>
+                                    <a class="eis-btn eis-btn-secondary" id="profPdfDownload" href="#" download>
+                                        Скачать
+                                    </a>
+                                </div>
+                            </div>
                         </div>
-                        <div class="eis-panel-body">
-                            <form id="passwordForm">
-                                <div class="eis-form-group">
-                                    <label class="eis-form-label">Новый пароль</label>
-                                    <input type="password" class="eis-input" id="newPassword" minlength="6" required autocomplete="new-password">
-                                </div>
 
-                                <div class="eis-form-group">
-                                    <label class="eis-form-label">Повтор пароля</label>
-                                    <input type="password" class="eis-input" id="newPassword2" minlength="6" required autocomplete="new-password">
-                                </div>
+                        <!-- Смена пароля -->
+                        <div class="eis-panel">
+                            <div class="eis-panel-header">
+                                <span class="eis-panel-title">Смена пароля</span>
+                            </div>
+                            <div class="eis-panel-body">
+                                <form id="passwordForm">
+                                    <div class="eis-form-group">
+                                        <label class="eis-form-label">Новый пароль</label>
+                                        <input type="password" class="eis-input" id="newPassword"
+                                               minlength="6" required autocomplete="new-password">
+                                    </div>
 
-                                <div class="eis-auth-error" id="passwordError"></div>
+                                    <div class="eis-form-group">
+                                        <label class="eis-form-label">Повтор пароля</label>
+                                        <input type="password" class="eis-input" id="newPassword2"
+                                               minlength="6" required autocomplete="new-password">
+                                    </div>
 
-                                <button type="submit" class="eis-btn eis-btn-primary">Сменить пароль</button>
-                            </form>
+                                    <div class="eis-auth-error" id="passwordError"></div>
+
+                                    <button type="submit" class="eis-btn eis-btn-primary">Сменить пароль</button>
+                                </form>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -90,21 +144,124 @@
     <script src="js/auth.js"></script>
     <script src="js/guard.js"></script>
     <script>
-        // Ждём, пока guard загрузит профиль
+        // ============ ДАННЫЕ ТЕХНИКИ И ПОГОНОВ ============
+        const VEHICLES = [
+            { id: '0149mp99', make: 'Skoda Octavia', plate: '0149 MP 99', image: 'images/plates/0149mp99.png' },
+            { id: '0267mp99', make: 'Skoda Octavia', plate: '0267 MP 99', image: 'images/plates/0267mp99.png' },
+            { id: '0167mp99', make: 'Haval F7', plate: '0167 MP 99', image: 'images/plates/0167mp99.png' },
+            { id: '0249mp99', make: 'Haval F7', plate: '0249 MP 99', image: 'images/plates/0249mp99.png' }
+        ];
+
+        const RANK_IMAGES = {
+            'Ефрейтор': 'images/epaulettes/efreytor.png',
+            'Мл. сержант': 'images/epaulettes/ml_serzhant.png',
+            'Сержант': 'images/epaulettes/serzhant.png',
+            'Ст. сержант': 'images/epaulettes/st_serzhant.png',
+            'Старшина': 'images/epaulettes/starshina.png',
+            'Прапорщик': 'images/epaulettes/praporshchik.png',
+            'Ст. прапорщик': 'images/epaulettes/st_praporshchik.png',
+            'Лейтенант': 'images/epaulettes/leytenant.png',
+            'Ст. лейтенант': 'images/epaulettes/st_leytenant.png',
+            'Капитан': 'images/epaulettes/kapitan.png',
+            'Майор': 'images/epaulettes/mayor.png',
+            'Подполковник': 'images/epaulettes/podpolkovnik.png',
+            'Полковник': 'images/epaulettes/polkovnik.png'
+        };
+
+        const DEPT_LABELS = {
+            'command': 'Командование',
+            'odps': 'ОДПС',
+            'reo': 'РЭО',
+            'cuipp': 'ЦУиПП',
+            'cadets': 'Курсанты',
+            'other': 'Прочие'
+        };
+
+        const ROLE_TO_DEPT = {
+            'chief_vai': 'command',
+            'chief_odps': 'odps',
+            'inspector_odps': 'odps',
+            'chief_reo': 'reo',
+            'inspector_reo': 'reo',
+            'chief_cuipp': 'cuipp',
+            'cadet': 'cadets'
+        };
+
+        function initials(fio) {
+            if (!fio) return '—';
+            const p = String(fio).trim().split(/\s+/);
+            return p.slice(0, 2).map(x => (x[0] || '').toUpperCase()).join('');
+        }
+
+        function esc(s) {
+            if (s == null) return '';
+            return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+        }
+
         document.addEventListener('user-ready', (e) => {
-            const profile = e.detail;
+            const p = e.detail;
             const user = window.currentUser;
 
-            document.getElementById('profUsername').value = profile.username || '';
-            document.getElementById('profFullName').value = profile.full_name || '';
-            document.getElementById('profRank').value = profile.rank || '';
-            document.getElementById('profPosition').value = profile.position || '—';
-            document.getElementById('profVaiUnit').value = profile.vai_unit || '';
-            document.getElementById('profRole').value = ROLE_LABELS[profile.role] || profile.role;
-            document.getElementById('profEmail').value = user?.email || '';
+            const setVal = (id, v) => {
+                const el = document.getElementById(id);
+                if (el) el.value = v || '';
+            };
+
+            setVal('profUsername', p.username);
+            setVal('profFullName', p.full_name);
+            setVal('profRank', p.rank);
+            setVal('profCallsign', p.callsign);
+            setVal('profPosition', p.position);
+
+            const dept = p.department || ROLE_TO_DEPT[p.role] || 'other';
+            setVal('profDepartment', DEPT_LABELS[dept] || dept);
+
+            // Аватар + шапка
+            document.getElementById('profAvatar').textContent = initials(p.full_name);
+            document.getElementById('profNameShort').textContent = p.full_name || p.username || '—';
+            const posText = p.position || ROLE_LABELS[p.role] || p.role || '';
+            document.getElementById('profRoleShort').textContent =
+                p.rank && posText ? `${p.rank} · ${posText}` : (p.rank || posText);
+
+            // Погон
+            const rankImg = RANK_IMAGES[p.rank];
+            document.getElementById('profEpaulette').innerHTML = rankImg
+                ? `<img src="${rankImg}" alt="${esc(p.rank)}" class="eis-epaulette-img"
+                            onerror="this.style.display='none'">`
+                : '';
+
+            // Машина
+            const veh = VEHICLES.find(v => v.id === p.vehicle_id);
+            if (veh) {
+                document.getElementById('profVehicleGroup').style.display = '';
+                document.getElementById('profVehicleMake').textContent = veh.make;
+                document.getElementById('profVehiclePlate').innerHTML =
+                    `<img src="${veh.image}" alt="${esc(veh.plate)}" class="eis-plate-img"
+                              onerror="this.style.display='none'">`;
+            } else {
+                document.getElementById('profVehicleGroup').style.display = 'none';
+            }
+
+            // Личное дело
+            if (p.personal_file_url) {
+                document.getElementById('profPersonalFilePanel').style.display = '';
+                document.getElementById('profPdfName').textContent =
+                    p.personal_file_name || 'Личное дело.pdf';
+
+                const openLink = document.getElementById('profPdfOpen');
+                openLink.href = p.personal_file_url;
+
+                const dlLink = document.getElementById('profPdfDownload');
+                dlLink.href = p.personal_file_url;
+                dlLink.download = p.personal_file_name ||
+                    `Личное_дело_${p.full_name || p.username}.pdf`;
+            } else {
+                document.getElementById('profPersonalFilePanel').style.display = 'none';
+            }
         });
 
-        // Смена пароля
+        // ============ СМЕНА ПАРОЛЯ ============
         document.getElementById('passwordForm').addEventListener('submit', async (e) => {
             e.preventDefault();
 

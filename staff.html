@@ -1,0 +1,175 @@
+﻿<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Состав — ЕИС ВАИ</title>
+    <link rel="icon" type="image/png" href="images/favicon.png">
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <div class="eis-wrapper">
+        <div id="site-header"></div>
+        <div id="site-nav"></div>
+
+        <main class="eis-main">
+            <div class="eis-container">
+                <div class="eis-page-header">
+                    <h1 class="eis-page-title">Состав подразделения</h1>
+                    <div class="eis-page-subtitle">Личные дела, позывные и закреплённая техника</div>
+                </div>
+
+                <div class="eis-panel">
+                    <div class="eis-panel-header">
+                        <span class="eis-panel-title">Личный состав</span>
+                        <div class="eis-panel-actions">
+                            <button class="eis-btn eis-btn-sm eis-btn-primary" onclick="openManageStaffModal()">
+                                + Управление составом
+                            </button>
+                            <button class="eis-btn eis-btn-sm eis-btn-secondary" onclick="loadStaff()">
+                                Обновить
+                            </button>
+                        </div>
+                    </div>
+                    <div class="eis-panel-body">
+                        <div id="staffContainer">
+                            <div class="eis-loading">
+                                <div class="eis-spinner"></div>
+                                <span>Загрузка состава...</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+
+        <div id="site-footer"></div>
+    </div>
+
+    <!-- ============ МОДАЛКА РЕДАКТИРОВАНИЯ ЛИЧНОГО ДЕЛА ============ -->
+    <div class="eis-modal-form" id="staffModal">
+        <div class="eis-modal-form-content" style="max-width: 640px;">
+            <div class="eis-modal-form-header">
+                <h3>Личное дело сотрудника</h3>
+                <span class="eis-modal-form-close" onclick="closeStaffModal()">×</span>
+            </div>
+            <div class="eis-modal-form-body">
+                <input type="hidden" id="sfId">
+
+                <div class="eis-staff-modal-head">
+                    <div class="eis-staff-avatar-lg" id="sfAvatar">—</div>
+                    <div class="eis-staff-modal-info">
+                        <div class="eis-staff-modal-name" id="sfName">—</div>
+                        <div class="eis-staff-modal-pos" id="sfPosition">—</div>
+                        <div class="eis-staff-modal-rank" id="sfRankLine">—</div>
+                    </div>
+                    <div class="eis-staff-modal-epaulette" id="sfEpaulette"></div>
+                </div>
+
+                <div class="eis-form-row">
+                    <div class="eis-form-group">
+                        <label class="eis-form-label">Позывной</label>
+                        <input type="text" class="eis-input" id="sfCallsign" maxlength="30"
+                               placeholder="Например: Сокол" autocomplete="off">
+                    </div>
+                    <div class="eis-form-group">
+                        <label class="eis-form-label">Отдел</label>
+                        <select class="eis-select" id="sfDepartment">
+                            <option value="">— Не задан —</option>
+                            <option value="command">Командование</option>
+                            <option value="odps">ОДПС</option>
+                            <option value="reo">РЭО</option>
+                            <option value="cuipp">ЦУиПП</option>
+                            <option value="cadets">Курсанты</option>
+                            <option value="other">Прочие</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="eis-form-group">
+                    <label class="eis-form-label">Закреплённая техника</label>
+                    <select class="eis-select" id="sfVehicle" onchange="updateStaffPlatePreview()">
+                        <option value="">— Не закреплена —</option>
+                    </select>
+                    <div class="eis-staff-plate-preview" id="sfPlatePreview"></div>
+                </div>
+
+                <div class="eis-form-group">
+                    <label class="eis-form-label">Личное дело (PDF)</label>
+                    <div class="eis-staff-pdf-current" id="sfPdfCurrent"></div>
+                    <div class="eis-staff-pdf-row">
+                        <input type="file" class="eis-file-input" id="sfPdfInput"
+                               accept="application/pdf" onchange="onStaffPdfSelected(this)">
+                    </div>
+                    <div class="eis-staff-pdf-hint">
+                        Максимум 20 МБ. Только PDF. Старый файл удаляется автоматически.
+                    </div>
+                </div>
+
+                <div class="eis-auth-error" id="sfError"></div>
+            </div>
+            <div class="eis-modal-form-footer">
+                <button type="button" class="eis-btn eis-btn-secondary" onclick="closeStaffModal()">Отмена</button>
+                <button type="button" class="eis-btn eis-btn-primary" id="sfSaveBtn" onclick="saveStaff()">Сохранить</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ============ МОДАЛКА УПРАВЛЕНИЯ СОСТАВОМ ============ -->
+    <div class="eis-modal-form" id="manageStaffModal">
+        <div class="eis-modal-form-content" style="max-width: 720px;">
+            <div class="eis-modal-form-header">
+                <h3>Управление составом</h3>
+                <span class="eis-modal-form-close" onclick="closeManageStaffModal()">×</span>
+            </div>
+            <div class="eis-modal-form-body">
+                <div class="eis-manage-hint">
+                    Отметьте сотрудников, которые должны отображаться в составе подразделения.
+                </div>
+                <div class="eis-manage-search">
+                    <input type="text" class="eis-input" id="manageStaffSearch"
+                           placeholder="Поиск по ФИО, логину, званию..."
+                           oninput="renderManageStaffList()">
+                </div>
+                <div id="manageStaffList" class="eis-manage-list"></div>
+            </div>
+            <div class="eis-modal-form-footer">
+                <div class="eis-manage-counter" id="manageStaffCounter">Выбрано: 0</div>
+                <div class="eis-modal-form-footer-right" style="margin-left:auto;">
+                    <button type="button" class="eis-btn eis-btn-secondary" onclick="closeManageStaffModal()">Отмена</button>
+                    <button type="button" class="eis-btn eis-btn-primary" id="manageSaveBtn" onclick="saveManageStaff()">
+                        Сохранить
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ============ МОДАЛКА ПРОСМОТРА PDF ============ -->
+    <div class="eis-modal-form" id="staffPdfModal">
+        <div class="eis-modal-form-content" style="max-width: 1100px; width: 95vw; height: 92vh;">
+            <div class="eis-modal-form-header">
+                <h3 id="pdfTitle">Личное дело</h3>
+                <span class="eis-modal-form-close" onclick="closeStaffPdfModal()">×</span>
+            </div>
+            <div class="eis-modal-form-body" style="padding: 0; display: flex; flex-direction: column; overflow: hidden;">
+                <iframe id="pdfFrame" src="about:blank"
+                        style="flex: 1; width: 100%; border: 0; background: #525659;"></iframe>
+            </div>
+            <div class="eis-modal-form-footer">
+                <a class="eis-btn eis-btn-secondary" id="pdfDownloadLink" href="#" download>Скачать PDF</a>
+                <button class="eis-btn eis-btn-primary" type="button" onclick="closeStaffPdfModal()">Закрыть</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="js/layout.js"></script>
+    <script src="js/toast.js"></script>
+    <script src="js/supabase.js"></script>
+    <script src="js/auth.js"></script>
+    <script src="js/guard.js"></script>
+    <script src="js/main.js"></script>
+    <script src="js/staff.js"></script>
+</body>
+</html>

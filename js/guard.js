@@ -4,6 +4,7 @@
 
 const PAGE_ACCESS = {
     'admin.html': ['chief_vai'],
+    'staff.html': ['chief_odps', 'chief_reo', 'chief_cuipp', 'chief_vai'],
     'create.html': ['inspector_odps', 'inspector_reo',
         'chief_odps', 'chief_reo', 'chief_cuipp', 'chief_vai'],
     'exam.html': ['inspector_odps', 'inspector_reo',
@@ -64,11 +65,11 @@ async function runGuard() {
 
     updateHeader(profile);
     addAdminMenuItem(profile);
+    addStaffMenuItem(profile);
 
     document.documentElement.setAttribute('data-authenticated', 'true');
     document.dispatchEvent(new CustomEvent('user-ready', { detail: profile }));
 
-    // Показать flash-сообщение (если было)
     const flash = sessionStorage.getItem('flash_message');
     if (flash) {
         const flashType = sessionStorage.getItem('flash_message_type') || 'info';
@@ -80,31 +81,21 @@ async function runGuard() {
 
 function shortName(fullName) {
     if (!fullName) return '';
-
     const parts = String(fullName).trim().split(/\s+/);
     if (parts.length === 0) return '';
-
     const lastName = parts[0];
     const initials = [];
-
     if (parts[1]) initials.push(parts[1][0].toUpperCase() + '.');
     if (parts[2]) initials.push(parts[2][0].toUpperCase() + '.');
-
-    return initials.length > 0
-        ? `${lastName} ${initials.join('')}`
-        : lastName;
+    return initials.length > 0 ? `${lastName} ${initials.join('')}` : lastName;
 }
 
 function updateHeader(profile) {
     const roleEl = document.querySelector('.eis-user-role');
     const nameEl = document.querySelector('.eis-user-name');
 
-    if (roleEl) {
-        roleEl.textContent = profile.position || ROLE_LABELS[profile.role] || profile.role;
-    }
-    if (nameEl) {
-        nameEl.textContent = `${profile.rank} ${shortName(profile.full_name)}`;
-    }
+    if (roleEl) roleEl.textContent = profile.position || ROLE_LABELS[profile.role] || profile.role;
+    if (nameEl) nameEl.textContent = `${profile.rank} ${shortName(profile.full_name)}`;
 
     const headerRight = document.querySelector('.eis-header-right');
     if (!headerRight) return;
@@ -145,13 +136,52 @@ function updateHeader(profile) {
     }
 }
 
-function addAdminMenuItem(profile) {
-    if (profile.role !== 'chief_vai') return;
+// ================================================================
+// ХЕЛПЕР: проверка, есть ли уже динамический пункт в навигации
+// ================================================================
+function hasDynamicNavItem(page) {
+    const navMenu = document.querySelector('.eis-nav-menu');
+    if (!navMenu) return false;
+    // Ищем li с data-page, исключая статические (у которых есть id вида navXxxItem)
+    return !!navMenu.querySelector(`li[data-page="${page}"]:not([id])`);
+}
 
+// ================================================================
+// УБИРАЕМ СТАТИЧЕСКИЕ СКРЫТЫЕ ПУНКТЫ (на случай, если остались)
+// ================================================================
+function removeStaleNavItems() {
     const navMenu = document.querySelector('.eis-nav-menu');
     if (!navMenu) return;
 
-    if (document.querySelector('a[href="admin.html"]')) return;
+    // Если в nav.html случайно остался статический <li id="navStaffItem"> —
+    // удаляем его, чтобы не мешал проверкам
+    const stale = navMenu.querySelector('#navStaffItem');
+    if (stale) {
+        console.warn('[guard] Удаляю статический #navStaffItem из nav.html');
+        stale.remove();
+    }
+}
+
+// ================================================================
+// ПУНКТ «АДМИН-ПАНЕЛЬ» — только для Начальника ВАИ
+// ================================================================
+function addAdminMenuItem(profile) {
+
+    if (profile.role !== 'chief_vai') {
+        return;
+    }
+
+    removeStaleNavItems();
+
+    const navMenu = document.querySelector('.eis-nav-menu');
+    if (!navMenu) {
+        console.warn('[guard] addAdminMenuItem: .eis-nav-menu не найден');
+        return;
+    }
+
+    if (hasDynamicNavItem('admin.html')) {
+        return;
+    }
 
     const li = document.createElement('li');
     li.className = 'eis-nav-item';
@@ -161,14 +191,64 @@ function addAdminMenuItem(profile) {
         li.classList.add('active');
     }
 
-    li.innerHTML = `
-        <a href="admin.html">
-            <span>Админ-панель</span>
-        </a>
-    `;
+    li.innerHTML = `<a href="admin.html"><span>Админ-панель</span></a>`;
+    navMenu.appendChild(li);
+
+}
+
+// ================================================================
+// ПУНКТ «СОСТАВ» — для всего начальства
+// ================================================================
+function addStaffMenuItem(profile) {
+
+    const chiefRoles = ['chief_odps', 'chief_reo', 'chief_cuipp', 'chief_vai'];
+    if (!chiefRoles.includes(profile.role)) {
+        return;
+    }
+
+    removeStaleNavItems();
+
+    const navMenu = document.querySelector('.eis-nav-menu');
+    if (!navMenu) {
+        console.warn('[guard] addStaffMenuItem: .eis-nav-menu не найден');
+        return;
+    }
+
+    if (hasDynamicNavItem('staff.html')) {
+        return;
+    }
+
+    const li = document.createElement('li');
+    li.className = 'eis-nav-item';
+    li.dataset.page = 'staff.html';
+
+    if (window.location.pathname.endsWith('staff.html')) {
+        li.classList.add('active');
+    }
+
+    li.innerHTML = `<a href="staff.html"><span>Состав</span></a>`;
+
+    // Перед «Админ-панель», если она есть
+    const adminItem = navMenu.querySelector('li[data-page="admin.html"]:not([id])');
+    if (adminItem) {
+        navMenu.insertBefore(li, adminItem);
+        return;
+    }
+
+    // Иначе — перед «Оформление ДТП»
+    const dtpItem = navMenu.querySelector('li[data-page="dtp.html"]:not([id])');
+    if (dtpItem) {
+        navMenu.insertBefore(li, dtpItem);
+        return;
+    }
 
     navMenu.appendChild(li);
 }
 
 window.ROLE_LABELS = ROLE_LABELS;
 window.PAGE_ACCESS = PAGE_ACCESS;
+window.addAdminMenuItem = addAdminMenuItem;
+window.addStaffMenuItem = addStaffMenuItem;
+window.runGuard = runGuard;
+window.updateHeader = updateHeader;
+window.shortName = shortName;

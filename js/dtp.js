@@ -1260,18 +1260,6 @@ function saveDTPPage2() {
     showToast('Страница 2 скачана', 'success');
 }
 
-function saveDTPBoth() {
-    saveDTPPage1();
-    setTimeout(saveDTPPage2, 600);
-}
-
-function saveDTPAll() {
-    saveDTPPage1();
-    setTimeout(saveDTPPage2, 600);
-    setTimeout(saveDTPPage3, 1200);
-    showToast('Скачивание 3 страниц...', 'info');
-}
-
 function saveDTPPage3() {
     const canvas = document.getElementById('dtpCanvas3');
     if (!canvas || canvas.width === 0) { showToast('Холст пуст', 'error'); return; }
@@ -1283,6 +1271,125 @@ function saveDTPPage3() {
     link.href = canvas.toDataURL('image/png');
     link.click();
     showToast('План-схема скачана', 'success');
+}
+
+// ================================================================
+// СКАЧИВАНИЕ ВСЕХ СТРАНИЦ АРХИВОМ (.zip)
+// ================================================================
+async function saveDTPBoth() {
+    await saveDTPAll();
+}
+
+async function saveDTPAll() {
+    // Проверяем наличие JSZip
+    if (typeof JSZip === 'undefined') {
+        showToast('Ошибка: библиотека JSZip не загружена', 'error');
+        // Откат к последовательному скачиванию
+        saveDTPPage1();
+        setTimeout(saveDTPPage2, 600);
+        setTimeout(saveDTPPage3, 1200);
+        return;
+    }
+
+    const canvas1 = document.getElementById('dtpCanvas1');
+    const canvas2 = document.getElementById('dtpCanvas2');
+    const canvas3 = document.getElementById('dtpCanvas3');
+
+    if (!canvas1 || canvas1.width === 0) { showToast('Холст стр.1 пуст', 'error'); return; }
+
+    const num = getFieldValueDTP('dtpNumber') || 'ДТП';
+    const safe = num.replace(/[\\/:*?"<>|]/g, '_');
+
+    // Меняем кнопку на состояние "Сохранение..."
+    const btns = document.querySelectorAll('.eis-actions-bar .eis-btn');
+    let archiveBtn = null;
+    btns.forEach(b => {
+        if (b.textContent.includes('Скачать все страницы') || b.textContent.includes('Скачать обе')) {
+            archiveBtn = b;
+        }
+    });
+
+    const origText = archiveBtn ? archiveBtn.textContent : '';
+    if (archiveBtn) {
+        archiveBtn.disabled = true;
+        archiveBtn.textContent = 'Формирование архива...';
+    }
+
+    try {
+        // Подписи временно отключаем, чтобы рамки редактирования не попали на бланк
+        const wasActive = {};
+        if (typeof signatureData !== 'undefined') {
+            for (const type of ['driverA', 'driverB', 'p2Officer']) {
+                if (signatureData[type]) {
+                    wasActive[type] = signatureData[type].active;
+                    signatureData[type].active = false;
+                }
+            }
+        }
+
+        // Перерисовываем бланки без рамок подписей
+        await generateDTP();
+
+        const zip = new JSZip();
+
+        // Функция: canvas → blob PNG
+        const canvasToBlob = (canvas) => new Promise((resolve, reject) => {
+            canvas.toBlob(blob => {
+                if (blob) resolve(blob);
+                else reject(new Error('Не удалось получить PNG'));
+            }, 'image/png');
+        });
+
+        // Добавляем страницы в архив
+        const blob1 = await canvasToBlob(canvas1);
+        zip.file(`ДТП_${safe}_стр1.png`, blob1);
+
+        if (canvas2 && canvas2.width > 0) {
+            const blob2 = await canvasToBlob(canvas2);
+            zip.file(`ДТП_${safe}_стр2.png`, blob2);
+        }
+
+        if (canvas3 && canvas3.width > 0) {
+            const blob3 = await canvasToBlob(canvas3);
+            zip.file(`ДТП_${safe}_схема.png`, blob3);
+        }
+
+        // Генерируем zip
+        const zipBlob = await zip.generateAsync({
+            type: 'blob',
+            compression: 'DEFLATE',
+            compressionOptions: { level: 6 }
+        });
+
+        // Восстанавливаем подписи
+        if (typeof signatureData !== 'undefined') {
+            for (const type of ['driverA', 'driverB', 'p2Officer']) {
+                if (signatureData[type]) signatureData[type].active = wasActive[type];
+            }
+        }
+        await generateDTP();
+
+        // Скачиваем
+        const url = URL.createObjectURL(zipBlob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = `ДТП_${safe}.zip`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        setTimeout(() => URL.revokeObjectURL(url), 1000);
+
+        showToast(`Архив ДТП_${safe}.zip скачан`, 'success');
+
+    } catch (e) {
+        console.error('[saveDTPAll]', e);
+        showToast('Ошибка формирования архива: ' + e.message, 'error');
+    } finally {
+        if (archiveBtn) {
+            archiveBtn.disabled = false;
+            archiveBtn.textContent = origText;
+        }
+    }
 }
 
 // ================================================================
@@ -1786,16 +1893,16 @@ function p3UpdateToolbarState() {
 window.generateDTP = generateDTP;
 window.saveDTPPage1 = saveDTPPage1;
 window.saveDTPPage2 = saveDTPPage2;
+window.saveDTPPage3 = saveDTPPage3;
 window.saveDTPBoth = saveDTPBoth;
+window.saveDTPAll = saveDTPAll;
 window.toggleDrawingMode = toggleDrawingMode;
 window.clearDtpDrawing = clearDtpDrawing;
 window.onGibddChange = onGibddChange;
 window.onP2CanMoveChange = onP2CanMoveChange;
-window.saveDTPPage3 = saveDTPPage3;
 window.drawDTPPage3Content = drawDTPPage3Content;
 window.p3SetTool = p3SetTool;
 window.p3Undo = p3Undo;
 window.p3Redo = p3Redo;
 window.p3ClearAll = p3ClearAll;
 window.drawDTPPage2Content = drawDTPPage2Content;
-window.saveDTPAll = saveDTPAll;

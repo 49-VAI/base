@@ -3144,3 +3144,670 @@ textarea {
     .eis-draw-toolbar.is-disabled .eis-btn {
         cursor: not-allowed;
     }
+
+    /* ================================================================
+   СОСТАВ ПОДРАЗДЕЛЕНИЯ — ЕИС ВАИ v2
+   ================================================================ */
+
+/* ---------- Блок отдела ---------- */
+.eis-staff-dept {
+    margin-bottom: 28px;
+}
+.eis-staff-dept:last-child { margin-bottom: 0; }
+
+.eis-staff-dept-head {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 12px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid #eceff2;
+}
+
+.eis-staff-dept-bar {
+    width: 4px;
+    height: 18px;
+    border-radius: 2px;
+}
+
+.eis-staff-dept-title {
+    font-size: 13px;
+    font-weight: 700;
+    color: #1c2a20;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+}
+
+.eis-staff-dept-count {
+    margin-left: auto;
+    font-size: 12px;
+    font-weight: 600;
+    color: #6b7e6e;
+    background: #f0f2f5;
+    padding: 2px 10px;
+    border-radius: 12px;
+    font-family: var(--eis-font-mono);
+}
+
+/* ---------- Список строк ---------- */
+.eis-staff-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+/* ---------- Строка сотрудника ---------- */
+.eis-staff-row {
+    display: grid;
+    grid-template-columns: 4px 64px minmax(180px, 1.4fr) auto minmax(200px, 1fr) auto;
+    align-items: center;
+    gap: 18px;
+    background: #fff;
+    border: 1px solid #e4e8ec;
+    border-radius: 8px;
+    padding: 12px 16px 12px 0;
+    padding-left: 0;
+    position: relative;
+    transition: border-color .15s, box-shadow .15s;
+    overflow: hidden;
+}
+
+.eis-staff-row:hover {
+    border-color: #c8d3cc;
+    box-shadow: 0 4px 16px rgba(20, 40, 25, 0.06);
+}
+
+.eis-staff-row.is-me {
+    border-color: #2e7d32;
+    background: #fbfdfb;
+    box-shadow: 0 0 0 3px rgba(46, 125, 50, 0.06);
+}
+
+.eis-staff-row-bar {
+    align-self: stretch;
+    border-radius: 0;
+}
+
+/* Аватар */
+.eis-staff-row-avatar {
+    width: 56px;
+    height: 56px;
+    border-radius: 8px;
+    background: #1f2a22;
+    color: #e8efe9;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    border: 1px solid #2e3a31;
+    flex-shrink: 0;
+}
+
+/* Инфо */
+.eis-staff-row-info { min-width: 0; }
+
+.eis-staff-row-name {
+    font-size: 15px;
+    font-weight: 700;
+    color: #16211a;
+    line-height: 1.25;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.eis-staff-row-me {
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    color: #fff;
+    background: #2e7d32;
+    padding: 2px 7px;
+    border-radius: 3px;
+}
+
+.eis-staff-row-rank {
+    font-size: 11px;
+    font-weight: 700;
+    color: #2e7d32;
+    text-transform: uppercase;
+    letter-spacing: 0.6px;
+    margin-top: 2px;
+}
+
+.eis-staff-row-pos {
+    font-size: 12.5px;
+    color: #6b7280;
+    line-height: 1.3;
+    margin-top: 1px;
+}
+
+/* Погон */
+.eis-staff-row-epaulette {
+    width: 44px;
+    height: 84px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.eis-epaulette-img {
+    max-width: 100%;
+    max-height: 84px;
+    width: auto;
+    height: auto;
+    object-fit: contain;
+    filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.12));
+}
+
+/* Правая доп. инфа */
+.eis-staff-row-extra {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    min-width: 0;
+}
+
+.eis-staff-row-callsign {
+    display: inline-flex;
+    align-items: baseline;
+    gap: 6px;
+    padding: 4px 10px;
+    background: #f0f7f2;
+    border: 1px solid #d7e8dc;
+    border-radius: 6px;
+    font-size: 12px;
+    align-self: flex-start;
+    max-width: 100%;
+}
+
+.eis-staff-row-callsign.is-empty {
+    background: #f7f8f9;
+    border-color: #e6e9ec;
+    color: #9aa3ac;
+    font-style: italic;
+}
+
+.eis-staff-row-callsign-label {
+    font-size: 9.5px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: #6b7e6e;
+}
+
+.eis-staff-row-callsign-value {
+    color: #1e7e34;
+    font-weight: 700;
+    font-family: var(--eis-font-mono);
+    font-size: 12px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.eis-staff-row-vehicle {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 4px;
+}
+
+.eis-staff-row-vehicle.is-empty {
+    font-size: 11.5px;
+    color: #9aa3ac;
+    font-style: italic;
+}
+
+.eis-staff-row-vehicle-make {
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+    color: #4a5560;
+}
+
+.eis-staff-row-vehicle-plate {
+    display: block;
+}
+
+.eis-plate-img {
+    max-width: 180px;
+    width: 100%;
+    height: auto;
+    display: block;
+}
+
+/* Действия */
+.eis-staff-row-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    align-items: stretch;
+    flex-shrink: 0;
+}
+
+.eis-staff-row-move {
+    display: flex;
+    gap: 4px;
+    justify-content: flex-end;
+}
+
+.eis-staff-move-btn {
+    width: 30px;
+    height: 30px;
+    padding: 0;
+    background: #fff;
+    border: 1px solid #e4e8ec;
+    color: #4a5560;
+    border-radius: 4px;
+    font-size: 14px;
+    font-weight: 700;
+    line-height: 1;
+    cursor: pointer;
+    transition: all .15s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.eis-staff-move-btn:hover:not(:disabled) {
+    border-color: #2e7d32;
+    color: #2e7d32;
+    background: #f0f7f2;
+}
+.eis-staff-move-btn:disabled {
+    opacity: 0.35;
+    cursor: not-allowed;
+}
+
+.eis-staff-row-actions-main {
+    display: flex;
+    gap: 6px;
+    justify-content: flex-end;
+}
+
+/* ---------- Модалка редактирования ---------- */
+.eis-staff-modal-head {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 14px 16px;
+    background: #f7f9f7;
+    border: 1px solid #e4e8ec;
+    border-radius: 8px;
+    margin-bottom: 18px;
+}
+
+.eis-staff-avatar-lg {
+    width: 56px;
+    height: 56px;
+    border-radius: 8px;
+    background: #1f2a22;
+    color: #e8efe9;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+    font-weight: 700;
+    flex-shrink: 0;
+}
+
+.eis-staff-modal-info { flex: 1; min-width: 0; }
+
+.eis-staff-modal-name {
+    font-size: 15px;
+    font-weight: 700;
+    color: #16211a;
+    margin-bottom: 2px;
+}
+
+.eis-staff-modal-pos {
+    font-size: 12px;
+    color: #6b7280;
+    margin-bottom: 2px;
+    line-height: 1.3;
+}
+
+.eis-staff-modal-rank {
+    font-size: 11px;
+    color: #2e7d32;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.eis-staff-modal-epaulette {
+    width: 44px;
+    height: 84px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.eis-staff-plate-preview {
+    margin-top: 10px;
+    display: flex;
+    justify-content: flex-start;
+    min-height: 0;
+}
+.eis-staff-plate-preview .eis-plate-img { max-width: 200px; }
+
+/* PDF текущий */
+.eis-staff-pdf-current { margin-bottom: 10px; }
+
+.eis-staff-pdf-empty {
+    font-size: 12px;
+    color: #8892a0;
+    padding: 10px 14px;
+    background: #fafbfc;
+    border: 1px dashed #dfe3e8;
+    border-radius: 6px;
+    font-style: italic;
+}
+
+.eis-staff-pdf-current-file {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    padding: 10px 14px;
+    background: #f0f7f2;
+    border: 1px solid #d7e8dc;
+    border-radius: 6px;
+    font-size: 13px;
+}
+
+.eis-staff-pdf-current-file.is-saved {
+    background: #eaf4ff;
+    border-color: #b8daff;
+}
+
+.eis-staff-pdf-current-file a {
+    color: #0d5aa7;
+    text-decoration: none;
+    font-weight: 600;
+    word-break: break-all;
+}
+.eis-staff-pdf-current-file a:hover { text-decoration: underline; }
+
+.eis-staff-pdf-remove {
+    width: 26px;
+    height: 26px;
+    border-radius: 50%;
+    border: none;
+    background: rgba(220, 53, 69, 0.1);
+    color: #dc3545;
+    font-size: 18px;
+    line-height: 1;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    transition: background .15s;
+}
+.eis-staff-pdf-remove:hover { background: rgba(220, 53, 69, 0.25); }
+
+.eis-staff-pdf-hint {
+    margin-top: 6px;
+    font-size: 11px;
+    color: #8892a0;
+}
+
+/* ---------- Модалка управления составом ---------- */
+.eis-manage-hint {
+    font-size: 12.5px;
+    color: #6b7280;
+    padding: 10px 14px;
+    background: #f7f9f7;
+    border-left: 3px solid #2e7d32;
+    border-radius: 4px;
+    margin-bottom: 14px;
+    line-height: 1.5;
+}
+
+.eis-manage-search { margin-bottom: 14px; }
+
+.eis-manage-list {
+    max-height: 55vh;
+    overflow-y: auto;
+    padding-right: 4px;
+    margin: 0 -4px;
+}
+
+.eis-manage-group { margin-bottom: 14px; }
+
+.eis-manage-group-title {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.6px;
+    color: #4a5560;
+    padding: 6px 0 6px 10px;
+    border-left: 3px solid #ccc;
+    margin-bottom: 6px;
+}
+
+.eis-manage-group-count {
+    margin-left: auto;
+    font-size: 11px;
+    color: #8892a0;
+    font-family: var(--eis-font-mono);
+}
+
+.eis-manage-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 8px 12px;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: background .12s;
+    border: 1px solid transparent;
+    margin-bottom: 4px;
+}
+.eis-manage-row:hover { background: #f5f7f9; }
+.eis-manage-row.is-checked {
+    background: #f0f7f2;
+    border-color: #d7e8dc;
+}
+
+.eis-manage-row input[type="checkbox"] {
+    width: 18px;
+    height: 18px;
+    accent-color: #2e7d32;
+    cursor: pointer;
+    flex-shrink: 0;
+}
+
+.eis-manage-row-avatar {
+    width: 36px;
+    height: 36px;
+    border-radius: 6px;
+    background: #1f2a22;
+    color: #e8efe9;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+    font-weight: 700;
+    flex-shrink: 0;
+}
+
+.eis-manage-row-info { min-width: 0; flex: 1; }
+
+.eis-manage-row-name {
+    font-size: 13px;
+    font-weight: 600;
+    color: #16211a;
+    line-height: 1.25;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.eis-manage-row-sub {
+    font-size: 11px;
+    color: #6b7280;
+    line-height: 1.3;
+    margin-top: 1px;
+}
+
+.eis-manage-counter {
+    font-size: 12px;
+    font-weight: 600;
+    color: #2e7d32;
+    font-family: var(--eis-font-mono);
+}
+
+/* ---------- Профиль (без изменений, но стили погона/номера) ---------- */
+.eis-profile-identity {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 14px;
+    background: #f7f9f7;
+    border: 1px solid #e4e8ec;
+    border-radius: 8px;
+    margin-bottom: 18px;
+}
+.eis-profile-avatar {
+    width: 58px;
+    height: 58px;
+    border-radius: 8px;
+    background: #1f2a22;
+    color: #e8efe9;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 20px;
+    font-weight: 700;
+    flex-shrink: 0;
+}
+.eis-profile-identity-info { flex: 1; min-width: 0; }
+.eis-profile-name {
+    font-size: 15px;
+    font-weight: 700;
+    color: #16211a;
+    margin-bottom: 2px;
+}
+.eis-profile-role {
+    font-size: 12px;
+    color: #6b7280;
+}
+.eis-profile-epaulette {
+    width: 44px;
+    height: 82px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+.eis-profile-epaulette .eis-epaulette-img { max-height: 82px; }
+
+.eis-profile-vehicle {
+    padding: 12px;
+    background: #fafbfc;
+    border: 1px solid #e4e8ec;
+    border-radius: 6px;
+    text-align: center;
+}
+.eis-profile-vehicle-make {
+    font-size: 12px;
+    color: #6b7280;
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+    margin-bottom: 6px;
+    font-weight: 600;
+}
+.eis-profile-vehicle-plate { display: flex; justify-content: center; }
+
+.eis-profile-pdf {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 16px;
+    background: #eaf4ff;
+    border: 1px solid #b8daff;
+    border-radius: 8px;
+}
+.eis-profile-pdf-icon { font-size: 32px; line-height: 1; flex-shrink: 0; }
+.eis-profile-pdf-info { flex: 1; min-width: 0; }
+.eis-profile-pdf-title {
+    font-size: 14px;
+    font-weight: 700;
+    color: #0d5aa7;
+    word-break: break-all;
+    margin-bottom: 2px;
+}
+.eis-profile-pdf-sub {
+    font-size: 11px;
+    color: #5b7ba3;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+/* ---------- Адаптив ---------- */
+@media (max-width: 1100px) {
+    .eis-staff-row {
+        grid-template-columns: 4px 56px 1fr auto;
+        grid-template-areas:
+            "bar avatar info epaulette"
+            "bar extra extra extra"
+            "bar actions actions actions";
+        gap: 12px 14px;
+        padding: 14px 16px 14px 0;
+    }
+    .eis-staff-row-bar { grid-area: bar; }
+    .eis-staff-row-avatar { grid-area: avatar; width: 48px; height: 48px; font-size: 15px; }
+    .eis-staff-row-info { grid-area: info; }
+    .eis-staff-row-epaulette { grid-area: epaulette; height: 72px; width: 38px; }
+    .eis-staff-row-epaulette .eis-epaulette-img { max-height: 72px; }
+    .eis-staff-row-extra {
+        grid-area: extra;
+        flex-direction: row;
+        flex-wrap: wrap;
+        gap: 10px;
+        align-items: center;
+    }
+    .eis-staff-row-actions {
+        grid-area: actions;
+        flex-direction: row;
+        justify-content: space-between;
+        align-items: center;
+    }
+    .eis-staff-row-move { justify-content: flex-start; }
+}
+
+@media (max-width: 640px) {
+    .eis-staff-row {
+        grid-template-columns: 4px 48px 1fr;
+        grid-template-areas:
+            "bar avatar info"
+            "bar epaulette epaulette"
+            "bar extra extra"
+            "bar actions actions";
+    }
+    .eis-staff-row-epaulette {
+        width: 100%;
+        height: auto;
+        min-height: 64px;
+        justify-content: flex-start;
+        padding-left: 62px;
+    }
+    .eis-staff-row-extra { padding-left: 62px; }
+    .eis-staff-row-actions { padding-left: 62px; }
+    .eis-staff-row-actions-main { flex-wrap: wrap; }
+    .eis-staff-row-actions-main .eis-btn { flex: 1 1 auto; }
+
+    .eis-plate-img { max-width: 150px; }
+}
