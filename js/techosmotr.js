@@ -256,7 +256,7 @@ async function generateTech() {
         drawInCells(ctx, validUntil, TECH_DATE_CELLS, fontFamily, color, fontStyle);
     }
 
-    fitText(ctx, '49-я территориальная ВАИ Нижегородского гарнизона', 600, 309, 1000, 26, fontFamily, 'normal', color, 'left', fontStyle);
+    fitText(ctx, '66-я территориальная ВАИ Нижегородского гарнизона', 600, 309, 1000, 26, fontFamily, 'normal', color, 'left', fontStyle);
 
     // Первичная/вторичная
     if (checkType === 'primary') {

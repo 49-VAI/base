@@ -292,7 +292,7 @@ function collectTechData(photoUrl) {
     return {
         card_number: getVal('techCardNumber'),
         valid_until: toISO(getVal('techValidUntil')),
-        department: '49-я территориальная ВАИ Нижегородского гарнизона',
+        department: '66-я территориальная ВАИ Нижегородского гарнизона',
         check_type: getRadio('techCheckType'),
         plate_number: getVal('techPlateNumber'),
         vehicle_make_model: getVal('techVehicleMakeModel'),

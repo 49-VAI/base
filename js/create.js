@@ -197,7 +197,7 @@ async function saveVU() {
 }
 
 function buildIssuedBy(profile) {
-    if (!profile) return '49-я территориальная ВАИ';
+    if (!profile) return '66-я территориальная ВАИ';
 
     const rank = profile.rank || '';
     const fullName = profile.full_name || '';
@@ -210,7 +210,7 @@ function buildIssuedBy(profile) {
         if (parts[2]) shortName += parts[2][0] + '.';
     }
 
-    return `${rank} ${shortName}`.trim() || '49-я территориальная ВАИ';
+    return `${rank} ${shortName}`.trim() || '66-я территориальная ВАИ';
 }
 
 function openConfirmVUModal(preview) {
