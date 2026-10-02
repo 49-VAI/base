@@ -6,27 +6,38 @@
 const VU_CONFIG = {
     canvasWidth: 1215,
     canvasHeight: 892,
-    rankBackgrounds: {
-        'Гвардии рядовой': 'backgrounds/ryadovoy.png',
-        'Гвардии ефрейтор': 'backgrounds/efreytor.png',
-        'Гвардии мл. сержант': 'backgrounds/mladshiy_serzhant.png',
-        'Гвардии сержант': 'backgrounds/serzhant.png',
-        'Гвардии ст. сержант': 'backgrounds/starshiy_serzhant.png',
-        'Гвардии старшина': 'backgrounds/starshina.png',
-        'Гвардии прапорщик': 'backgrounds/praporshchik.png',
-        'Гвардии ст. прапорщик': 'backgrounds/starshiy_praporshchik.png',
-        'Гвардии лейтенант': 'backgrounds/leytenant.png',
-        'Гвардии ст. лейтенант': 'backgrounds/starshiy_leytenant.png',
-        'Гвардии капитан': 'backgrounds/kapitan.png',
-        'Гвардии майор': 'backgrounds/mayor.png'
+    background: 'backgrounds/vu_base.png', // Единый фон для всех
+    rankPhotos: {
+        'Гвардии рядовой': 'backgrounds/ranks/ryadovoy.png',
+        'Гвардии ефрейтор': 'backgrounds/ranks/efreytor.png',
+        'Гвардии мл. сержант': 'backgrounds/ranks/mladshiy_serzhant.png',
+        'Гвардии сержант': 'backgrounds/ranks/serzhant.png',
+        'Гвардии ст. сержант': 'backgrounds/ranks/starshiy_serzhant.png',
+        'Гвардии старшина': 'backgrounds/ranks/starshina.png',
+        'Гвардии прапорщик': 'backgrounds/ranks/praporshchik.png',
+        'Гвардии ст. прапорщик': 'backgrounds/ranks/starshiy_praporshchik.png',
+        'Гвардии лейтенант': 'backgrounds/ranks/leytenant.png',
+        'Гвардии ст. лейтенант': 'backgrounds/ranks/starshiy_leytenant.png',
+        'Гвардии капитан': 'backgrounds/ranks/kapitan.png',
+        'Гвардии майор': 'backgrounds/ranks/mayor.png'
     },
     serviceStamps: {
         'srochnaya': 'backgrounds/stamp_srochnaya.png',
         'kontraktnaya': 'backgrounds/stamp_kontraktnaya.png'
     },
-    stampRect: { x: 371, y: 616, w: 216, h: 78 },
-    stampAngleMin: -7,
-    stampAngleMax: 10
+    vaiStamp: 'backgrounds/vai_stamp.png',
+    chiefSignature: 'backgrounds/chief_signature.png',
+    // Координаты и размеры элементов
+    photoRect: { x: 53, y: 381, w: 235, h: 313 },
+    stampRect: { x: 221, y: 605, w: 135, h: 135 },
+    signatureRect: { x: 200, y: 765, w: 212, h: 74 },
+    serviceStampRect: { x: 371, y: 616, w: 216, h: 78 },
+    // Углы поворота печати ВАИ
+    stampAngleMin: -40,
+    stampAngleMax: 40,
+    // Углы поворота печати службы (как было в оригинале)
+    serviceStampAngleMin: -7,
+    serviceStampAngleMax: 10
 };
 
 function fitText(ctx, text, x, y, maxWidth, initialSize, fontFamily, fontWeight, color, align = 'left', fontStyle = 'normal') {
@@ -47,7 +58,8 @@ function fitText(ctx, text, x, y, maxWidth, initialSize, fontFamily, fontWeight,
     ctx.fillText(text, x, y);
 }
 
-function getStampAngle(seed) {
+// Универсальная функция получения угла по сиду + диапазону
+function getStampAngle(seed, minDeg, maxDeg) {
     const str = String(seed || '');
     let h = 0;
     for (let i = 0; i < str.length; i++) {
@@ -55,9 +67,23 @@ function getStampAngle(seed) {
         h |= 0;
     }
     const t = Math.abs(Math.sin(h) * 10000) % 1;
-    const min = VU_CONFIG.stampAngleMin;
-    const max = VU_CONFIG.stampAngleMax;
-    return (min + t * (max - min)) * Math.PI / 180;
+    return (minDeg + t * (maxDeg - minDeg)) * Math.PI / 180;
+}
+
+// ================================================================
+// Отрисовка повёрнутой картинки с максимальным качеством
+// ================================================================
+function drawRotatedImage(ctx, img, cx, cy, w, h, angleRad, alpha = 1) {
+    ctx.save();
+    ctx.imageSmoothingEnabled = true;
+    ctx.imageSmoothingQuality = 'high';
+
+    ctx.translate(cx, cy);
+    ctx.rotate(angleRad);
+    if (alpha !== 1) ctx.globalAlpha = alpha;
+
+    ctx.drawImage(img, -w / 2, -h / 2, w, h);
+    ctx.restore();
 }
 
 async function generateVU() {
@@ -65,6 +91,10 @@ async function generateVU() {
     if (!canvas) return;
 
     const ctx = canvas.getContext('2d');
+
+    // ★ Максимальное сглаживание для всего канваса
+    ctx.imageSmoothingEnabled = true;
+    ctx.imageSmoothingQuality = 'high';
 
     const vuNumber = document.getElementById('createVUNumber').value.trim();
     const rank = document.getElementById('createRank').value;
@@ -81,42 +111,107 @@ async function generateVU() {
 
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-    if (rank && VU_CONFIG.rankBackgrounds[rank]) {
-        try {
-            const bgImage = await loadImage(VU_CONFIG.rankBackgrounds[rank]);
-            ctx.drawImage(bgImage, 0, 0, canvas.width, canvas.height);
-        } catch (error) {
-            console.warn('Ошибка загрузки фона:', error);
-            ctx.fillStyle = '#2a2a2a';
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
-            ctx.fillStyle = '#666';
-            ctx.font = '24px Arial';
-            ctx.textAlign = 'center';
-            ctx.fillText('Ошибка загрузки фона', 607, 446);
-        }
-    } else {
+    // 1. Единый задний фон
+    try {
+        const bgImage = await loadImage(VU_CONFIG.background);
+        ctx.drawImage(bgImage, 0, 0, canvas.width, canvas.height);
+    } catch (error) {
+        console.warn('Ошибка загрузки фона:', error);
         ctx.fillStyle = '#2a2a2a';
         ctx.fillRect(0, 0, canvas.width, canvas.height);
         ctx.fillStyle = '#666';
         ctx.font = '24px Arial';
         ctx.textAlign = 'center';
-        ctx.fillText('Выберите звание', 607, 446);
+        ctx.fillText('Ошибка загрузки фона', 607, 446);
     }
 
-    if (rank) {
-        const fontFamily = 'Segoe Script';
-        const color = '#000f55';
+    const fontFamily = 'Segoe Script';
+    const color = '#000f55';
 
+    // 2. Надпись "войсковая часть 23921" — верх (120; 285), размер 30 → низ = 315
+    fitText(ctx, 'войсковая часть 23921', 120, 315, 400, 30, fontFamily, 'normal', color, 'left', 'italic');
+
+    // 3. Надпись "66" — верх (439; 374), размер 22 → низ = 396
+    fitText(ctx, '66', 439, 396, 100, 22, fontFamily, 'normal', color, 'left', 'italic');
+
+    // 4. Фотография по званию — размер 235x313, координаты (53; 381)
+    if (rank && VU_CONFIG.rankPhotos[rank]) {
+        try {
+            const photoImg = await loadImage(VU_CONFIG.rankPhotos[rank]);
+            ctx.imageSmoothingEnabled = true;
+            ctx.imageSmoothingQuality = 'high';
+            ctx.drawImage(photoImg, VU_CONFIG.photoRect.x, VU_CONFIG.photoRect.y, VU_CONFIG.photoRect.w, VU_CONFIG.photoRect.h);
+        } catch (error) {
+            console.warn('Ошибка загрузки фото звания:', error);
+        }
+    }
+
+    
+
+    // 6. Надпись "Начальник 66-ой ВАИ" — верх (137; 720), размер 30 → низ = 750
+    fitText(ctx, 'Начальник 66-ой ВАИ', 137, 750, 400, 30, fontFamily, 'normal', color, 'left', 'italic');
+
+    // 7. Надпись "капитан" — верх (51; 795), размер 30 → низ = 825
+    fitText(ctx, 'капитан', 51, 817, 300, 30, fontFamily, 'normal', color, 'left', 'italic');
+
+    // 8. Надпись "М.А. Котиков" — верх (378; 787), размер 30 → низ = 817
+    fitText(ctx, 'М. Котиков', 368, 817, 300, 30, fontFamily, 'normal', color, 'left', 'italic');
+
+    // 9. Подпись начальника — размер 212x74, координаты (200; 765)
+    try {
+        const sigImg = await loadImage(VU_CONFIG.chiefSignature);
+        ctx.imageSmoothingEnabled = true;
+        ctx.imageSmoothingQuality = 'high';
+        ctx.drawImage(sigImg, VU_CONFIG.signatureRect.x, VU_CONFIG.signatureRect.y, VU_CONFIG.signatureRect.w, VU_CONFIG.signatureRect.h);
+    } catch (error) {
+        console.warn('Ошибка загрузки подписи начальника:', error);
+    }
+
+    // 5. Печать ВАИ — размер 135x135, координаты (221; 605), угол от -40 до 40
+    try {
+        const stampImg = await loadImage(VU_CONFIG.vaiStamp);
+        const { x, y, w, h } = VU_CONFIG.stampRect;
+        const cx = x + w / 2;
+        const cy = y + h / 2;
+        const seed = (vuNumber || '') + '|' + (lastName || '');
+        const angle = getStampAngle(seed, VU_CONFIG.stampAngleMin, VU_CONFIG.stampAngleMax);
+
+        drawRotatedImage(ctx, stampImg, cx, cy, w, h, angle, 0.9);
+    } catch (error) {
+        console.warn('Ошибка загрузки печати ВАИ:', error);
+    }
+
+    // 10. Печать срочной/контрактной службы — размер 216x78, координаты (371; 616), угол от -7 до 10
+    if (serviceType && VU_CONFIG.serviceStamps[serviceType]) {
+        try {
+            const stampImg = await loadImage(VU_CONFIG.serviceStamps[serviceType]);
+            const { x, y, w, h } = VU_CONFIG.serviceStampRect;
+            const cx = x + w / 2;
+            const cy = y + h / 2;
+            const seed = (vuNumber || '') + '|' + (lastName || '') + '|service';
+            const angle = getStampAngle(seed, VU_CONFIG.serviceStampAngleMin, VU_CONFIG.serviceStampAngleMax);
+
+            drawRotatedImage(ctx, stampImg, cx, cy, w, h, angle, 0.9);
+        } catch (error) {
+            console.warn('Ошибка загрузки печати службы:', error);
+        }
+    }
+
+    // ===== ОСТАЛЬНЫЕ ЭЛЕМЕНТЫ =====
+    if (rank) {
+        // Номер ВУ
         if (vuNumber) fitText(ctx, vuNumber, 389, 106, 123, 25, fontFamily, 'normal', color, 'left', 'italic');
 
-        if (rank) {
-            const rankLower = rank.charAt(0).toLowerCase() + rank.slice(1);
-            fitText(ctx, rankLower, 218, 149, 341, 30, fontFamily, 'normal', color, 'left', 'italic');
-        }
+        // Звание (первая буква строчная)
+        const rankLower = rank.charAt(0).toLowerCase() + rank.slice(1);
+        fitText(ctx, rankLower, 218, 149, 341, 30, fontFamily, 'normal', color, 'left', 'italic');
+
+        // ФИО
         if (lastName) fitText(ctx, lastName, 148, 191, 411, 30, fontFamily, 'normal', color, 'left', 'italic');
         if (firstName) fitText(ctx, firstName, 102, 233, 457, 30, fontFamily, 'normal', color, 'left', 'italic');
         if (middleName) fitText(ctx, middleName, 149, 275, 410, 30, fontFamily, 'normal', color, 'left', 'italic');
 
+        // Дата выдачи
         if (issueDate) {
             const dateStr = formatDateForDisplay(issueDate);
             const dateParts = dateStr.split('.');
@@ -128,6 +223,7 @@ async function generateVU() {
             }
         }
 
+        // Дата окончания
         if (expiryDate) {
             const dateStr = formatDateForDisplay(expiryDate);
             const dateParts = dateStr.split('.');
@@ -137,26 +233,6 @@ async function generateVU() {
                 const year = dateParts[2].slice(-2);
                 fitText(ctx, year, 529, 591, 33, 23, fontFamily, 'normal', color, 'left', 'italic');
             }
-        }
-    }
-
-    if (serviceType && VU_CONFIG.serviceStamps[serviceType]) {
-        try {
-            const stampImg = await loadImage(VU_CONFIG.serviceStamps[serviceType]);
-            const { x, y, w, h } = VU_CONFIG.stampRect;
-            const cx = x + w / 2;
-            const cy = y + h / 2;
-            const seed = (vuNumber || '') + '|' + (lastName || '');
-            const angle = getStampAngle(seed);
-
-            ctx.save();
-            ctx.translate(cx, cy);
-            ctx.rotate(angle);
-            ctx.globalAlpha = 0.9;
-            ctx.drawImage(stampImg, -w / 2, -h / 2, w, h);
-            ctx.restore();
-        } catch (error) {
-            console.warn('Ошибка загрузки штампа:', error);
         }
     }
 }
@@ -305,7 +381,6 @@ async function confirmSaveVU() {
             return;
         }
 
-        // ЛОГ с ЧЕЛОВЕЧЕСКОЙ фразой — 5-м аргументом СТРОКА
         await logCreate('vu_create', 'military_ids', data.id, data,
             `Создал ВУ ${preview.vuNumber} для ${preview.fio} (${preview.rank})`);
 
@@ -362,10 +437,11 @@ function compressCanvasToJpeg(sourceCanvas, maxWidth = 1600, quality = 0.85) {
         off.height = dstH;
         const ctx = off.getContext('2d');
 
-        ctx.fillStyle = '#ffffff';
-        ctx.fillRect(0, 0, dstW, dstH);
         ctx.imageSmoothingEnabled = true;
         ctx.imageSmoothingQuality = 'high';
+
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(0, 0, dstW, dstH);
         ctx.drawImage(sourceCanvas, 0, 0, srcW, srcH, 0, 0, dstW, dstH);
 
         off.toBlob(
