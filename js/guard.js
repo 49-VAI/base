@@ -5,12 +5,9 @@
 const PAGE_ACCESS = {
     'admin.html': ['chief_vai'],
     'staff.html': ['chief_odps', 'chief_reo', 'chief_cuipp', 'chief_vai'],
-    'create.html': ['inspector_odps', 'inspector_reo',
-        'chief_odps', 'chief_reo', 'chief_cuipp', 'chief_vai'],
-    'exam.html': ['inspector_odps', 'inspector_reo',
-        'chief_odps', 'chief_reo', 'chief_cuipp', 'chief_vai'],
-    'tech.html': ['inspector_odps', 'inspector_reo',
-        'chief_odps', 'chief_reo', 'chief_cuipp', 'chief_vai'],
+    'create.html': ['inspector_reo', 'chief_reo', 'chief_vai'],
+    'exam.html': ['inspector_reo', 'chief_reo', 'chief_vai'],
+    'tech.html': ['inspector_reo', 'chief_reo', 'chief_vai'],
     'protocol.html': ['inspector_odps', 'inspector_reo',
         'chief_odps', 'chief_reo', 'chief_cuipp', 'chief_vai']
 };
@@ -62,6 +59,8 @@ async function runGuard() {
 
     window.currentUser = session.user;
     window.currentProfile = profile;
+
+    restrictNavItems(profile);
 
     updateHeader(profile);
     addAdminMenuItem(profile);
@@ -245,10 +244,33 @@ function addStaffMenuItem(profile) {
     navMenu.appendChild(li);
 }
 
+// ================================================================
+// СКРЫТИЕ ПУНКТОВ МЕНЮ ДЛЯ НЕДОСТУПНЫХ РОЛЕЙ
+// ================================================================
+function restrictNavItems(profile) {
+    const restricted = {
+        'create.html': ['inspector_reo', 'chief_reo', 'chief_vai'],
+        'exam.html': ['inspector_reo', 'chief_reo', 'chief_vai'],
+        'tech.html': ['inspector_reo', 'chief_reo', 'chief_vai']
+    };
+
+    document.querySelectorAll('.eis-nav-item').forEach(item => {
+        const page = item.dataset.page;
+        if (restricted[page]) {
+            if (!restricted[page].includes(profile.role)) {
+                item.style.display = 'none';
+            } else {
+                item.style.display = '';
+            }
+        }
+    });
+}
+
 window.ROLE_LABELS = ROLE_LABELS;
 window.PAGE_ACCESS = PAGE_ACCESS;
 window.addAdminMenuItem = addAdminMenuItem;
 window.addStaffMenuItem = addStaffMenuItem;
 window.runGuard = runGuard;
 window.updateHeader = updateHeader;
+window.restrictNavItems = restrictNavItems;
 window.shortName = shortName;
