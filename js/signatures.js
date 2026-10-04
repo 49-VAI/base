@@ -31,7 +31,7 @@ const signatureData = {
         active: false,
         imageData: null
     },
-    // === Новые типы подписей для протокола ===
+    // === Подписи для протокола ===
     official: {
         image: null,
         src: null,
@@ -72,6 +72,7 @@ const signatureData = {
         active: false,
         imageData: null
     },
+    // === Подписи для ДТП ===
     driverA: {
         image: null, src: null, scale: 1, rotation: 0,
         x: 0.5, y: 0.5, active: false, imageData: null
@@ -83,13 +84,19 @@ const signatureData = {
     p2Officer: {
         image: null, src: null, scale: 1, rotation: 0,
         x: 0.5, y: 0.5, active: false, imageData: null
+    },
+    // === ★ НОВОЕ: подпись составителя схемы ДТП (3-й лист) ===
+    p3Officer: {
+        image: null, src: null, scale: 1, rotation: 0,
+        x: 0.5, y: 0.5, active: false, imageData: null
     }
 };
 
 const ALL_SIGNATURE_TYPES = [
     'examiner', 'candidate', 'techExpert',
     'official', 'violator', 'witness', 'victim',
-    'driverA', 'driverB', 'p2Officer'
+    'driverA', 'driverB', 'p2Officer',
+    'p3Officer'
 ];
 
 // Типы, которые нужно перерисовывать на своих канвасах
@@ -103,7 +110,8 @@ const SIGNATURE_CANVAS_MAP = {
     victim: 'protocolCanvas2',
     driverA: 'dtpCanvas1',
     driverB: 'dtpCanvas1',
-    p2Officer: 'dtpCanvas2'
+    p2Officer: 'dtpCanvas2',
+    p3Officer: 'dtpCanvas3'
 };
 
 let activeSignatureType = null;
@@ -253,7 +261,8 @@ function updateSignatureInfo(type) {
             victim: 'Потерпевший',
             driverA: 'Водитель ТС «A»',
             driverB: 'Водитель ТС «B»',
-            p2Officer: 'Сотрудник (2-й лист)'
+            p2Officer: 'Сотрудник (2-й лист)',
+            p3Officer: 'Составитель схемы'
         };
         const label = labels[type] || type;
         info.textContent = `${label}: Масштаб ${Math.round(data.scale * 100)}% | Поворот ${Math.round(data.rotation)}°`;
@@ -425,7 +434,7 @@ function handleCanvasMouseUp() {
     isRotating = false;
     selectedSignature = null;
 
-    const canvases = ['examCanvas2', 'techCanvas', 'protocolCanvas2', 'dtpCanvas1', 'dtpCanvas2'];
+    const canvases = ['examCanvas2', 'techCanvas', 'protocolCanvas2', 'dtpCanvas1', 'dtpCanvas2', 'dtpCanvas3'];
     canvases.forEach(id => {
         const canvas = document.getElementById(id);
         if (canvas) canvas.style.cursor = 'default';
@@ -528,7 +537,8 @@ function drawSignatureOnCanvas(ctx, type, canvas, showEditMode) {
             victim: 'Потерпевший',
             driverA: 'Водитель ТС «A»',
             driverB: 'Водитель ТС «B»',
-            p2Officer: 'Сотрудник (2-й лист)'
+            p2Officer: 'Сотрудник (2-й лист)',
+            p3Officer: 'Составитель схемы'
         };
         const label = labels[type] || type;
         ctx.fillText(label, x, y - drawHeight / 2 - 5);
@@ -564,9 +574,30 @@ function resetSignature(type) {
     regenerateAll();
 }
 
+// ================================================================
+// ★ НОВОЕ: временное скрытие рамок подписей при сохранении
+// ================================================================
+async function withSignaturesHidden(types, fn) {
+    const wasActive = {};
+    types.forEach(t => {
+        if (signatureData[t]) {
+            wasActive[t] = signatureData[t].active;
+            signatureData[t].active = false;
+        }
+    });
+
+    try {
+        await fn();
+    } finally {
+        types.forEach(t => {
+            if (signatureData[t]) signatureData[t].active = wasActive[t];
+        });
+    }
+}
+
 // ========== ИНИЦИАЛИЗАЦИЯ ==========
 document.addEventListener('DOMContentLoaded', function () {
-    const canvases = ['examCanvas2', 'techCanvas', 'protocolCanvas2', 'dtpCanvas1', 'dtpCanvas2'];
+    const canvases = ['examCanvas2', 'techCanvas', 'protocolCanvas2', 'dtpCanvas1', 'dtpCanvas2', 'dtpCanvas3'];
     canvases.forEach(id => {
         const canvas = document.getElementById(id);
         if (!canvas) return;
@@ -591,3 +622,4 @@ window.adjustSignature = adjustSignature;
 window.drawSignatureOnCanvas = drawSignatureOnCanvas;
 window.activateSignature = activateSignature;
 window.deactivateSignatures = deactivateSignatures;
+window.withSignaturesHidden = withSignaturesHidden;

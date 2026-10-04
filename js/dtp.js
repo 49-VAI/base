@@ -10,7 +10,7 @@ const DTP_CONFIG = {
     backgrounds: {
         page1: 'backgrounds/dtp_page1.png',
         page2: 'backgrounds/dtp_page2.png',
-        page3: 'backgrounds/dtp_page3.png' 
+        page3: 'backgrounds/dtp_page3.png'
     }
 };
 
@@ -37,8 +37,8 @@ const DTP_CIRCUMSTANCES = [
     { id: 'priority_sign', text: 'Не выполнил требование знака приоритета' },
     { id: 'hit_object', text: 'Совершил наезд (на неподвижное ТС, препятствие, пешехода и т.п.)' },
     { id: 'stopped_red', text: 'Остановился (стоял) на запрещающий сигнал светофора' },
-    { id: 'other_a', text: 'Иное (для водителя ТС "А"):' }, // Это будет только для A
-    { id: 'other_b', text: 'Иное (для водителя ТС "В"):' }  // Это будет только для B
+    { id: 'other_a', text: 'Иное (для водителя ТС "А"):' },
+    { id: 'other_b', text: 'Иное (для водителя ТС "В"):' }
 ];
 
 // Координаты для галочек для ТС "A" (левая колонка)
@@ -103,7 +103,6 @@ const dtpDrawings = {
 };
 
 // История для undo/redo на 3-м листе (план-схема)
-// Каждый шаг — это снимок массива dtpDrawings.p3 (deep clone)
 const p3History = {
     undo: [],
     redo: []
@@ -303,7 +302,7 @@ window.onSignatureActivated = function () {
 function updateDrawingButtons() {
     const btnA = document.getElementById('toggleDrawABtn');
     const btnB = document.getElementById('toggleDrawBBtn');
-    const btnP3 = document.getElementById('toggleDrawP3Btn');   // ← добавить
+    const btnP3 = document.getElementById('toggleDrawP3Btn');
 
     if (btnA) {
         if (drawingMode === 'a') {
@@ -329,7 +328,6 @@ function updateDrawingButtons() {
         }
     }
 
-    // ← добавить блок для плана-схемы
     if (btnP3) {
         if (drawingMode === 'p3') {
             btnP3.textContent = 'Режим рисования — ВКЛ (кликните для выкл)';
@@ -379,7 +377,7 @@ function setupDrawingHandlers(canvasId, allowedModes) {
         if (drawingMode === 'p3' && p3CurrentTool === 'eraser') {
             p3Snapshot();
             isDrawingOnCanvas = true;
-            currentDrawLine = { __eraser: true }; // маркер, что это стирание
+            currentDrawLine = { __eraser: true };
             p3EraseAt(pos.x, pos.y);
             generateDTP();
             return;
@@ -635,7 +633,7 @@ function drawDTPVehicleBlockA(ctx, startY) {
     if (v('StsSeries')) {
         const stsSeries = v('StsSeries').toUpperCase().split('');
 
-        if (stsSeries[0]) fitText(ctx, stsSeries[0], 347 + 10, 775+25, 20, 25, ff, 'normal', color, 'center', 'normal');
+        if (stsSeries[0]) fitText(ctx, stsSeries[0], 347 + 10, 775 + 25, 20, 25, ff, 'normal', color, 'center', 'normal');
         if (stsSeries[1]) fitText(ctx, stsSeries[1], 369 + 10, 775 + 25, 20, 25, ff, 'normal', color, 'center', 'normal');
         if (stsSeries[2]) fitText(ctx, stsSeries[2], 391 + 10, 775 + 25, 20, 25, ff, 'normal', color, 'center', 'normal');
         if (stsSeries[3]) fitText(ctx, stsSeries[3], 413 + 10, 775 + 25, 20, 25, ff, 'normal', color, 'center', 'normal');
@@ -762,7 +760,7 @@ function drawDTPVehicleBlockA(ctx, startY) {
     }
 
     if (v('VUCategory')) {
-        fitText(ctx, v('VUCategory'), 245 + 87/2, 1258 + 25, 87, 25, ff, 'normal', color, 'center', 'normal');
+        fitText(ctx, v('VUCategory'), 245 + 87 / 2, 1258 + 25, 87, 25, ff, 'normal', color, 'center', 'normal');
     }
 
     if (v('VUIssueDate')) {
@@ -783,12 +781,12 @@ function drawDTPVehicleBlockA(ctx, startY) {
     }
 
     if (v('OwnershipDoc')) {
-        fitText(ctx, v('OwnershipDoc'), 282, 1319+35, 300, 30, ff, 'normal', color, 'left', style);
+        fitText(ctx, v('OwnershipDoc'), 282, 1319 + 35, 300, 30, ff, 'normal', color, 'left', style);
     }
 
 
     if (v('Insurer')) {
-        fitText(ctx, v('Insurer'), 114, 1410+35, 468, 30, ff, 'normal', color, 'left', style);
+        fitText(ctx, v('Insurer'), 114, 1410 + 35, 468, 30, ff, 'normal', color, 'left', style);
     }
 
 
@@ -833,8 +831,8 @@ function drawDTPVehicleBlockA(ctx, startY) {
     }
 
     const insured = v('Insured');
-    if (insured === 'Нет') drawCheckmark(ctx, 421 + 11, 1577 +10);
-    else if (insured === 'Да') drawCheckmark(ctx, 509 + 11, 1577+10);
+    if (insured === 'Нет') drawCheckmark(ctx, 421 + 11, 1577 + 10);
+    else if (insured === 'Да') drawCheckmark(ctx, 509 + 11, 1577 + 10);
 
     if (v('Damage')) {
         fitTextMultiline(
@@ -1227,16 +1225,28 @@ async function generateDTP() {
             ctx3.fillRect(0, 0, canvas3.width, canvas3.height);
         }
 
-        await drawDTPPage3Content(ctx3);
+        await drawDTPPage3Content(ctx3, canvas3);
     }
 }
 
 // ================================================================
 // СКАЧИВАНИЕ PNG
 // ================================================================
-function saveDTPPage1() {
+async function saveDTPPage1() {
     const canvas = document.getElementById('dtpCanvas1');
     if (!canvas || canvas.width === 0) { showToast('Холст пуст', 'error'); return; }
+
+    // ★ Скрываем рамки подписей на время сохранения
+    const wasActive = {};
+    if (typeof signatureData !== 'undefined') {
+        for (const type of ['driverA', 'driverB', 'p2Officer', 'p3Officer']) {
+            if (signatureData[type]) {
+                wasActive[type] = signatureData[type].active;
+                signatureData[type].active = false;
+            }
+        }
+    }
+    await generateDTP();
 
     const num = getFieldValueDTP('dtpNumber') || 'ДТП';
     const safe = num.replace(/[\\/:*?"<>|]/g, '_');
@@ -1244,12 +1254,32 @@ function saveDTPPage1() {
     link.download = `ДТП_${safe}_стр1.png`;
     link.href = canvas.toDataURL('image/png');
     link.click();
+
+    // ★ Возвращаем как было
+    if (typeof signatureData !== 'undefined') {
+        for (const type of ['driverA', 'driverB', 'p2Officer', 'p3Officer']) {
+            if (signatureData[type]) signatureData[type].active = wasActive[type];
+        }
+    }
+    await generateDTP();
+
     showToast('Страница 1 скачана', 'success');
 }
 
-function saveDTPPage2() {
+async function saveDTPPage2() {
     const canvas = document.getElementById('dtpCanvas2');
     if (!canvas || canvas.width === 0) { showToast('Холст пуст', 'error'); return; }
+
+    const wasActive = {};
+    if (typeof signatureData !== 'undefined') {
+        for (const type of ['driverA', 'driverB', 'p2Officer', 'p3Officer']) {
+            if (signatureData[type]) {
+                wasActive[type] = signatureData[type].active;
+                signatureData[type].active = false;
+            }
+        }
+    }
+    await generateDTP();
 
     const num = getFieldValueDTP('dtpNumber') || 'ДТП';
     const safe = num.replace(/[\\/:*?"<>|]/g, '_');
@@ -1257,12 +1287,31 @@ function saveDTPPage2() {
     link.download = `ДТП_${safe}_стр2.png`;
     link.href = canvas.toDataURL('image/png');
     link.click();
+
+    if (typeof signatureData !== 'undefined') {
+        for (const type of ['driverA', 'driverB', 'p2Officer', 'p3Officer']) {
+            if (signatureData[type]) signatureData[type].active = wasActive[type];
+        }
+    }
+    await generateDTP();
+
     showToast('Страница 2 скачана', 'success');
 }
 
-function saveDTPPage3() {
+async function saveDTPPage3() {
     const canvas = document.getElementById('dtpCanvas3');
     if (!canvas || canvas.width === 0) { showToast('Холст пуст', 'error'); return; }
+
+    const wasActive = {};
+    if (typeof signatureData !== 'undefined') {
+        for (const type of ['driverA', 'driverB', 'p2Officer', 'p3Officer']) {
+            if (signatureData[type]) {
+                wasActive[type] = signatureData[type].active;
+                signatureData[type].active = false;
+            }
+        }
+    }
+    await generateDTP();
 
     const num = getFieldValueDTP('dtpNumber') || 'ДТП';
     const safe = num.replace(/[\\/:*?"<>|]/g, '_');
@@ -1270,6 +1319,14 @@ function saveDTPPage3() {
     link.download = `ДТП_${safe}_схема.png`;
     link.href = canvas.toDataURL('image/png');
     link.click();
+
+    if (typeof signatureData !== 'undefined') {
+        for (const type of ['driverA', 'driverB', 'p2Officer', 'p3Officer']) {
+            if (signatureData[type]) signatureData[type].active = wasActive[type];
+        }
+    }
+    await generateDTP();
+
     showToast('План-схема скачана', 'success');
 }
 
@@ -1319,7 +1376,7 @@ async function saveDTPAll() {
         // Подписи временно отключаем, чтобы рамки редактирования не попали на бланк
         const wasActive = {};
         if (typeof signatureData !== 'undefined') {
-            for (const type of ['driverA', 'driverB', 'p2Officer']) {
+            for (const type of ['driverA', 'driverB', 'p2Officer', 'p3Officer']) {
                 if (signatureData[type]) {
                     wasActive[type] = signatureData[type].active;
                     signatureData[type].active = false;
@@ -1363,7 +1420,7 @@ async function saveDTPAll() {
 
         // Восстанавливаем подписи
         if (typeof signatureData !== 'undefined') {
-            for (const type of ['driverA', 'driverB', 'p2Officer']) {
+            for (const type of ['driverA', 'driverB', 'p2Officer', 'p3Officer']) {
                 if (signatureData[type]) signatureData[type].active = wasActive[type];
             }
         }
@@ -1538,12 +1595,10 @@ function drawDtpCircumstances(ctx) {
     const countA = countCheckedCircumstances('a');
     const countB = countCheckedCircumstances('b');
 
-    // Координаты для ТС "A" — ПОДСТАВЬТЕ СВОИ
     if (countA >= 0) {
-        fitText(ctx, String(countA), 614+21, 1690 + 35, 42, 30, ff, 'normal', color, 'center', style);
+        fitText(ctx, String(countA), 614 + 21, 1690 + 35, 42, 30, ff, 'normal', color, 'center', style);
     }
 
-    // Координаты для ТС "B" — ПОДСТАВЬТЕ СВОИ
     if (countB >= 0) {
         fitText(ctx, String(countB), 1034 + 21, 1690 + 35, 42, 30, ff, 'normal', color, 'center', style);
     }
@@ -1553,7 +1608,6 @@ function drawDtpCircumstances(ctx) {
 function countCheckedCircumstances(prefix) {
     let count = 0;
     DTP_CIRCUMSTANCES.forEach(circ => {
-        // Пропускаем "other_b" для A и "other_a" для B
         if (prefix === 'a' && circ.id === 'other_b') return;
         if (prefix === 'b' && circ.id === 'other_a') return;
 
@@ -1593,9 +1647,9 @@ async function drawDTPPage2Content(ctx) {
     // ---- Транспортное средство (галочка A или B) ----
     const veh = radio('dtpP2Vehicle');
     if (veh === 'a') {
-        drawCheckmark(ctx, 474+20, 122+10, 40);
+        drawCheckmark(ctx, 474 + 20, 122 + 10, 40);
     } else if (veh === 'b') {
-        drawCheckmark(ctx, 612+20, 122+10, 40);
+        drawCheckmark(ctx, 612 + 20, 122 + 10, 40);
     }
 
     // ---- Обстоятельства ДТП ----
@@ -1627,9 +1681,9 @@ async function drawDTPPage2Content(ctx) {
     // ---- ТС находилось под управлением ----
     const drivenBy = radio('p2DrivenBy');
     if (drivenBy === 'owner') {
-        drawCheckmark(ctx, 454+11, 715+10);
+        drawCheckmark(ctx, 454 + 11, 715 + 10);
     } else if (drivenBy === 'other') {
-        drawCheckmark(ctx, 454 + 11, 748+10);
+        drawCheckmark(ctx, 454 + 11, 748 + 10);
     }
 
     // ---- Другие ТС ----
@@ -1666,9 +1720,9 @@ async function drawDTPPage2Content(ctx) {
     // ---- Может ли передвигаться ----
     const canMove = radio('p2CanMove');
     if (canMove === 'yes') {
-        drawCheckmark(ctx, 572+10, 1400+11);
+        drawCheckmark(ctx, 572 + 10, 1400 + 11);
     } else if (canMove === 'no') {
-        drawCheckmark(ctx, 652+10, 1400+11);
+        drawCheckmark(ctx, 652 + 10, 1400 + 11);
     }
     const loc = v('p2VehicleLocation');
     if (loc) {
@@ -1709,9 +1763,9 @@ async function drawDTPPage2Content(ctx) {
     if (fillDate) {
         const parts = String(fillDate).split('-');
         if (parts.length === 3) {
-            fitText(ctx, parts[2], 134 + 56 / 2, 1755 + 35, 56, 30, ff, 'normal', color, 'center', style);         
-            fitText(ctx, parts[1], 221 + 213 / 2, 1755 + 35, 213, 30, ff, 'normal', color, 'center', style);     
-            fitText(ctx, parts[0].slice(-2), 473 + 40 / 2, 1755 + 35, 40, 30, ff, 'normal', color, 'center', style); 
+            fitText(ctx, parts[2], 134 + 56 / 2, 1755 + 35, 56, 30, ff, 'normal', color, 'center', style);
+            fitText(ctx, parts[1], 221 + 213 / 2, 1755 + 35, 213, 30, ff, 'normal', color, 'center', style);
+            fitText(ctx, parts[0].slice(-2), 473 + 40 / 2, 1755 + 35, 40, 30, ff, 'normal', color, 'center', style);
         }
     }
 
@@ -1727,7 +1781,7 @@ async function drawDTPPage2Content(ctx) {
     }
 }
 
-async function drawDTPPage3Content(ctx) {
+async function drawDTPPage3Content(ctx, canvas3) {
     const ff = 'Segoe Script';
     const color = '#000f55';
     const style = 'italic';
@@ -1739,8 +1793,7 @@ async function drawDTPPage3Content(ctx) {
     if (fillDate) {
         const parts = String(fillDate).split('-');
         if (parts.length === 3) {
-            // Координаты подгони под свой бланк (canvas 1697×1200)
-            fitText(ctx, parts[2], 83 + 49/2, 134+35, 49, 30, ff, 'normal', color, 'center', style);
+            fitText(ctx, parts[2], 83 + 49 / 2, 134 + 35, 49, 30, ff, 'normal', color, 'center', style);
             fitText(ctx, parts[1], 149 + 122 / 2, 134 + 35, 122, 30, ff, 'normal', color, 'center', style);
             fitText(ctx, parts[0].slice(-2), 300 + 25, 134 + 35, 50, 30, ff, 'normal', color, 'center', style);
         }
@@ -1750,40 +1803,78 @@ async function drawDTPPage3Content(ctx) {
     if (fillTime) {
         const tParts = String(fillTime).split(':');
         if (tParts.length === 2) {
-            // Координаты подгони под свой бланк (canvas 1697×1200)
             fitText(ctx, tParts[0], 425 + 49 / 2, 134 + 35, 49, 30, ff, 'normal', color, 'center', style);
-            fitText(ctx, tParts[1], 525+49/2, 134+35, 49, 30, ff, 'normal', color, 'center', style);
+            fitText(ctx, tParts[1], 525 + 49 / 2, 134 + 35, 49, 30, ff, 'normal', color, 'center', style);
         }
     }
 
     // ---- Место составления ----
     const place = v('p3Place');
     if (place) {
-        fitText(ctx, place, 640, 135+35, 998, 30, ff, 'normal', color, 'left', style);
+        fitText(ctx, place, 640, 135 + 35, 998, 30, ff, 'normal', color, 'left', style);
     }
 
     // ---- Рисование пользователя поверх схемы ----
     drawAllDtpDrawings(ctx, ['p3']);
+
+    // ================== ★ НОВОЕ: УСЛОВНЫЕ ОБОЗНАЧЕНИЯ (сетка 3×2) ==================
+    // ⚙️ ПОДОГНАТЬ координаты под свой бланк dtp_page3.png
+    const LEGEND_CELLS = [
+        { x: 54, y: 996+33, maxWidth: 498 },
+        { x: 582, y: 996 + 33, maxWidth: 528 },
+        { x: 1134, y: 996 + 33, maxWidth: 504 },
+        { x: 54, y: 1021 + 33, maxWidth: 498 },
+        { x: 582, y: 1021 + 33, maxWidth: 528 },
+        { x: 1134, y: 1021 + 33, maxWidth: 504 }
+    ];
+
+    for (let i = 0; i < 6; i++) {
+        const txt = v('p3Legend' + (i + 1));
+        if (!txt) continue;
+        const cell = LEGEND_CELLS[i];
+        fitText(ctx, txt, cell.x, cell.y, cell.maxWidth, 25, ff, 'normal', color, 'left', style);
+    }
+
+    const p3OfficerPosition = v('p3OfficerPosition');
+    const p3OfficerRank = v('p3OfficerRank');
+    const p3OfficerName = v('p3OfficerName');
+
+    const officerLine = (p3OfficerPosition && p3OfficerRank && p3OfficerName)
+        ? `${p3OfficerPosition}, ${p3OfficerRank} ${p3OfficerName}`
+        : [p3OfficerPosition, p3OfficerRank, p3OfficerName].filter(Boolean).join(' ');
+
+    if (officerLine) {
+        fitText(
+            ctx,
+            officerLine,
+            55,       
+            1053+40,    
+            1584,      
+            30,
+            ff, 'normal', color, 'left', style
+        );
+    }
+
+    // ---- ★ НОВОЕ: Подпись составителя схемы ----
+    if (typeof drawSignatureOnCanvas === 'function') {
+        drawSignatureOnCanvas(ctx, 'p3Officer', canvas3, true);
+    }
 }
 
 // ================================================================
 // УПРАВЛЕНИЕ РИСОВАНИЕМ НА ПЛАН-СХЕМЕ (p3)
 // ================================================================
 
-// Deep clone массива линий
 function p3CloneLines(lines) {
     return lines.map(line => line.map(pt => ({ x: pt.x, y: pt.y })));
 }
 
-// Снимок состояния перед изменением (для undo)
 function p3Snapshot() {
     p3History.undo.push(p3CloneLines(dtpDrawings.p3));
-    // Ограничиваем историю — чтобы память не жрало
     if (p3History.undo.length > 50) p3History.undo.shift();
     p3History.redo = [];
 }
 
-// Установка инструмента
 function p3SetTool(tool) {
     p3CurrentTool = tool;
 
@@ -1794,20 +1885,16 @@ function p3SetTool(tool) {
     if (eraserBtn) eraserBtn.classList.toggle('is-active', tool === 'eraser');
 }
 
-// Отмена последнего действия
 function p3Undo() {
     if (p3History.undo.length === 0) {
         showToast('Нечего отменять', 'info', 1500);
         return;
     }
-    // Сохраняем текущее в redo
     p3History.redo.push(p3CloneLines(dtpDrawings.p3));
-    // Восстанавливаем предыдущее
     dtpDrawings.p3 = p3History.undo.pop();
     generateDTP();
 }
 
-// Вернуть отменённое
 function p3Redo() {
     if (p3History.redo.length === 0) {
         showToast('Нечего возвращать', 'info', 1500);
@@ -1818,7 +1905,6 @@ function p3Redo() {
     generateDTP();
 }
 
-// Полная очистка 3-го листа
 async function p3ClearAll() {
     if (dtpDrawings.p3.length === 0) return;
 
@@ -1835,18 +1921,15 @@ async function p3ClearAll() {
     generateDTP();
 }
 
-// Проверка: попадает ли точка в линию (для ластика)
 function p3PointNearLine(px, py, line, radius) {
     if (!line || line.length === 0) return false;
 
-    // Если в линии одна точка — просто расстояние
     if (line.length === 1) {
         const dx = px - line[0].x;
         const dy = py - line[0].y;
         return (dx * dx + dy * dy) <= radius * radius;
     }
 
-    // Проверяем расстояние до каждого сегмента
     for (let i = 1; i < line.length; i++) {
         const x1 = line[i - 1].x, y1 = line[i - 1].y;
         const x2 = line[i].x, y2 = line[i].y;
@@ -1882,7 +1965,6 @@ function p3UpdateToolbarState() {
         if (btn) btn.disabled = !isDrawing;
     });
 
-    // Визуально приглушаем весь тулбар, когда рисование выключено
     const toolbar = document.getElementById('p3Toolbar');
     if (toolbar) toolbar.classList.toggle('is-disabled', !isDrawing);
 }

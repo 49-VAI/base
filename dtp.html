@@ -595,6 +595,65 @@
                             </div>
                         </div>
 
+                        <div class="eis-form-group">
+                            <label class="eis-form-label">Условные обозначения</label>
+                            <div class="eis-form-row" style="grid-template-columns: repeat(3, 1fr); gap: 10px;">
+                                <div class="eis-form-group" style="margin-bottom: 0;">
+                                    <label class="eis-form-label" style="text-transform: none; font-weight: 400;">1</label>
+                                    <input type="text" class="eis-input" id="p3Legend1" oninput="generateDTP()">
+                                </div>
+                                <div class="eis-form-group" style="margin-bottom: 0;">
+                                    <label class="eis-form-label" style="text-transform: none; font-weight: 400;">2</label>
+                                    <input type="text" class="eis-input" id="p3Legend2" oninput="generateDTP()">
+                                </div>
+                                <div class="eis-form-group" style="margin-bottom: 0;">
+                                    <label class="eis-form-label" style="text-transform: none; font-weight: 400;">3</label>
+                                    <input type="text" class="eis-input" id="p3Legend3" oninput="generateDTP()">
+                                </div>
+                            </div>
+                            <div class="eis-form-row" style="grid-template-columns: repeat(3, 1fr); gap: 10px; margin-top: -10px;">
+                                <div class="eis-form-group" style="margin-bottom: 0;">
+                                    <label class="eis-form-label" style="text-transform: none; font-weight: 400;">4</label>
+                                    <input type="text" class="eis-input" id="p3Legend4" oninput="generateDTP()">
+                                </div>
+                                <div class="eis-form-group" style="margin-bottom: 0;">
+                                    <label class="eis-form-label" style="text-transform: none; font-weight: 400;">5</label>
+                                    <input type="text" class="eis-input" id="p3Legend5" oninput="generateDTP()">
+                                </div>
+                                <div class="eis-form-group" style="margin-bottom: 0;">
+                                    <label class="eis-form-label" style="text-transform: none; font-weight: 400;">6</label>
+                                    <input type="text" class="eis-input" id="p3Legend6" oninput="generateDTP()">
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- ============ СОСТАВИТЕЛЬ СХЕМЫ (одной строкой) ============ -->
+                        <div class="eis-form-group">
+                            <label class="eis-form-label">Лицо, составившее схему</label>
+                            <div class="eis-form-row">
+                                <div class="eis-form-group" style="margin-bottom: 0;">
+                                    <label class="eis-form-label">Должность</label>
+                                    <input type="text" class="eis-input" id="p3OfficerPosition" oninput="generateDTP()">
+                                </div>
+                                <div class="eis-form-group" style="margin-bottom: 0;">
+                                    <label class="eis-form-label">Воинское звание</label>
+                                    <input type="text" class="eis-input" id="p3OfficerRank" oninput="generateDTP()">
+                                </div>
+                                <div class="eis-form-group" style="margin-bottom: 0;">
+                                    <label class="eis-form-label">Фамилия, инициалы</label>
+                                    <input type="text" class="eis-input" id="p3OfficerName" placeholder="Иванов И.И." oninput="generateDTP()">
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="eis-signature-item" style="max-width: 400px;">
+                            <div class="eis-signature-label">Подпись составителя схемы</div>
+                            <input type="file" class="eis-file-input" id="signatureP3OfficerInput"
+                                   accept="image/*" onchange="loadSignature('p3Officer', this)">
+                            <div class="eis-signature-preview" id="signatureP3OfficerPreview">Подпись не загружена</div>
+                            <button class="eis-btn eis-btn-sm" onclick="resetSignature('p3Officer')">Сбросить</button>
+                        </div>
+
                     </div>
                 </div>
 
