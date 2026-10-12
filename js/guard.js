@@ -1,16 +1,39 @@
-﻿// ================================================================
-// ЗАЩИТА СТРАНИЦ — ЕИС ВАИ
-// ================================================================
-
-const PAGE_ACCESS = {
+﻿const PAGE_ACCESS = {
     'admin.html': ['chief_vai'],
     'staff.html': ['chief_odps', 'chief_reo', 'chief_cuipp', 'chief_vai'],
     'create.html': ['inspector_reo', 'chief_reo', 'chief_vai'],
     'exam.html': ['inspector_reo', 'chief_reo', 'chief_vai'],
     'tech.html': ['inspector_reo', 'chief_reo', 'chief_vai'],
-    'protocol.html': ['inspector_odps', 'inspector_reo',
+    'protocol.html': ['cadet', 'inspector_odps', 'inspector_reo',
         'chief_odps', 'chief_reo', 'chief_cuipp', 'chief_vai']
 };
+
+const READ_ONLY_ROLES = ['cadet'];
+
+function isReadOnlyUser() {
+    return READ_ONLY_ROLES.includes(window.currentProfile?.role);
+}
+
+function canWriteToDB() {
+    return !isReadOnlyUser();
+}
+
+function blockWrite(action = 'выполнить это действие') {
+    if (isReadOnlyUser()) {
+        if (typeof showToast === 'function') {
+            showToast(`Курсантам запрещено ${action}`, 'warning');
+        }
+        return true;
+    }
+    return false;
+}
+
+function hideReadOnlyUi() {
+    if (!isReadOnlyUser()) return;
+    document.querySelectorAll('[data-readonly-hide]').forEach(el => {
+        el.style.display = 'none';
+    });
+}
 
 const ROLE_LABELS = {
     'cadet': 'Курсант',
@@ -59,6 +82,8 @@ async function runGuard() {
 
     window.currentUser = session.user;
     window.currentProfile = profile;
+
+    hideReadOnlyUi();
 
     restrictNavItems(profile);
 
@@ -135,25 +160,16 @@ function updateHeader(profile) {
     }
 }
 
-// ================================================================
-// ХЕЛПЕР: проверка, есть ли уже динамический пункт в навигации
-// ================================================================
 function hasDynamicNavItem(page) {
     const navMenu = document.querySelector('.eis-nav-menu');
     if (!navMenu) return false;
-    // Ищем li с data-page, исключая статические (у которых есть id вида navXxxItem)
     return !!navMenu.querySelector(`li[data-page="${page}"]:not([id])`);
 }
 
-// ================================================================
-// УБИРАЕМ СТАТИЧЕСКИЕ СКРЫТЫЕ ПУНКТЫ (на случай, если остались)
-// ================================================================
 function removeStaleNavItems() {
     const navMenu = document.querySelector('.eis-nav-menu');
     if (!navMenu) return;
 
-    // Если в nav.html случайно остался статический <li id="navStaffItem"> —
-    // удаляем его, чтобы не мешал проверкам
     const stale = navMenu.querySelector('#navStaffItem');
     if (stale) {
         console.warn('[guard] Удаляю статический #navStaffItem из nav.html');
@@ -161,9 +177,6 @@ function removeStaleNavItems() {
     }
 }
 
-// ================================================================
-// ПУНКТ «АДМИН-ПАНЕЛЬ» — только для Начальника ВАИ
-// ================================================================
 function addAdminMenuItem(profile) {
 
     if (profile.role !== 'chief_vai') {
@@ -195,9 +208,6 @@ function addAdminMenuItem(profile) {
 
 }
 
-// ================================================================
-// ПУНКТ «СОСТАВ» — для всего начальства
-// ================================================================
 function addStaffMenuItem(profile) {
 
     const chiefRoles = ['chief_odps', 'chief_reo', 'chief_cuipp', 'chief_vai'];
@@ -227,14 +237,12 @@ function addStaffMenuItem(profile) {
 
     li.innerHTML = `<a href="staff.html"><span>Состав</span></a>`;
 
-    // Перед «Админ-панель», если она есть
     const adminItem = navMenu.querySelector('li[data-page="admin.html"]:not([id])');
     if (adminItem) {
         navMenu.insertBefore(li, adminItem);
         return;
     }
 
-    // Иначе — перед «Оформление ДТП»
     const dtpItem = navMenu.querySelector('li[data-page="dtp.html"]:not([id])');
     if (dtpItem) {
         navMenu.insertBefore(li, dtpItem);
@@ -244,9 +252,6 @@ function addStaffMenuItem(profile) {
     navMenu.appendChild(li);
 }
 
-// ================================================================
-// СКРЫТИЕ ПУНКТОВ МЕНЮ ДЛЯ НЕДОСТУПНЫХ РОЛЕЙ
-// ================================================================
 function restrictNavItems(profile) {
     const restricted = {
         'create.html': ['inspector_reo', 'chief_reo', 'chief_vai'],
@@ -257,11 +262,9 @@ function restrictNavItems(profile) {
     document.querySelectorAll('.eis-nav-item').forEach(item => {
         const page = item.dataset.page;
         if (restricted[page]) {
-            if (!restricted[page].includes(profile.role)) {
-                item.style.display = 'none';
-            } else {
-                item.style.display = '';
-            }
+            item.style.display = restricted[page].includes(profile.role)
+                ? 'flex'
+                : 'none';
         }
     });
 }
@@ -274,3 +277,8 @@ window.runGuard = runGuard;
 window.updateHeader = updateHeader;
 window.restrictNavItems = restrictNavItems;
 window.shortName = shortName;
+
+window.isReadOnlyUser = isReadOnlyUser;
+window.canWriteToDB = canWriteToDB;
+window.blockWrite = blockWrite;
+window.hideReadOnlyUi = hideReadOnlyUi;

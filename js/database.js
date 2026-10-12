@@ -70,10 +70,11 @@ function displayResults(results) {
         return;
     }
 
-    const canEdit = window.currentProfile && [
+    // ★ Курсантам кнопки редактирования/удаления не показываем
+    const canEdit = canWriteToDB() && [
         'inspector_odps', 'inspector_reo',
         'chief_odps', 'chief_reo', 'chief_cuipp', 'chief_vai'
-    ].includes(window.currentProfile.role);
+    ].includes(window.currentProfile?.role);
 
     let html = '';
 
@@ -171,6 +172,8 @@ function resetSearch() {
 }
 
 function openEditVUModal(vuId) {
+    if (blockWrite('редактировать ВУ')) return;
+
     const vu = vuDatabase.find(v => v.id === vuId);
     if (!vu) { showToast('Запись не найдена', 'error'); return; }
 
@@ -198,6 +201,8 @@ function closeEditVUModal() {
 }
 
 async function saveEditVU() {
+    if (blockWrite('сохранять изменения ВУ')) return;
+
     const errEl = document.getElementById('evError');
     const btn = document.getElementById('evSaveBtn');
     errEl.textContent = '';
@@ -257,7 +262,6 @@ async function saveEditVU() {
     const { data: after } = await supabaseClient
         .from('military_ids').select('*').eq('id', id).single();
 
-    // logUpdate сам строит человеческий summary из changes
     await logUpdate('vu_update', 'military_ids', id, before, after, {
         summary_prefix: `Изменил ВУ ${number} (${lastName} ${firstName})`
     });
@@ -268,6 +272,8 @@ async function saveEditVU() {
 }
 
 async function toggleArchiveVU(vuId) {
+    if (blockWrite('менять статус ВУ')) return;
+
     const vu = vuDatabase.find(v => v.id === vuId);
     if (!vu) return;
 
@@ -291,7 +297,6 @@ async function toggleArchiveVU(vuId) {
 
     if (error) { showToast('Ошибка: ' + error.message, 'error'); return; }
 
-    // logAction с готовой строкой summary
     await logAction('vu_status_change', 'military_ids', vuId, {
         kind: 'update',
         summary: `${isArchived ? 'Разархивировал' : 'Архивировал'} ВУ ${vu.vuNumber} (${vu.fio})`,
@@ -304,6 +309,8 @@ async function toggleArchiveVU(vuId) {
 }
 
 async function deleteVU(vuId, vuNumber) {
+    if (blockWrite('удалять ВУ')) return;
+
     const vu = vuDatabase.find(v => v.id === vuId);
 
     const ok = await showConfirm({
@@ -334,7 +341,6 @@ async function deleteVU(vuId, vuNumber) {
 
     if (error) { showToast('Ошибка: ' + error.message, 'error'); return; }
 
-    // 5-м аргументом СТРОКА-фраза
     await logDelete('vu_delete', 'military_ids', vuId, fullRow || vu,
         `Удалил ВУ ${vuNumber}${vu?.fio ? ' (' + vu.fio + ')' : ''}`);
 

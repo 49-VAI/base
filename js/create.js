@@ -2,11 +2,10 @@
 // СОЗДАНИЕ ВУ — генерация + сохранение в Supabase
 // ================================================================
 
-// ========== КОНФИГУРАЦИЯ ВУ ==========
 const VU_CONFIG = {
     canvasWidth: 1215,
     canvasHeight: 892,
-    background: 'backgrounds/vu_base.png', // Единый фон для всех
+    background: 'backgrounds/vu_base.png',
     rankPhotos: {
         'Гвардии рядовой': 'backgrounds/ranks/ryadovoy.png',
         'Гвардии ефрейтор': 'backgrounds/ranks/efreytor.png',
@@ -27,15 +26,12 @@ const VU_CONFIG = {
     },
     vaiStamp: 'backgrounds/vai_stamp.png',
     chiefSignature: 'backgrounds/chief_signature.png',
-    // Координаты и размеры элементов
     photoRect: { x: 53, y: 381, w: 235, h: 313 },
     stampRect: { x: 221, y: 605, w: 135, h: 135 },
     signatureRect: { x: 200, y: 765, w: 212, h: 74 },
     serviceStampRect: { x: 371, y: 616, w: 216, h: 78 },
-    // Углы поворота печати ВАИ
     stampAngleMin: -40,
     stampAngleMax: 40,
-    // Углы поворота печати службы (как было в оригинале)
     serviceStampAngleMin: -7,
     serviceStampAngleMax: 10
 };
@@ -58,7 +54,6 @@ function fitText(ctx, text, x, y, maxWidth, initialSize, fontFamily, fontWeight,
     ctx.fillText(text, x, y);
 }
 
-// Универсальная функция получения угла по сиду + диапазону
 function getStampAngle(seed, minDeg, maxDeg) {
     const str = String(seed || '');
     let h = 0;
@@ -70,9 +65,6 @@ function getStampAngle(seed, minDeg, maxDeg) {
     return (minDeg + t * (maxDeg - minDeg)) * Math.PI / 180;
 }
 
-// ================================================================
-// Отрисовка повёрнутой картинки с максимальным качеством
-// ================================================================
 function drawRotatedImage(ctx, img, cx, cy, w, h, angleRad, alpha = 1) {
     ctx.save();
     ctx.imageSmoothingEnabled = true;
@@ -92,7 +84,6 @@ async function generateVU() {
 
     const ctx = canvas.getContext('2d');
 
-    // ★ Максимальное сглаживание для всего канваса
     ctx.imageSmoothingEnabled = true;
     ctx.imageSmoothingQuality = 'high';
 
@@ -111,7 +102,6 @@ async function generateVU() {
 
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-    // 1. Единый задний фон
     try {
         const bgImage = await loadImage(VU_CONFIG.background);
         ctx.drawImage(bgImage, 0, 0, canvas.width, canvas.height);
@@ -128,13 +118,9 @@ async function generateVU() {
     const fontFamily = 'Segoe Script';
     const color = '#000f55';
 
-    // 2. Надпись "войсковая часть 23921" — верх (120; 285), размер 30 → низ = 315
     fitText(ctx, 'войсковая часть 23921', 120, 315, 400, 30, fontFamily, 'normal', color, 'left', 'italic');
-
-    // 3. Надпись "66" — верх (439; 374), размер 22 → низ = 396
     fitText(ctx, '66', 439, 396, 100, 22, fontFamily, 'normal', color, 'left', 'italic');
 
-    // 4. Фотография по званию — размер 235x313, координаты (53; 381)
     if (rank && VU_CONFIG.rankPhotos[rank]) {
         try {
             const photoImg = await loadImage(VU_CONFIG.rankPhotos[rank]);
@@ -146,18 +132,10 @@ async function generateVU() {
         }
     }
 
-    
-
-    // 6. Надпись "Начальник 66-ой ВАИ" — верх (137; 720), размер 30 → низ = 750
     fitText(ctx, 'Начальник 66-ой ВАИ', 137, 750, 400, 30, fontFamily, 'normal', color, 'left', 'italic');
-
-    // 7. Надпись "капитан" — верх (51; 795), размер 30 → низ = 825
     fitText(ctx, 'капитан', 51, 817, 300, 30, fontFamily, 'normal', color, 'left', 'italic');
-
-    // 8. Надпись "М.А. Котиков" — верх (378; 787), размер 30 → низ = 817
     fitText(ctx, 'М. Котиков', 368, 817, 300, 30, fontFamily, 'normal', color, 'left', 'italic');
 
-    // 9. Подпись начальника — размер 212x74, координаты (200; 765)
     try {
         const sigImg = await loadImage(VU_CONFIG.chiefSignature);
         ctx.imageSmoothingEnabled = true;
@@ -167,7 +145,6 @@ async function generateVU() {
         console.warn('Ошибка загрузки подписи начальника:', error);
     }
 
-    // 5. Печать ВАИ — размер 135x135, координаты (221; 605), угол от -40 до 40
     try {
         const stampImg = await loadImage(VU_CONFIG.vaiStamp);
         const { x, y, w, h } = VU_CONFIG.stampRect;
@@ -181,7 +158,6 @@ async function generateVU() {
         console.warn('Ошибка загрузки печати ВАИ:', error);
     }
 
-    // 10. Печать срочной/контрактной службы — размер 216x78, координаты (371; 616), угол от -7 до 10
     if (serviceType && VU_CONFIG.serviceStamps[serviceType]) {
         try {
             const stampImg = await loadImage(VU_CONFIG.serviceStamps[serviceType]);
@@ -197,21 +173,16 @@ async function generateVU() {
         }
     }
 
-    // ===== ОСТАЛЬНЫЕ ЭЛЕМЕНТЫ =====
     if (rank) {
-        // Номер ВУ
         if (vuNumber) fitText(ctx, vuNumber, 389, 106, 123, 25, fontFamily, 'normal', color, 'left', 'italic');
 
-        // Звание (первая буква строчная)
         const rankLower = rank.charAt(0).toLowerCase() + rank.slice(1);
         fitText(ctx, rankLower, 218, 149, 341, 30, fontFamily, 'normal', color, 'left', 'italic');
 
-        // ФИО
         if (lastName) fitText(ctx, lastName, 148, 191, 411, 30, fontFamily, 'normal', color, 'left', 'italic');
         if (firstName) fitText(ctx, firstName, 102, 233, 457, 30, fontFamily, 'normal', color, 'left', 'italic');
         if (middleName) fitText(ctx, middleName, 149, 275, 410, 30, fontFamily, 'normal', color, 'left', 'italic');
 
-        // Дата выдачи
         if (issueDate) {
             const dateStr = formatDateForDisplay(issueDate);
             const dateParts = dateStr.split('.');
@@ -223,7 +194,6 @@ async function generateVU() {
             }
         }
 
-        // Дата окончания
         if (expiryDate) {
             const dateStr = formatDateForDisplay(expiryDate);
             const dateParts = dateStr.split('.');
@@ -326,6 +296,8 @@ function closeConfirmVUModal() {
 }
 
 async function confirmSaveVU() {
+    if (blockWrite('сохранять ВУ в базу')) return;
+
     const preview = window._vuPreviewData;
     if (!preview) return;
 

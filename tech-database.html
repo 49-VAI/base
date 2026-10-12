@@ -127,7 +127,7 @@
                         <div class="eis-panel-header">
                             <span class="eis-panel-title">Поиск по реестру</span>
                             <div class="eis-panel-actions">
-                                <button class="eis-btn eis-btn-sm eis-btn-primary" onclick="openVehicleModal()">+ Добавить ТС</button>
+                                <button class="eis-btn eis-btn-sm eis-btn-primary" onclick="openVehicleModal()" data-readonly-hide>+ Добавить ТС</button>
                                 <button class="eis-btn eis-btn-sm eis-btn-secondary" onclick="loadVehiclesFromSupabase()">Обновить</button>
                             </div>
                         </div>
@@ -188,7 +188,7 @@
                                 </div>
                                 <div class="eis-form-group">
                                     <label class="eis-form-label">&nbsp;</label>
-                                    <button type="button" class="eis-btn eis-btn-primary" onclick="openAssignModal()">
+                                    <button type="button" class="eis-btn eis-btn-primary" onclick="openAssignModal()" data-readonly-hide>
                                         + Записать ТС
                                     </button>
                                 </div>
@@ -284,12 +284,12 @@
             </div>
             <div class="eis-modal-form-footer eis-modal-form-footer-split">
                 <div class="eis-modal-form-footer-right">
-                    <button type="button" class="eis-btn eis-btn-danger" id="tdDeleteBtn">Удалить</button>
+                    <button type="button" class="eis-btn eis-btn-danger" id="tdDeleteBtn" data-readonly-hide>Удалить</button>
                 </div>
                 <div class="eis-modal-form-footer-right">
                     <button type="button" class="eis-btn eis-btn-secondary" id="tdDownloadBtn">Скачать PNG</button>
-                    <button type="button" class="eis-btn eis-btn-secondary" id="tdRecheckBtn">Повторный осмотр</button>
-                    <button type="button" class="eis-btn eis-btn-primary" id="tdEditBtn">Редактировать</button>
+                    <button type="button" class="eis-btn eis-btn-secondary" id="tdRecheckBtn" data-readonly-hide>Повторный осмотр</button>
+                    <button type="button" class="eis-btn eis-btn-primary" id="tdEditBtn" data-readonly-hide>Редактировать</button>
                 </div>
             </div>
         </div>
@@ -367,12 +367,16 @@
                 <div class="eis-auth-error" id="vehError"></div>
             </div>
             <div class="eis-modal-form-footer eis-modal-form-footer-split">
-                <button type="button" class="eis-btn eis-btn-danger" id="vehDeleteBtn" style="display:none;" onclick="deleteVehicleFromModal()">
+                <button type="button" class="eis-btn eis-btn-danger" id="vehDeleteBtn" style="display:none;"
+                        data-readonly-hide onclick="deleteVehicleFromModal()">
                     Удалить
                 </button>
                 <div class="eis-modal-form-footer-right">
                     <button type="button" class="eis-btn eis-btn-secondary" onclick="closeVehicleModal()">Отмена</button>
-                    <button type="button" class="eis-btn eis-btn-primary" id="vehSaveBtn" onclick="saveVehicle()">Сохранить</button>
+                    <button type="button" class="eis-btn eis-btn-primary" id="vehSaveBtn"
+                            onclick="saveVehicle()" data-readonly-hide>
+                        Сохранить
+                    </button>
                 </div>
             </div>
         </div>
@@ -414,7 +418,10 @@
             </div>
             <div class="eis-modal-form-footer">
                 <button type="button" class="eis-btn eis-btn-secondary" onclick="closeAssignModal()">Отмена</button>
-                <button type="button" class="eis-btn eis-btn-primary" id="assignSaveBtn" onclick="saveAppointment()">Записать</button>
+                <button type="button" class="eis-btn eis-btn-primary" id="assignSaveBtn"
+                        onclick="saveAppointment()" data-readonly-hide>
+                    Записать
+                </button>
             </div>
         </div>
     </div>

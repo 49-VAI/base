@@ -3,10 +3,10 @@
 // Карта действительна максимум 1 месяц → планируем за 3 дня до истечения
 // ================================================================
 
-const PLAN_DEFAULT_CAPACITY = 5;   // ТС в день
-const PLAN_DEFAULT_HORIZON = 15;   // дней до истечения — попадают в очередь
-const PLAN_MAX_HORIZON = 30;   // т.к. карта действует 1 мес.
-const PLAN_BUFFER_DAYS = 3;    // записываем за N дней до истечения
+const PLAN_DEFAULT_CAPACITY = 5;
+const PLAN_DEFAULT_HORIZON = 15;
+const PLAN_MAX_HORIZON = 30;
+const PLAN_BUFFER_DAYS = 3;
 
 const PLAN_MONTH_NAMES = [
     'Январь', 'Февраль', 'Март', 'Апрель', 'Май', 'Июнь',
@@ -19,9 +19,6 @@ let planHorizon = PLAN_DEFAULT_HORIZON;
 let planCurrentMonth = new Date();
 let planUnplanned = [];
 
-// ================================================================
-// ОБЁРТКА НАД switchTechTab — поддержка вкладки "planning"
-// ================================================================
 window.switchTechTab = function (tab) {
     document.querySelectorAll('.eis-tab').forEach(t => {
         t.classList.toggle('active', t.dataset.tab === tab);
@@ -39,9 +36,6 @@ window.switchTechTab = function (tab) {
     }
 };
 
-// ================================================================
-// ФОРМАТ ДАТЫ
-// ================================================================
 function planISO(date) {
     const y = date.getFullYear();
     const m = String(date.getMonth() + 1).padStart(2, '0');
@@ -54,9 +48,6 @@ function planToday() {
     return t;
 }
 
-// ================================================================
-// ЗАГРУЗКА ДАННЫХ
-// ================================================================
 async function loadPlanningData() {
     if (typeof techDatabase !== 'undefined' && techDatabase.length === 0
         && typeof loadTechFromSupabase === 'function') {
@@ -68,8 +59,18 @@ async function loadPlanningData() {
 
     const capInput = document.getElementById('planningCapacity');
     const horInput = document.getElementById('planningHorizon');
-    if (capInput) capInput.value = planCapacity;
-    if (horInput) horInput.value = planHorizon;
+
+    // ★ Курсантам инпуты недоступны
+    const editable = canWriteToDB();
+
+    if (capInput) {
+        capInput.value = planCapacity;
+        capInput.disabled = !editable;
+    }
+    if (horInput) {
+        horInput.value = planHorizon;
+        horInput.disabled = !editable;
+    }
 
     const { data, error } = await supabaseClient
         .from('tech_appointments')
@@ -88,26 +89,42 @@ async function loadPlanningData() {
 }
 
 function onPlanningCapacityChange() {
-    const v = parseInt(document.getElementById('planningCapacity').value);
-    if (!v || v < 1) return;
+    const capInput = document.getElementById('planningCapacity');
+
+    // ★ Курсантам менять нельзя — откатываем значение обратно
+    if (blockWrite('менять мощность дня')) {
+        if (capInput) capInput.value = planCapacity;
+        return;
+    }
+
+    const v = parseInt(capInput.value);
+    if (!v || v < 1) {
+        if (capInput) capInput.value = planCapacity;
+        return;
+    }
     planCapacity = v;
     localStorage.setItem('tech_plan_capacity', v);
     renderPlanningTab();
 }
 
 function onPlanningHorizonChange() {
-    let v = parseInt(document.getElementById('planningHorizon').value);
+    const horInput = document.getElementById('planningHorizon');
+
+    // ★ Курсантам менять нельзя — откатываем значение обратно
+    if (blockWrite('менять горизонт очереди')) {
+        if (horInput) horInput.value = planHorizon;
+        return;
+    }
+
+    let v = parseInt(horInput.value);
     if (!v || v < 5) v = 5;
     if (v > PLAN_MAX_HORIZON) v = PLAN_MAX_HORIZON;
     planHorizon = v;
-    document.getElementById('planningHorizon').value = v;
+    if (horInput) horInput.value = v;
     localStorage.setItem('tech_plan_horizon', v);
     renderPlanningTab();
 }
 
-// ================================================================
-// ОЧЕРЕДЬ ТС БЕЗ ЗАПИСИ
-// ================================================================
 function buildUnplannedList() {
     if (typeof techDatabase === 'undefined' || !techDatabase.length) {
         planUnplanned = [];
@@ -118,7 +135,6 @@ function buildUnplannedList() {
     const limit = new Date(today);
     limit.setDate(limit.getDate() + planHorizon);
 
-    // Множество plate с активной записью
     const bookedPlates = new Set(
         planAppointments
             .filter(a => a.status === 'planned')
@@ -130,8 +146,8 @@ function buildUnplannedList() {
         if (!row.valid_until) return false;
         const d = parseDate(row.valid_until);
         if (!d) return false;
-        if (d > limit) return false;              // ещё далеко
-        if (bookedPlates.has(row.plate_number)) return false; // уже записан
+        if (d > limit) return false;
+        if (bookedPlates.has(row.plate_number)) return false;
         return true;
     }).map(row => {
         const d = parseDate(row.valid_until);
@@ -140,9 +156,6 @@ function buildUnplannedList() {
     }).sort((a, b) => a._daysLeft - b._daysLeft);
 }
 
-// ================================================================
-// ЗАГРУЗКА ДНЯ
-// ================================================================
 function getDayLoad(isoDate) {
     return planAppointments.filter(a =>
         a.scheduled_date === isoDate && a.status === 'planned'
@@ -158,9 +171,6 @@ function getLoadClass(count) {
     return 'free';
 }
 
-// ================================================================
-// РЕНДЕР
-// ================================================================
 function renderPlanningTab() {
     buildUnplannedList();
     renderPlanningStats();
@@ -282,9 +292,6 @@ function planningToday() {
     renderPlanningStats();
 }
 
-// ================================================================
-// ОЧЕРЕДЬ
-// ================================================================
 function renderPlanningQueue() {
     const container = document.getElementById('planningQueue');
     const countEl = document.getElementById('planningQueueCount');
@@ -302,6 +309,9 @@ function renderPlanningQueue() {
         </div>`;
         return;
     }
+
+    // ★ Курсантам кнопку «Записать» не показываем
+    const canEdit = canWriteToDB();
 
     let html = '<div class="eis-admin-table-wrap"><table class="eis-admin-table"><thead><tr>';
     html += '<th>Истекает</th><th>Осталось</th><th>Гос.номер</th><th>ТС</th><th>Эксперт</th><th></th>';
@@ -323,10 +333,10 @@ function renderPlanningQueue() {
             <td data-label="ТС">${escapeHtmlTd(row.vehicle_make_model || '—')}</td>
             <td data-label="Эксперт">${escapeHtmlTd(row.expert_name || '—')}</td>
             <td>
-                <button class="eis-btn eis-btn-sm eis-btn-primary"
+                ${canEdit ? `<button class="eis-btn eis-btn-sm eis-btn-primary"
                         onclick="openAssignModal('${escapeHtmlTd(row.plate_number || '')}', '${escapeHtmlTd(row.vehicle_make_model || '')}', '${row.valid_until}')">
                     Записать
-                </button>
+                </button>` : ''}
             </td>
         </tr>`;
     });
@@ -335,9 +345,6 @@ function renderPlanningQueue() {
     container.innerHTML = html;
 }
 
-// ================================================================
-// ВСЕ ИЗВЕСТНЫЕ ТС
-// ================================================================
 function getAllKnownVehicles() {
     const map = new Map();
 
@@ -366,9 +373,6 @@ function getAllKnownVehicles() {
     return Array.from(map.values()).sort((a, b) => a.plate.localeCompare(b.plate));
 }
 
-// ================================================================
-// ПОДБОР ДАТЫ — за 3 дня до истечения (карта действует 1 месяц)
-// ================================================================
 function suggestDate(validUntil) {
     const today = planToday();
     let suggested = new Date(today);
@@ -377,14 +381,11 @@ function suggestDate(validUntil) {
         const vu = parseDate(validUntil);
         if (vu) {
             const diff = Math.ceil((vu - today) / (1000 * 60 * 60 * 24));
-            // Хотим записать за PLAN_BUFFER_DAYS дней до истечения
             const offset = diff - PLAN_BUFFER_DAYS;
 
             if (offset > 0) {
-                // Карта ещё не скоро истечёт — ставим за 3 дня до конца
                 suggested.setDate(suggested.getDate() + offset);
             } else {
-                // Истекает скоро или уже просрочено — ставим на завтра
                 suggested.setDate(suggested.getDate() + 1);
             }
         }
@@ -392,7 +393,6 @@ function suggestDate(validUntil) {
         suggested.setDate(suggested.getDate() + 1);
     }
 
-    // Если день забит — ищем следующий свободный (в пределах 120 дней)
     for (let i = 0; i < 120; i++) {
         const iso = planISO(suggested);
         if (getDayLoad(iso) < planCapacity) return iso;
@@ -401,10 +401,9 @@ function suggestDate(validUntil) {
     return planISO(suggested);
 }
 
-// ================================================================
-// МОДАЛКА: ЗАПИСЬ
-// ================================================================
 function openAssignModal(plate, make, validUntil) {
+    if (blockWrite('записывать ТС на ТО')) return;
+
     const modal = document.getElementById('assignModal');
     if (!modal) return;
 
@@ -464,6 +463,8 @@ function onAssignDateChange() {
 }
 
 async function saveAppointment() {
+    if (blockWrite('записывать ТС на ТО')) return;
+
     const sel = document.getElementById('assignVehicle');
     const dateISO = document.getElementById('assignDate').value;
     const time = document.getElementById('assignTime').value;
@@ -529,9 +530,6 @@ function closeAssignModal() {
     if (modal) modal.style.display = 'none';
 }
 
-// ================================================================
-// МОДАЛКА: ЗАПИСИ ДНЯ
-// ================================================================
 function openDayAppointmentsModal(isoDate) {
     const modal = document.getElementById('dayAppointmentsModal');
     const title = document.getElementById('dayApptTitle');
@@ -560,6 +558,9 @@ function openDayAppointmentsModal(isoDate) {
         return;
     }
 
+    // ★ Курсантам кнопку «Отменить» не показываем
+    const canEdit = canWriteToDB();
+
     let html = '<div class="eis-admin-table-wrap"><table class="eis-admin-table"><thead><tr>';
     html += '<th>Время</th><th>Гос.номер</th><th>ТС</th><th>Примечание</th><th></th>';
     html += '</tr></thead><tbody>';
@@ -571,10 +572,10 @@ function openDayAppointmentsModal(isoDate) {
             <td data-label="ТС">${escapeHtmlTd(a.make_model || '—')}</td>
             <td data-label="Примечание">${escapeHtmlTd(a.notes || '—')}</td>
             <td>
-                <button class="eis-btn eis-btn-sm eis-btn-danger"
+                ${canEdit ? `<button class="eis-btn eis-btn-sm eis-btn-danger"
                         onclick="cancelAppointment('${a.id}', '${escapeHtmlTd(a.plate_number)}')">
                     Отменить
-                </button>
+                </button>` : ''}
             </td>
         </tr>`;
     });
@@ -591,6 +592,8 @@ function closeDayAppointmentsModal() {
 }
 
 async function cancelAppointment(id, plate) {
+    if (blockWrite('отменять записи на ТО')) return;
+
     const ok = await showConfirm({
         title: 'Отмена записи',
         message: `Удалить запись ТС ${plate} с этого дня?`,
@@ -616,9 +619,6 @@ async function cancelAppointment(id, plate) {
     renderPlanningTab();
 }
 
-// ================================================================
-// ИНИЦИАЛИЗАЦИЯ
-// ================================================================
 document.addEventListener('DOMContentLoaded', function () {
     if (!document.getElementById('planningGrid')) return;
 
@@ -638,9 +638,6 @@ document.addEventListener('DOMContentLoaded', function () {
     });
 });
 
-// ================================================================
-// ЭКСПОРТ
-// ================================================================
 window.loadPlanningData = loadPlanningData;
 window.renderPlanningTab = renderPlanningTab;
 window.onPlanningCapacityChange = onPlanningCapacityChange;

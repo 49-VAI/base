@@ -313,14 +313,29 @@ function openFineDetail(id) {
         dlBtn.onclick = () => downloadFine(row);
     }
 
+    // ★ Кнопки редактирования и удаления — только для тех, кто может писать
+    const canEdit = canWriteToDB();
+
     const editBtn = document.getElementById('fdEditBtn');
-    if (editBtn) editBtn.onclick = () => openEditFineModal();
+    if (editBtn) {
+        if (canEdit) {
+            editBtn.style.display = '';
+            editBtn.onclick = () => openEditFineModal();
+        } else {
+            editBtn.style.display = 'none';
+        }
+    }
 
     const delBtn = document.getElementById('fdDeleteBtn');
     if (delBtn) {
-        delBtn.disabled = false;
-        delBtn.textContent = 'Удалить';
-        delBtn.onclick = () => deleteFine();
+        if (canEdit) {
+            delBtn.style.display = '';
+            delBtn.disabled = false;
+            delBtn.textContent = 'Удалить';
+            delBtn.onclick = () => deleteFine();
+        } else {
+            delBtn.style.display = 'none';
+        }
     }
 
     document.getElementById('fineDetailModal').style.display = 'flex';
@@ -365,6 +380,7 @@ function downloadFine(row) {
 }
 
 function openEditFineModal() {
+    if (blockWrite('редактировать протоколы')) return;
     if (!currentFineRow) { showToast('Запись не найдена', 'error'); return; }
     const row = currentFineRow;
 
@@ -424,6 +440,8 @@ function closeEditFineModal() {
 }
 
 async function saveEditFine() {
+    if (blockWrite('сохранять изменения протокола')) return;
+
     const errEl = document.getElementById('efError');
     const btn = document.getElementById('efSaveBtn');
     if (errEl) errEl.textContent = '';
@@ -528,6 +546,7 @@ async function saveEditFine() {
 }
 
 async function deleteFine() {
+    if (blockWrite('удалять протоколы')) return;
     if (!currentFineRow) return;
     const row = currentFineRow;
 
@@ -577,7 +596,6 @@ async function deleteFine() {
         const { error } = await supabaseClient.from('protocols').delete().eq('id', row.id);
         if (error) throw new Error(error.message);
 
-        // 5-м аргументом СТРОКА
         await logDelete('protocol_delete', 'protocols', row.id, row,
             `Удалил протокол ${row.reg_number} (${row.violator_last_name || ''} ${row.violator_first_name || ''})`.trim());
 

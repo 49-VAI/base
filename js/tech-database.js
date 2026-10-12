@@ -37,16 +37,26 @@ async function loadTechFromSupabase() {
 
     const { data, error } = await supabaseClient
         .from('tech_inspections').select('*')
-        .eq('is_current', true).order('valid_until', { ascending: true });
+        .eq('is_current', true);
 
     if (error) { container.innerHTML = `<div class="eis-no-results">Ошибка: ${escapeHtmlTd(error.message)}</div>`; return; }
-    techDatabase = data || [];
+
+    techDatabase = (data || []).sort(compareTechByCardNumber);
     updateTechStats();
     applyTechFilters();
 
     if (document.getElementById('tab-calendar')?.classList.contains('active')) {
         renderCalendarTab();
     }
+}
+
+// Сортировка карт ТО по номеру — от большего к меньшему
+function compareTechByCardNumber(a, b) {
+    const na = parseInt(String(a.card_number || '').replace(/\D/g, ''), 10) || 0;
+    const nb = parseInt(String(b.card_number || '').replace(/\D/g, ''), 10) || 0;
+    if (na !== nb) return nb - na;
+    // если номера совпадают (или нечисловые) — по дате создания
+    return new Date(b.created_at || 0) - new Date(a.created_at || 0);
 }
 
 function updateTechStats() {
@@ -176,10 +186,39 @@ async function openTechDetailModal(id) {
     const versionsHtml = await buildVersionHistoryHtml(row.id);
     document.getElementById('tdFields').innerHTML = fieldsHtml + versionsHtml;
 
+    const canEdit = canWriteToDB();
+
     document.getElementById('tdDownloadBtn').onclick = () => downloadTechPhoto(row);
-    document.getElementById('tdRecheckBtn').onclick = () => window.location.href = 'tech.html?clone=' + row.id;
-    document.getElementById('tdEditBtn').onclick = () => window.location.href = 'tech.html?edit=' + row.id;
-    document.getElementById('tdDeleteBtn').onclick = () => deleteTechFromDB(row);
+
+    const recheckBtn = document.getElementById('tdRecheckBtn');
+    if (recheckBtn) {
+        if (canEdit) {
+            recheckBtn.style.display = '';
+            recheckBtn.onclick = () => window.location.href = 'tech.html?clone=' + row.id;
+        } else {
+            recheckBtn.style.display = 'none';
+        }
+    }
+
+    const editBtn = document.getElementById('tdEditBtn');
+    if (editBtn) {
+        if (canEdit) {
+            editBtn.style.display = '';
+            editBtn.onclick = () => window.location.href = 'tech.html?edit=' + row.id;
+        } else {
+            editBtn.style.display = 'none';
+        }
+    }
+
+    const delBtn = document.getElementById('tdDeleteBtn');
+    if (delBtn) {
+        if (canEdit) {
+            delBtn.style.display = '';
+            delBtn.onclick = () => deleteTechFromDB(row);
+        } else {
+            delBtn.style.display = 'none';
+        }
+    }
 
     document.getElementById('techDetailModal').style.display = 'flex';
 }
@@ -264,6 +303,8 @@ function downloadTechPhoto(row) {
 // УДАЛЕНИЕ ТО + ВСЕХ ВЕРСИЙ
 // ================================================================
 async function deleteTechFromDB(row) {
+    if (blockWrite('удалять карты ТО')) return;
+
     const chain = await collectVersionChain(row.id);
     if (chain.length === 0) { showToast('Запись не найдена', 'error'); return; }
 
@@ -367,6 +408,9 @@ function displayVehicles(rows) {
     if (countEl) countEl.textContent = `ЗАПИСЕЙ: ${rows.length}`;
     if (rows.length === 0) { container.innerHTML = '<div class="eis-no-results">Записи не найдены</div>'; return; }
 
+    // ★ Курсантам кнопки «Изменить» не показываем
+    const canEdit = canWriteToDB();
+
     let html = '<div class="eis-admin-table-wrap"><table class="eis-admin-table"><thead><tr>';
     html += '<th>Гос.номер</th><th>Марка, модель</th><th>VIN</th><th>Категория</th><th>Год</th><th>Подразделение</th><th></th>';
     html += '</tr></thead><tbody>';
@@ -380,7 +424,7 @@ function displayVehicles(rows) {
             <td data-label="Год">${v.year || '—'}</td>
             <td data-label="Подразделение">${escapeHtmlTd(v.owner_unit || '—')}</td>
             <td class="eis-admin-actions">
-                <button class="eis-btn eis-btn-sm eis-btn-secondary" onclick="openVehicleModal('${v.id}')">Изменить</button>
+                ${canEdit ? `<button class="eis-btn eis-btn-sm eis-btn-secondary" onclick="openVehicleModal('${v.id}')">Изменить</button>` : ''}
             </td>
         </tr>`;
     });
@@ -389,6 +433,8 @@ function displayVehicles(rows) {
 }
 
 function openVehicleModal(id) {
+    if (blockWrite('редактировать реестр ТС')) return;
+
     const modal = document.getElementById('vehicleModal');
     if (!modal) return;
     document.getElementById('vehError').textContent = '';
@@ -428,6 +474,8 @@ function closeVehicleModal() {
 }
 
 async function saveVehicle() {
+    if (blockWrite('сохранять ТС в реестр')) return;
+
     const errEl = document.getElementById('vehError');
     const btn = document.getElementById('vehSaveBtn');
     errEl.textContent = '';
@@ -498,6 +546,8 @@ async function saveVehicle() {
 }
 
 async function deleteVehicleFromModal() {
+    if (blockWrite('удалять ТС из реестра')) return;
+
     const id = document.getElementById('vehId').value;
     if (!id) return;
     const v = vehicleDatabase.find(x => x.id === id);
@@ -539,7 +589,7 @@ function extractStorageFileName(url, bucket) {
 // КАЛЕНДАРЬ ТЕХОСМОТРОВ
 // ================================================================
 let calendarCurrentDate = new Date();
-let calendarEvents = {}; // { 'YYYY-MM-DD': [rows] }
+let calendarEvents = {};
 
 const CAL_MONTH_NAMES = [
     'Январь', 'Февраль', 'Март', 'Апрель', 'Май', 'Июнь',

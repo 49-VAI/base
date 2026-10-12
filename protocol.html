@@ -29,7 +29,7 @@
                             <div class="eis-input-with-btn">
                                 <input type="text" class="eis-input" id="protocolRegNumber" placeholder="000001-ПДД" oninput="generateProtocol()">
                                 <button type="button" class="eis-btn eis-btn-secondary" id="lastProtocolBtn"
-                                        onclick="fetchLastProtocolNumber()">
+                                        onclick="fetchLastProtocolNumber()" data-readonly-hide>
                                     Узнать номер последнего протокола
                                 </button>
                             </div>
@@ -297,7 +297,8 @@
                     <button class="eis-btn eis-btn-secondary" onclick="saveProtocolPage1()">Скачать стр. 1</button>
                     <button class="eis-btn eis-btn-secondary" onclick="saveProtocolPage2()">Скачать стр. 2</button>
                     <button class="eis-btn eis-btn-secondary" onclick="saveProtocolBoth()">Скачать обе</button>
-                    <button class="eis-btn eis-btn-success" id="protocolSaveToDbBtn" onclick="saveProtocolToDB()">
+                    <button class="eis-btn eis-btn-success" id="protocolSaveToDbBtn"
+                            onclick="saveProtocolToDB()" data-readonly-hide>
                         Сохранить в базу ЕИС
                     </button>
                 </div>

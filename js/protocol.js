@@ -573,6 +573,9 @@ async function saveProtocolBoth() {
 }
 
 async function saveProtocolToDB() {
+    // ★ Блокируем запись в БД для курсантов
+    if (blockWrite('сохранять протоколы в базу')) return;
+
     const btn = document.getElementById('protocolSaveToDbBtn');
     const origText = btn ? btn.textContent : 'Сохранить в базу ЕИС';
 
@@ -681,7 +684,6 @@ async function saveProtocolToDB() {
 
         if (error) throw new Error(error.message);
 
-        // 5-м аргументом СТРОКА
         await logCreate('protocol_create', 'protocols', data.id, data,
             `Создал протокол ${regNumber} на ${lastName} ${firstName} (${payload.article_part ? 'ч. ' + payload.article_part + ' ' : ''}ст. ${payload.article_number})`);
 

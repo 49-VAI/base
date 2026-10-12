@@ -181,6 +181,9 @@ function validateTechForm() {
 }
 
 async function saveTechToDB() {
+    // ★ Блокируем запись в БД для курсантов
+    if (blockWrite('сохранять ТО в базу')) return;
+
     const saveBtn = document.querySelector('.eis-actions-bar .eis-btn-success');
     const origText = saveBtn ? saveBtn.textContent : '';
 
@@ -247,7 +250,6 @@ async function saveTechToDB() {
                 .from('tech_inspections').update({ is_current: false }).eq('id', techEditMode.previousId);
         }
 
-        // ЛОГИРОВАНИЕ
         if (techEditMode && techEditMode.id && beforeSnapshot) {
             const { data: after } = await supabaseClient
                 .from('tech_inspections').select('*').eq('id', techEditMode.id).single();

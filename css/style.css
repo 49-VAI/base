@@ -4359,3 +4359,8 @@ textarea {
         background: #c62828;
     }
 }
+
+/* По умолчанию скрыты, показываются только через guard.js */
+.eis-nav-item.eis-nav-restricted {
+    display: none;
+}

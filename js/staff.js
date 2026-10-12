@@ -178,6 +178,9 @@ function renderStaffRow(person, index, total, dept) {
     const isMe = person.id === window.currentUser?.id;
     const hasPdf = !!person.personal_file_url;
 
+    // ★ Кнопки управления для курсантов скрываем
+    const canEdit = canWriteToDB();
+
     return `<div class="eis-staff-row ${isMe ? 'is-me' : ''}" data-id="${person.id}">
         <div class="eis-staff-row-bar" style="background:${dept.color}"></div>
         <div class="eis-staff-row-avatar">
@@ -206,19 +209,23 @@ function renderStaffRow(person, index, total, dept) {
             ` : `<div class="eis-staff-row-vehicle is-empty">Техника не закреплена</div>`}
         </div>
         <div class="eis-staff-row-actions">
+            ${canEdit ? `
             <div class="eis-staff-row-move">
                 <button class="eis-staff-move-btn" title="Выше" ${index === 0 ? 'disabled' : ''} onclick="moveStaff('${person.id}', -1)">↑</button>
                 <button class="eis-staff-move-btn" title="Ниже" ${index === total - 1 ? 'disabled' : ''} onclick="moveStaff('${person.id}', 1)">↓</button>
             </div>
+            ` : ''}
             <div class="eis-staff-row-actions-main">
                 ${hasPdf ? `<button class="eis-btn eis-btn-sm eis-btn-secondary" onclick="openStaffPdf('${person.id}')">📄 Дело</button>` : ''}
-                <button class="eis-btn eis-btn-sm eis-btn-primary" onclick="openStaffModal('${person.id}')">Изменить</button>
+                ${canEdit ? `<button class="eis-btn eis-btn-sm eis-btn-primary" onclick="openStaffModal('${person.id}')">Изменить</button>` : ''}
             </div>
         </div>
     </div>`;
 }
 
 async function moveStaff(id, delta) {
+    if (blockWrite('менять порядок в составе')) return;
+
     const person = staffList.find(p => p.id === id);
     if (!person) return;
 
@@ -278,6 +285,8 @@ function updateStaffPlatePreview() {
 }
 
 function openStaffModal(id) {
+    if (blockWrite('изменять личные дела')) return;
+
     const person = staffList.find(p => p.id === id);
     if (!person) { showToast('Сотрудник не найден', 'error'); return; }
 
@@ -363,6 +372,7 @@ function closeStaffModal() {
 }
 
 async function saveStaff() {
+    if (blockWrite('изменять личные дела')) return;
     if (!currentStaff) return;
 
     const btn = document.getElementById('sfSaveBtn');
@@ -489,6 +499,8 @@ function closeStaffPdfModal() {
 }
 
 async function openManageStaffModal() {
+    if (blockWrite('управлять составом')) return;
+
     document.getElementById('manageStaffSearch').value = '';
     document.getElementById('manageStaffList').innerHTML = '<div class="eis-loading"><div class="eis-spinner"></div><span>Загрузка...</span></div>';
     document.getElementById('manageStaffModal').style.display = 'flex';
@@ -582,6 +594,8 @@ function closeManageStaffModal() {
 }
 
 async function saveManageStaff() {
+    if (blockWrite('управлять составом')) return;
+
     const btn = document.getElementById('manageSaveBtn');
     btn.disabled = true;
     btn.textContent = 'Сохранение...';

@@ -23,7 +23,8 @@
                     <div class="eis-panel-header">
                         <span class="eis-panel-title">Транспортное средство из реестра</span>
                         <div class="eis-panel-actions">
-                            <a href="tech-database.html?tab=vehicles" class="eis-btn eis-btn-sm eis-btn-secondary" style="text-decoration:none;">Управление реестром</a>
+                            <a href="tech-database.html?tab=vehicles" class="eis-btn eis-btn-sm eis-btn-secondary"
+                               style="text-decoration:none;" data-readonly-hide>Управление реестром</a>
                         </div>
                     </div>
                     <div class="eis-panel-body">
@@ -212,7 +213,7 @@
 
                 <div class="eis-actions-bar">
                     <button class="eis-btn eis-btn-secondary" onclick="saveTech()">Скачать PNG</button>
-                    <button class="eis-btn eis-btn-success" onclick="saveTechToDB()">
+                    <button class="eis-btn eis-btn-success" onclick="saveTechToDB()" data-readonly-hide>
                         Сохранить в базу ЕИС
                     </button>
                 </div>
