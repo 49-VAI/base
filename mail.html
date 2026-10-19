@@ -496,7 +496,8 @@
         document.getElementById('mailLetterDate').textContent = dateStr;
 
         // Получатель
-        document.getElementById('mailLetterRecipient').textContent = m.to_user || '—';
+		const recipientEl = document.getElementById('mailLetterRecipient');
+		if (recipientEl) recipientEl.textContent = m.to_user || '—';
 
         // Тело
         document.getElementById('mailLetterBody').textContent = m.body || '';
