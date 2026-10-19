@@ -8,35 +8,40 @@
     <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
-    <div class="eis-auth-wrapper">
-        <div class="eis-auth-card">
-            <div class="eis-auth-header">
-                <img src="images/gerb.png" alt="Герб" class="eis-auth-logo">
-                <h1 class="eis-auth-title">Единая информационная система</h1>
-                <p class="eis-auth-subtitle">66-ой территориальной ВАИ</p>
+    <div class="eis-auth-page">
+        <div class="eis-auth-wrapper">
+            <div class="eis-auth-card">
+                <div class="eis-auth-header">
+                    <img src="images/gerb.png" alt="Герб" class="eis-auth-logo">
+                    <h1 class="eis-auth-title">Единая информационная система</h1>
+                    <p class="eis-auth-subtitle">66-ой территориальной ВАИ</p>
+                </div>
+
+                <form id="loginForm" class="eis-auth-form">
+                    <div class="eis-form-group">
+                        <label class="eis-form-label">Логин</label>
+                        <input type="text" class="eis-input" id="loginUsername" required autocomplete="username">
+                    </div>
+
+                    <div class="eis-form-group">
+                        <label class="eis-form-label">Пароль</label>
+                        <input type="password" class="eis-input" id="loginPassword" required autocomplete="current-password">
+                    </div>
+
+                    <div class="eis-auth-error" id="loginError"></div>
+
+                    <button type="submit" class="eis-btn eis-btn-primary eis-btn-block" id="loginBtn">
+                        Войти
+                    </button>
+                </form>
             </div>
-
-            <form id="loginForm" class="eis-auth-form">
-                <div class="eis-form-group">
-                    <label class="eis-form-label">Логин</label>
-                    <input type="text" class="eis-input" id="loginUsername" required autocomplete="username">
-                </div>
-
-                <div class="eis-form-group">
-                    <label class="eis-form-label">Пароль</label>
-                    <input type="password" class="eis-input" id="loginPassword" required autocomplete="current-password">
-                </div>
-
-                <div class="eis-auth-error" id="loginError"></div>
-
-                <button type="submit" class="eis-btn eis-btn-primary eis-btn-block" id="loginBtn">
-                    Войти
-                </button>
-            </form>
         </div>
+
+        <div id="site-footer"></div>
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="js/layout.js"></script>
     <script src="js/toast.js"></script>
     <script src="js/supabase.js"></script>
     <script src="js/auth.js"></script>

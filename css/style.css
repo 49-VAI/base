@@ -4364,3 +4364,39 @@ textarea {
 .eis-nav-item.eis-nav-restricted {
     display: none;
 }
+
+/* ================================================================
+   СТРАНИЦА ВХОДА — ФУТЕР ВСЕГДА ВИДЕН
+   ================================================================ */
+.eis-auth-page {
+    min-height: 100vh;
+    min-height: 100dvh;
+    display: flex;
+    flex-direction: column;
+    background: var(--eis-bg-dark);
+}
+
+.eis-auth-page .eis-auth-wrapper {
+    flex: 1;
+    min-height: 0;
+    background: transparent;
+}
+
+.eis-auth-page .eis-footer {
+    margin-top: 0;
+    padding: 16px 0 12px;
+}
+
+@media (max-width: 768px) {
+    .eis-auth-page .eis-footer {
+        padding: 12px 0 10px;
+    }
+
+    .eis-auth-page .eis-footer-top {
+        padding-bottom: 12px;
+    }
+
+    .eis-auth-page .eis-footer-bottom {
+        padding-top: 10px;
+    }
+}
