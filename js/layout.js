@@ -2,24 +2,16 @@
 // АВТОПОДСТАНОВКА ШАПКИ, НАВИГАЦИИ И ПОДВАЛА — ЕИС ВАИ
 // ================================================================
 
-// Меняй при правках partials, чтобы сбросить кэш браузера
-const LAYOUT_VERSION = '1';
+const LAYOUT_VERSION = '3';
 
-// ----------------------------------------------------------------
-// Загрузка одного partial
-// ----------------------------------------------------------------
 async function loadPartial(url) {
     const res = await fetch(`${url}?v=${LAYOUT_VERSION}`);
     if (!res.ok) throw new Error(`Не удалось загрузить ${url}`);
 
-    // Читаем сырые байты и декодируем как UTF-8 принудительно
     const buffer = await res.arrayBuffer();
     return new TextDecoder('utf-8').decode(buffer);
 }
 
-// ----------------------------------------------------------------
-// Подсветка активного пункта меню
-// ----------------------------------------------------------------
 function highlightActiveNav() {
     const current = window.location.pathname.split('/').pop() || 'index.html';
     document.querySelectorAll('#eisNavMenu .eis-nav-item').forEach(item => {
@@ -27,9 +19,6 @@ function highlightActiveNav() {
     });
 }
 
-// ----------------------------------------------------------------
-// Вставка всех частей layout
-// ----------------------------------------------------------------
 async function injectLayout() {
     const headerMount = document.getElementById('site-header');
     const navMount = document.getElementById('site-nav');
@@ -48,21 +37,35 @@ async function injectLayout() {
 
         highlightActiveNav();
 
-        // Сигнал остальным скриптам: layout готов
         document.dispatchEvent(new Event('layout-ready'));
     } catch (err) {
         console.error('[layout] Ошибка загрузки partials:', err);
-        document.dispatchEvent(new Event('layout-ready')); // чтобы guard не завис
+        document.dispatchEvent(new Event('layout-ready'));
     }
 }
 
-// Запускаем сразу, как только DOM готов
 if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', injectLayout);
 } else {
     injectLayout();
 }
 
-// Экспорт
+// ----------------------------------------------------------------
+// Красная точка «непрочитанные» в навигации — на всех страницах
+// ----------------------------------------------------------------
+document.addEventListener('layout-ready', () => {
+    document.addEventListener('user-ready', () => {
+        if (typeof mailboxUpdateNavDot !== 'function') return;
+
+        mailboxUpdateNavDot();
+
+        // Realtime — только на mail.html, чтобы не держать лишний канал везде
+        const currentPage = window.location.pathname.split('/').pop();
+        if (currentPage === 'mail.html' && typeof mailboxSubscribeNav === 'function') {
+            mailboxSubscribeNav();
+        }
+    }, { once: true });
+}, { once: true });
+
 window.injectLayout = injectLayout;
 window.highlightActiveNav = highlightActiveNav;

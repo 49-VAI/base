@@ -1,0 +1,750 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Почта — ЕИС ВАИ</title>
+<link rel="icon" type="image/png" href="images/favicon.png">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <div class="eis-wrapper">
+        <div id="site-header"></div>
+        <div id="site-nav"></div>
+
+        <main class="eis-main">
+            <div class="eis-container">
+                <div class="eis-page-header">
+                    <h1 class="eis-page-title">Почта</h1>
+                    <div class="eis-page-subtitle">Внутренняя переписка между ведомствами</div>
+                </div>
+
+                <div class="eis-mail-tabs">
+                    <button class="eis-mail-tab active" data-tab="inbox" onclick="switchMailTab('inbox')">
+                        Входящие <span class="badge" id="mailInboxBadge" style="display:none;">0</span>
+                    </button>
+                    <button class="eis-mail-tab" data-tab="outbox" onclick="switchMailTab('outbox')">Исходящие</button>
+                    <button class="eis-mail-tab" data-tab="compose" onclick="switchMailTab('compose')">Написать</button>
+                </div>
+
+                <div id="tab-inbox" class="eis-mail-tab-content active">
+                    <div class="eis-panel">
+                        <div class="eis-panel-header">
+                            <span class="eis-panel-title">Входящие</span>
+                            <div class="eis-panel-actions">
+                                <span class="eis-mail-selected-info" id="inboxSelectedInfo" style="display:none;">
+                                    Выделено: <strong id="inboxSelectedCount">0</strong>
+                                </span>
+                                <button class="eis-btn eis-btn-sm eis-btn-secondary"
+                                        onclick="mailSelectAll('inbox', true)">Выделить всё</button>
+                                <button class="eis-btn eis-btn-sm eis-btn-secondary"
+                                        onclick="mailSelectAll('inbox', false)">Снять</button>
+                                <button class="eis-btn eis-btn-sm eis-btn-primary"
+                                        onclick="mailBulkMarkRead('inbox')" id="inboxBulkReadBtn" disabled>
+                                    Отметить прочитанными
+                                </button>
+                                <button class="eis-btn eis-btn-sm eis-btn-primary"
+                                        onclick="mailBulkMarkUnread('inbox')" id="inboxBulkUnreadBtn" disabled>
+                                    Отметить непрочитанными
+                                </button>
+                            </div>
+                            <span class="eis-badge" id="inboxCount">ПИСЕМ: 0</span>
+                        </div>
+                        <div class="eis-panel-body" id="inboxList" style="padding:0;"></div>
+                    </div>
+                </div>
+
+                <div id="tab-outbox" class="eis-mail-tab-content">
+                    <div class="eis-panel">
+                        <div class="eis-panel-header">
+                            <span class="eis-panel-title">Исходящие</span>
+                            <span class="eis-badge" id="outboxCount">ПИСЕМ: 0</span>
+                        </div>
+                        <div class="eis-panel-body" id="outboxList" style="padding:0;"></div>
+                    </div>
+                </div>
+
+                <div id="tab-compose" class="eis-mail-tab-content">
+                    <div class="eis-panel">
+                        <div class="eis-panel-header">
+                            <span class="eis-panel-title">Новое письмо</span>
+                        </div>
+                        <div class="eis-panel-body">
+                            <div class="eis-form-group">
+                                <label class="eis-form-label">Получатель *</label>
+                                <select class="eis-select" id="mailToSite"></select>
+                            </div>
+
+                            <div class="eis-form-group">
+                                <label class="eis-form-label">Отправитель (должность, звание, ФИО) *</label>
+                                <div class="eis-mail-form-row-3">
+                                    <input type="text" class="eis-input" id="mailFromPosition" placeholder="Должность">
+                                    <input type="text" class="eis-input" id="mailFromRank" placeholder="Звание">
+                                    <input type="text" class="eis-input" id="mailFromName" placeholder="Фамилия И.О.">
+                                </div>
+                            </div>
+
+                            <div class="eis-form-group">
+                                <label class="eis-form-label">Тема письма *</label>
+                                <input type="text" class="eis-input" id="mailSubject" placeholder="Тема письма">
+                            </div>
+
+                            <div class="eis-form-group">
+                                <label class="eis-form-label">Текст письма *</label>
+                                <textarea class="eis-input" id="mailBody" rows="6" style="resize:vertical;"></textarea>
+                            </div>
+
+                            <div class="eis-form-group">
+                                <label class="eis-form-label">Вложения (до 5 файлов, до 5 МБ каждый)</label>
+                                <div class="eis-mail-attach-zone" id="mailAttachZone"
+                                     onclick="document.getElementById('mailAttachInput').click()">
+                                    <div class="eis-mail-attach-zone-icon">📎</div>
+                                    <div class="eis-mail-attach-zone-text"><strong>Нажмите</strong> или перетащите файлы сюда</div>
+                                </div>
+                                <input type="file" id="mailAttachInput" multiple style="display:none;">
+                                <div class="eis-mail-attach-list" id="mailAttachList"></div>
+                            </div>
+
+                            <div class="eis-actions-bar" style="margin-bottom:0;">
+                                <button class="eis-btn eis-btn-primary" id="mailSendBtn" onclick="onMailSend()">Отправить</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+
+        <div id="site-footer"></div>
+    </div>
+
+    <!-- Модалка письма (v2) -->
+    <div class="eis-mail-modal-overlay" id="mailLetterModal" onclick="if(event.target===this)closeMailLetter()">
+        <div class="eis-mail-modal">
+            <!-- Шапка -->
+            <div class="eis-mail-modal-header">
+                <div class="eis-mail-modal-header-main">
+                    <h3 class="eis-mail-modal-subject" id="mailLetterSubject">—</h3>
+                </div>
+                <button class="eis-mail-modal-close" type="button"
+                        onclick="closeMailLetter()" title="Закрыть (Esc)" aria-label="Закрыть">×</button>
+            </div>
+
+            <!-- Отправитель -->
+            <div class="eis-mail-modal-sender">
+                <div class="eis-mail-modal-avatar" id="mailLetterAvatar">—</div>
+                <div class="eis-mail-modal-sender-info">
+                    <div class="eis-mail-modal-sender-name" id="mailLetterSenderName">—</div>
+                    <div class="eis-mail-modal-sender-line" id="mailLetterSenderLine">—</div>
+                </div>
+                <div class="eis-mail-modal-date" id="mailLetterDate">—</div>
+            </div>
+
+            <!-- Получатель -->
+            <div class="eis-mail-modal-recipient">
+                <span class="eis-mail-modal-recipient-label">Кому</span>
+                <span class="eis-mail-modal-recipient-value" id="mailLetterRecipient">—</span>
+            </div>
+
+            <!-- Тело -->
+            <div class="eis-mail-modal-body" id="mailLetterBody">—</div>
+
+            <!-- Вложения -->
+            <div class="eis-mail-modal-attachments" id="mailLetterAttachments" style="display:none;">
+                <div class="eis-mail-modal-attach-title">
+                    <span>Вложения</span>
+                    <span class="count" id="mailLetterAttachCount">0</span>
+                </div>
+                <div class="eis-mail-modal-attach-list" id="mailLetterAttachList"></div>
+            </div>
+
+            <!-- Футер -->
+            <div class="eis-mail-modal-footer">
+                <div class="eis-mail-modal-footer-info" id="mailLetterFooterInfo"></div>
+                <div class="eis-mail-modal-footer-actions">
+                    <button class="eis-btn eis-btn-secondary" type="button" onclick="closeMailLetter()">Закрыть</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Просмотрщик файлов -->
+    <div class="eis-mail-viewer-overlay" id="mailViewerOverlay" onclick="if(event.target===this)closeMailViewer()">
+        <div class="eis-mail-viewer">
+            <div class="eis-mail-viewer-header">
+                <div class="eis-mail-viewer-title" id="mailViewerTitle">—</div>
+                <span class="eis-mail-viewer-close" onclick="closeMailViewer()">×</span>
+            </div>
+            <div class="eis-mail-viewer-body" id="mailViewerBody"></div>
+            <div class="eis-mail-viewer-footer">
+                <button class="eis-btn" onclick="closeMailViewer()">Закрыть</button>
+                <button class="eis-btn eis-btn-primary-viewer" id="mailViewerDownload">Скачать</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="js/layout.js"></script>
+    <script src="js/toast.js"></script>
+    <script src="js/supabase.js"></script>
+    <script src="js/mailbox-client.js"></script>
+    <script src="js/auth.js"></script>
+    <script src="js/guard.js"></script>
+    <script src="js/main.js"></script>
+    <script src="js/mailbox.js"></script>
+    <script>
+    // ================================================================
+    // ПОЧТА — UI
+    // ================================================================
+    let mailInbox = [];
+    let mailOutbox = [];
+    let mailPendingFiles = [];
+    let mailRealtimeChannel = null;
+
+    const mailSelected = { inbox: new Set(), outbox: new Set() };
+
+    // ---------- Утилиты ----------
+    function getInitials(fullName) {
+        if (!fullName) return '?';
+        const p = String(fullName).trim().split(/\s+/);
+        return p.slice(0, 2).map(x => (x[0] || '').toUpperCase()).join('') || '?';
+    }
+
+    function pluralize(n, one, few, many) {
+        const mod10 = n % 10, mod100 = n % 100;
+        if (mod10 === 1 && mod100 !== 11) return one;
+        if (mod10 >= 2 && mod10 <= 4 && (mod100 < 10 || mod100 >= 20)) return few;
+        return many;
+    }
+
+    // ---------- Переключение вкладок ----------
+    function switchMailTab(tab) {
+        document.querySelectorAll('.eis-mail-tab').forEach(t => {
+            t.classList.toggle('active', t.dataset.tab === tab);
+        });
+        document.querySelectorAll('.eis-mail-tab-content').forEach(c => {
+            c.classList.toggle('active', c.id === 'tab-' + tab);
+        });
+
+        mailSelected.inbox.clear();
+        mailSelected.outbox.clear();
+
+        if (tab === 'inbox') refreshMailInbox();
+        if (tab === 'outbox') refreshMailOutbox();
+    }
+
+    // ---------- Форма ----------
+    function fillComposeFromProfile() {
+        const p = window.currentProfile || {};
+        const pos = document.getElementById('mailFromPosition');
+        const rank = document.getElementById('mailFromRank');
+        const name = document.getElementById('mailFromName');
+        if (pos && !pos.value) pos.value = p.position || '';
+        if (rank && !rank.value) rank.value = p.rank || '';
+        if (name && !name.value) {
+            const parts = (p.full_name || '').trim().split(/\s+/);
+            name.value = parts.length >= 2
+                ? `${parts[0]} ${parts[1][0]}.${parts[2] ? parts[2][0] + '.' : ''}`
+                : (p.full_name || '');
+        }
+    }
+
+    function fillRecipients() {
+        const sel = document.getElementById('mailToSite');
+        if (!sel) return;
+        sel.innerHTML = MAILBOX_RECIPIENTS.map(r =>
+            `<option value="${r.value}">${r.label}</option>`
+        ).join('');
+    }
+
+    // ---------- Входящие ----------
+    async function refreshMailInbox() {
+        try {
+            mailInbox = await mailboxLoadInbox();
+        } catch (e) {
+            showToast(e.message, 'error');
+            return;
+        }
+        const myId = window.currentProfile?.id;
+        const unread = mailInbox.filter(m => !(m.read_by || []).includes(myId)).length;
+        const badge = document.getElementById('mailInboxBadge');
+        if (badge) {
+            if (unread > 0) { badge.textContent = unread; badge.style.display = ''; }
+            else badge.style.display = 'none';
+        }
+        const count = document.getElementById('inboxCount');
+        if (count) count.textContent = 'ПИСЕМ: ' + mailInbox.length;
+        renderMailList('inboxList', mailInbox, 'inbox');
+        mailUpdateSelectionUI('inbox');
+
+        if (typeof mailboxUpdateNavDot === 'function') mailboxUpdateNavDot();
+    }
+
+    // ---------- Исходящие ----------
+    async function refreshMailOutbox() {
+        try {
+            mailOutbox = await mailboxLoadOutbox();
+        } catch (e) {
+            showToast(e.message, 'error');
+            return;
+        }
+        const count = document.getElementById('outboxCount');
+        if (count) count.textContent = 'ПИСЕМ: ' + mailOutbox.length;
+        renderMailList('outboxList', mailOutbox, 'outbox');
+        mailUpdateSelectionUI('outbox');
+    }
+
+    // ---------- Рендер списка ----------
+    function renderMailList(containerId, list, mode) {
+        const c = document.getElementById(containerId);
+        if (!c) return;
+
+        if (list.length === 0) {
+            mailSelected[mode].clear();
+            c.innerHTML = `<div class="eis-no-results">
+                <div style="font-size:32px;margin-bottom:12px;opacity:.5;">${mode === 'inbox' ? '📭' : '📤'}</div>
+                <div style="font-weight:700;">${mode === 'inbox' ? 'Входящих писем нет' : 'Исходящих писем нет'}</div>
+                <div style="font-size:13px;color:#888;margin-top:6px;">
+                    ${mode === 'inbox' ? 'Письма с другого сайта появятся здесь.' : 'Отправьте первое письмо на вкладке «Написать».'}
+                </div>
+            </div>`;
+            return;
+        }
+
+        const myId = window.currentProfile?.id;
+
+        c.innerHTML = list.map(m => {
+            const date = new Date(m.created_at).toLocaleString('ru-RU', {
+                day: '2-digit', month: '2-digit', year: '2-digit', hour: '2-digit', minute: '2-digit'
+            });
+            const fromUser = [m.from_position, m.from_rank, m.from_name].filter(Boolean).join(', ');
+            const who = mode === 'inbox' ? fromUser : ('Кому: ' + (m.to_user || '—'));
+            const unread = mode === 'inbox' && !(m.read_by || []).includes(myId);
+            const selected = mailSelected[mode].has(m.id);
+            const attachCount = (m.attachments || []).length;
+            const preview = (m.body || '').slice(0, 140);
+
+            const checkboxHtml = mode === 'inbox'
+                ? `<input type="checkbox" class="eis-mail-checkbox" data-mail-id="${m.id}"
+                          ${selected ? 'checked' : ''}
+                          onclick="event.stopPropagation(); mailToggleSelect(${m.id}, '${mode}', this.checked)">`
+                : '';
+
+            return `<div class="eis-mail-item ${unread ? 'unread' : ''} ${selected ? 'selected' : ''}"
+                         data-id="${m.id}" onclick="mailItemClick(event, ${m.id}, '${mode}')">
+                ${checkboxHtml}
+                <div class="eis-mail-item-body">
+                    <div class="eis-mail-head">
+                        <span class="eis-mail-from">${mailboxEscape(who)}</span>
+                        <span>${date}</span>
+                    </div>
+                    <div class="eis-mail-subject">${mailboxEscape(m.subject || '(без темы)')}</div>
+                    <div class="eis-mail-preview">${mailboxEscape(preview)}${m.body && m.body.length > 140 ? '…' : ''}</div>
+                    ${attachCount > 0 ? `<div class="eis-mail-attach-count">📎 ${attachCount}</div>` : ''}
+                </div>
+            </div>`;
+        }).join('');
+    }
+
+    // ---------- Клик по строке ----------
+    function mailItemClick(event, id, mode) {
+        if (event.target.closest('.eis-mail-checkbox')) return;
+        openMailLetter(id);
+    }
+
+    // ---------- Выделение ----------
+    function mailToggleSelect(id, mode, checked) {
+        if (checked) mailSelected[mode].add(id);
+        else mailSelected[mode].delete(id);
+
+        const row = document.querySelector(`.eis-mail-item[data-id="${id}"]`);
+        if (row) row.classList.toggle('selected', checked);
+
+        mailUpdateSelectionUI(mode);
+    }
+
+    function mailSelectAll(mode, select) {
+        const list = mode === 'inbox' ? mailInbox : mailOutbox;
+        mailSelected[mode].clear();
+        if (select) list.forEach(m => mailSelected[mode].add(m.id));
+
+        const container = document.getElementById(mode + 'List');
+        if (!container) return;
+        container.querySelectorAll('.eis-mail-checkbox').forEach(cb => {
+            cb.checked = select;
+        });
+        container.querySelectorAll('.eis-mail-item').forEach(row => {
+            const id = Number(row.dataset.id);
+            row.classList.toggle('selected', select && mailSelected[mode].has(id));
+        });
+        mailUpdateSelectionUI(mode);
+    }
+
+    function mailUpdateSelectionUI(mode) {
+        const n = mailSelected[mode].size;
+        const info = document.getElementById(mode + 'SelectedInfo');
+        const cnt = document.getElementById(mode + 'SelectedCount');
+        const btnRead = document.getElementById(mode + 'BulkReadBtn');
+        const btnUnread = document.getElementById(mode + 'BulkUnreadBtn');
+
+        if (info) info.style.display = n > 0 ? '' : 'none';
+        if (cnt) cnt.textContent = n;
+        if (btnRead) btnRead.disabled = n === 0;
+        if (btnUnread) btnUnread.disabled = n === 0;
+    }
+
+    // ---------- Массовые действия ----------
+    async function mailBulkMarkRead(mode) {
+        const ids = [...mailSelected[mode]];
+        if (ids.length === 0) return;
+
+        const myId = window.currentProfile?.id;
+        if (!myId) return;
+
+        const buttons = ['inboxBulkReadBtn', 'inboxBulkUnreadBtn']
+            .map(id => document.getElementById(id)).filter(Boolean);
+        buttons.forEach(b => b.disabled = true);
+
+        try {
+            await mailboxBulkMarkRead(ids, myId);
+
+            mailInbox.forEach(m => {
+                if (ids.includes(m.id) && !(m.read_by || []).includes(myId)) {
+                    m.read_by = [...(m.read_by || []), myId];
+                }
+            });
+
+            showToast(`Отмечено прочитанными: ${ids.length}`, 'success');
+            mailSelected[mode].clear();
+            await refreshMailInbox();
+        } catch (e) {
+            showToast('Ошибка: ' + e.message, 'error');
+            buttons.forEach(b => b.disabled = false);
+            mailUpdateSelectionUI(mode);
+        }
+    }
+
+    async function mailBulkMarkUnread(mode) {
+        const ids = [...mailSelected[mode]];
+        if (ids.length === 0) return;
+
+        const myId = window.currentProfile?.id;
+        if (!myId) return;
+
+        const buttons = ['inboxBulkReadBtn', 'inboxBulkUnreadBtn']
+            .map(id => document.getElementById(id)).filter(Boolean);
+        buttons.forEach(b => b.disabled = true);
+
+        try {
+            await mailboxBulkMarkUnread(ids, myId);
+
+            mailInbox.forEach(m => {
+                if (ids.includes(m.id)) {
+                    m.read_by = (m.read_by || []).filter(x => x !== myId);
+                }
+            });
+
+            showToast(`Отмечено непрочитанными: ${ids.length}`, 'success');
+            mailSelected[mode].clear();
+            await refreshMailInbox();
+        } catch (e) {
+            showToast('Ошибка: ' + e.message, 'error');
+            buttons.forEach(b => b.disabled = false);
+            mailUpdateSelectionUI(mode);
+        }
+    }
+
+    // ---------- Модалка письма (v2) ----------
+    function openMailLetter(id) {
+        const m = [...mailInbox, ...mailOutbox].find(x => x.id === id);
+        if (!m) return;
+
+        const myId = window.currentProfile?.id;
+
+        if (m.to_site === MAILBOX_MY_SITE && !(m.read_by || []).includes(myId)) {
+            mailboxMarkRead(id, myId).catch(e => console.warn('mark read error:', e));
+            m.read_by = [...(m.read_by || []), myId];
+
+            const unread = mailInbox.filter(x => !(x.read_by || []).includes(myId)).length;
+            const badge = document.getElementById('mailInboxBadge');
+            if (badge) {
+                if (unread > 0) { badge.textContent = unread; badge.style.display = ''; }
+                else badge.style.display = 'none';
+            }
+            const row = document.querySelector(`.eis-mail-item[data-id="${id}"]`);
+            if (row) row.classList.remove('unread');
+            if (typeof mailboxUpdateNavDot === 'function') mailboxUpdateNavDot();
+        }
+
+        // Тема
+        document.getElementById('mailLetterSubject').textContent = m.subject || '(без темы)';
+
+        // Отправитель
+        const parts = [m.from_rank, m.from_position, m.from_name].filter(Boolean);
+        const senderFull = parts.join(', ') || 'Неизвестный отправитель';
+        const senderName = m.from_name || m.from_rank || 'Неизвестный отправитель';
+        const senderLine = [m.from_rank, m.from_position].filter(Boolean).join(' · ') || '—';
+
+        const avatarEl = document.getElementById('mailLetterAvatar');
+        avatarEl.textContent = getInitials(m.from_name);
+        avatarEl.title = senderFull;
+
+        document.getElementById('mailLetterSenderName').textContent = senderName;
+        document.getElementById('mailLetterSenderLine').textContent = senderLine;
+
+        // Дата
+        const d = new Date(m.created_at);
+        const dateStr = d.toLocaleString('ru-RU', {
+            day: '2-digit', month: 'long', year: 'numeric',
+            hour: '2-digit', minute: '2-digit'
+        });
+        document.getElementById('mailLetterDate').textContent = dateStr;
+
+        // Получатель
+        document.getElementById('mailLetterRecipient').textContent = m.to_user || '—';
+
+        // Тело
+        document.getElementById('mailLetterBody').textContent = m.body || '';
+
+        // Вложения
+        const wrap = document.getElementById('mailLetterAttachments');
+        const list = document.getElementById('mailLetterAttachList');
+        const countEl = document.getElementById('mailLetterAttachCount');
+        const att = m.attachments || [];
+
+        if (att.length > 0) {
+            wrap.style.display = '';
+            if (countEl) countEl.textContent = att.length;
+
+            list.innerHTML = att.map((a, i) => {
+                const viewable = mailboxGetFileViewType(a.type, a.name) !== 'unsupported';
+                const icon = mailboxFileIcon(a.type, a.name);
+                const size = mailboxFormatSize(a.size);
+                return `<div class="eis-mail-attach-card">
+                    <div class="eis-mail-attach-card-icon">${icon}</div>
+                    <div class="eis-mail-attach-card-info">
+                        <div class="eis-mail-attach-card-name" title="${mailboxEscape(a.name)}">${mailboxEscape(a.name)}</div>
+                        <div class="eis-mail-attach-card-size">${size}</div>
+                    </div>
+                    <div class="eis-mail-attach-card-actions">
+                        ${viewable ? `<button type="button" class="eis-mail-attach-card-btn" onclick="openMailViewer(${m.id}, ${i})" title="Просмотр">Просмотр</button>` : ''}
+                        <a class="eis-mail-attach-card-btn is-primary" href="${a.url}" download="${mailboxEscape(a.name)}" target="_blank" rel="noopener" title="Скачать">Скачать</a>
+                    </div>
+                </div>`;
+            }).join('');
+        } else {
+            wrap.style.display = 'none';
+        }
+
+        // Футер
+        const footerInfo = document.getElementById('mailLetterFooterInfo');
+        if (footerInfo) {
+            if (att.length > 0) {
+                const totalSize = att.reduce((s, a) => s + (a.size || 0), 0);
+                footerInfo.textContent = `${att.length} ${pluralize(att.length, 'вложение', 'вложения', 'вложений')} · ${mailboxFormatSize(totalSize)}`;
+            } else {
+                footerInfo.textContent = '';
+            }
+        }
+
+        document.getElementById('mailLetterModal').classList.add('open');
+    }
+
+    function closeMailLetter() {
+        document.getElementById('mailLetterModal').classList.remove('open');
+    }
+
+    // ---------- Просмотрщик файлов ----------
+    function openMailViewer(messageId, idx) {
+        const m = [...mailInbox, ...mailOutbox].find(x => x.id === messageId);
+        if (!m) return;
+        const a = (m.attachments || [])[idx];
+        if (!a) return;
+        const type = mailboxGetFileViewType(a.type, a.name);
+        const body = document.getElementById('mailViewerBody');
+        const title = document.getElementById('mailViewerTitle');
+        const dl = document.getElementById('mailViewerDownload');
+        title.innerHTML = `${mailboxEscape(a.name)} <small>${mailboxFormatSize(a.size)}</small>`;
+        dl.onclick = () => {
+            const link = document.createElement('a');
+            link.href = a.url;
+            link.download = a.name;
+            link.target = '_blank';
+            link.rel = 'noopener';
+            link.click();
+        };
+        body.innerHTML = '';
+        if (type === 'image') {
+            const img = document.createElement('img');
+            img.src = a.url;
+            img.alt = a.name;
+            body.appendChild(img);
+        } else if (type === 'pdf') {
+            const iframe = document.createElement('iframe');
+            iframe.src = a.url;
+            body.appendChild(iframe);
+        } else if (type === 'text') {
+            fetch(a.url)
+                .then(r => r.text())
+                .then(text => {
+                    const pre = document.createElement('pre');
+                    pre.textContent = text;
+                    body.innerHTML = '';
+                    body.appendChild(pre);
+                })
+                .catch(() => {
+                    body.innerHTML = `<div class="unsupported"><div class="big">⚠</div>Не удалось прочитать файл</div>`;
+                });
+        } else {
+            body.innerHTML = `<div class="unsupported">
+                <div class="big">${mailboxFileIcon(a.type, a.name)}</div>
+                Предпросмотр для этого типа файлов недоступен.<br>
+                Используйте кнопку «Скачать».
+            </div>`;
+        }
+        document.getElementById('mailViewerOverlay').classList.add('open');
+    }
+
+    function closeMailViewer() {
+        document.getElementById('mailViewerOverlay').classList.remove('open');
+        document.getElementById('mailViewerBody').innerHTML = '';
+    }
+
+    // ---------- Вложения в форме ----------
+    function mailRenderPendingList() {
+        const list = document.getElementById('mailAttachList');
+        if (!list) return;
+        if (mailPendingFiles.length === 0) { list.innerHTML = ''; return; }
+        list.innerHTML = mailPendingFiles.map((f, i) => `
+            <div class="eis-mail-attach-item">
+                <div>${mailboxFileIcon(f.type, f.name)}</div>
+                <div class="eis-mail-attach-item-info">
+                    <div class="eis-mail-attach-item-name">${mailboxEscape(f.name)}</div>
+                    <div class="eis-mail-attach-item-size">${mailboxFormatSize(f.size)}</div>
+                </div>
+                <button class="eis-mail-attach-item-remove" onclick="mailRemoveFile(${i})">×</button>
+            </div>
+        `).join('');
+    }
+
+    function mailRemoveFile(i) {
+        mailPendingFiles.splice(i, 1);
+        mailRenderPendingList();
+    }
+
+    function mailHandleFiles(files) {
+        for (const f of Array.from(files || [])) {
+            if (mailPendingFiles.length >= MAILBOX_MAX_ATTACHMENTS) {
+                showToast(`Максимум ${MAILBOX_MAX_ATTACHMENTS} файлов`, 'warning');
+                break;
+            }
+            if (f.size > MAILBOX_MAX_FILE_SIZE) {
+                showToast(`Файл "${f.name}" больше 5 МБ`, 'warning');
+                continue;
+            }
+            const dup = mailPendingFiles.some(x => x.name === f.name && x.size === f.size);
+            if (dup) continue;
+            mailPendingFiles.push(f);
+        }
+        mailRenderPendingList();
+        const inp = document.getElementById('mailAttachInput');
+        if (inp) inp.value = '';
+    }
+
+    // ---------- Отправка ----------
+    async function onMailSend() {
+        const toSite = document.getElementById('mailToSite').value;
+        const toLabel = (MAILBOX_RECIPIENTS.find(r => r.value === toSite) || {}).label || toSite;
+        const fromPosition = document.getElementById('mailFromPosition').value.trim();
+        const fromRank = document.getElementById('mailFromRank').value.trim();
+        const fromName = document.getElementById('mailFromName').value.trim();
+        const subject = document.getElementById('mailSubject').value.trim();
+        const body = document.getElementById('mailBody').value;
+
+        if (!toSite) { showToast('Выберите получателя', 'warning'); return; }
+        if (!fromPosition || !fromRank || !fromName) { showToast('Заполните данные отправителя', 'warning'); return; }
+        if (!subject) { showToast('Укажите тему письма', 'warning'); return; }
+        if (!body.trim()) { showToast('Введите текст письма', 'warning'); return; }
+
+        const btn = document.getElementById('mailSendBtn');
+        btn.disabled = true;
+        btn.textContent = 'Отправка...';
+
+        try {
+            await mailboxSend({
+                toSite, toUser: toLabel,
+                fromPosition, fromRank, fromName,
+                subject, body: body.trim(),
+                files: mailPendingFiles
+            });
+            showToast('Письмо отправлено', 'success');
+            mailPendingFiles = [];
+            document.getElementById('mailSubject').value = '';
+            document.getElementById('mailBody').value = '';
+            mailRenderPendingList();
+            await refreshMailOutbox();
+            switchMailTab('outbox');
+        } catch (e) {
+            console.error(e);
+            showToast(e.message, 'error');
+        } finally {
+            btn.disabled = false;
+            btn.textContent = 'Отправить';
+        }
+    }
+
+    // ---------- Realtime ----------
+    function startMailRealtime() {
+        if (mailRealtimeChannel) return;
+        mailRealtimeChannel = mailboxSubscribeInbox((letter) => {
+            showToast('Новое письмо: ' + (letter.subject || '(без темы)'), 'info');
+            refreshMailInbox();
+            if (typeof mailboxUpdateNavDot === 'function') mailboxUpdateNavDot();
+        });
+    }
+
+    // ---------- Старт ----------
+    document.addEventListener('user-ready', () => {
+        fillRecipients();
+        fillComposeFromProfile();
+        refreshMailInbox();
+        refreshMailOutbox();
+        startMailRealtime();
+
+        const zone = document.getElementById('mailAttachZone');
+        if (zone) {
+            zone.addEventListener('dragover', e => { e.preventDefault(); zone.classList.add('dragover'); });
+            zone.addEventListener('dragleave', () => zone.classList.remove('dragover'));
+            zone.addEventListener('drop', e => {
+                e.preventDefault();
+                zone.classList.remove('dragover');
+                mailHandleFiles(e.dataTransfer.files);
+            });
+        }
+        const inp = document.getElementById('mailAttachInput');
+        if (inp) inp.addEventListener('change', e => mailHandleFiles(e.target.files));
+
+        document.addEventListener('keydown', e => {
+            if (e.key === 'Escape') {
+                if (document.getElementById('mailViewerOverlay').classList.contains('open')) closeMailViewer();
+                else if (document.getElementById('mailLetterModal').classList.contains('open')) closeMailLetter();
+            }
+        });
+    }, { once: true });
+
+    window.switchMailTab = switchMailTab;
+    window.openMailLetter = openMailLetter;
+    window.closeMailLetter = closeMailLetter;
+    window.openMailViewer = openMailViewer;
+    window.closeMailViewer = closeMailViewer;
+    window.onMailSend = onMailSend;
+    window.mailRemoveFile = mailRemoveFile;
+
+    window.mailToggleSelect = mailToggleSelect;
+    window.mailSelectAll = mailSelectAll;
+    window.mailUpdateSelectionUI = mailUpdateSelectionUI;
+    window.mailBulkMarkRead = mailBulkMarkRead;
+    window.mailBulkMarkUnread = mailBulkMarkUnread;
+    window.mailItemClick = mailItemClick;
+    </script>
+</body>
+</html>
