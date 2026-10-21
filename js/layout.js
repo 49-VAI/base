@@ -1,13 +1,8 @@
-// ================================================================
-// АВТОПОДСТАНОВКА ШАПКИ, НАВИГАЦИИ И ПОДВАЛА — ЕИС ВАИ
-// ================================================================
-
 const LAYOUT_VERSION = '3';
 
 async function loadPartial(url) {
     const res = await fetch(`${url}?v=${LAYOUT_VERSION}`);
     if (!res.ok) throw new Error(`Не удалось загрузить ${url}`);
-
     const buffer = await res.arrayBuffer();
     return new TextDecoder('utf-8').decode(buffer);
 }
@@ -19,52 +14,73 @@ function highlightActiveNav() {
     });
 }
 
+// ? Каждый partial вставляется СРАЗУ как только пришёл — не ждём остальные
 async function injectLayout() {
     const headerMount = document.getElementById('site-header');
     const navMount = document.getElementById('site-nav');
     const footerMount = document.getElementById('site-footer');
 
-    try {
-        const [headerHtml, navHtml, footerHtml] = await Promise.all([
-            headerMount ? loadPartial('partials/header.html') : Promise.resolve(''),
-            navMount ? loadPartial('partials/nav.html') : Promise.resolve(''),
-            footerMount ? loadPartial('partials/footer.html') : Promise.resolve('')
-        ]);
-
-        if (headerMount) headerMount.innerHTML = headerHtml;
-        if (navMount) navMount.innerHTML = navHtml;
-        if (footerMount) footerMount.innerHTML = footerHtml;
-
-        highlightActiveNav();
-
-        document.dispatchEvent(new Event('layout-ready'));
-    } catch (err) {
-        console.error('[layout] Ошибка загрузки partials:', err);
-        document.dispatchEvent(new Event('layout-ready'));
+    const tasks = [];
+    if (headerMount) {
+        tasks.push(loadPartial('partials/header.html')
+            .then(html => { headerMount.innerHTML = html; })
+            .catch(err => console.error('[layout] header:', err)));
     }
+    if (navMount) {
+        tasks.push(loadPartial('partials/nav.html')
+            .then(html => { navMount.innerHTML = html; })
+            .catch(err => console.error('[layout] nav:', err)));
+    }
+    if (footerMount) {
+        tasks.push(loadPartial('partials/footer.html')
+            .then(html => { footerMount.innerHTML = html; })
+            .catch(err => console.error('[layout] footer:', err)));
+    }
+
+    await Promise.all(tasks);
+    highlightActiveNav();
+    document.dispatchEvent(new Event('layout-ready'));
 }
 
-if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', injectLayout);
+// ? Скрипт стоит в конце <body> — точки монтирования уже в DOM.
+// Стартуем немедленно, не ждём DOMContentLoaded.
+if (document.getElementById('site-header')
+    || document.getElementById('site-nav')
+    || document.getElementById('site-footer')) {
+    injectLayout();
+} else if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', injectLayout, { once: true });
 } else {
     injectLayout();
 }
 
-// ----------------------------------------------------------------
-// Красная точка «непрочитанные» в навигации — на всех страницах
-// ----------------------------------------------------------------
+// -----------------------------------------------------------------
+// Бейдж почты — обновляем ТОЛЬКО когда готов и layout, и user.
+// Не блокирует ни навигацию, ни что-либо ещё.
+// -----------------------------------------------------------------
+let __layoutReady = false;
+let __userReady = false;
+
+function __tryUpdateMailBadge() {
+    if (!__layoutReady || !__userReady) return;
+    if (typeof mailboxUpdateNavDot !== 'function') return;
+
+    mailboxUpdateNavDot();
+
+    const currentPage = window.location.pathname.split('/').pop();
+    if (currentPage === 'mail.html' && typeof mailboxSubscribeNav === 'function') {
+        mailboxSubscribeNav();
+    }
+}
+
 document.addEventListener('layout-ready', () => {
-    document.addEventListener('user-ready', () => {
-        if (typeof mailboxUpdateNavDot !== 'function') return;
+    __layoutReady = true;
+    __tryUpdateMailBadge();
+}, { once: true });
 
-        mailboxUpdateNavDot();
-
-        // Realtime — только на mail.html, чтобы не держать лишний канал везде
-        const currentPage = window.location.pathname.split('/').pop();
-        if (currentPage === 'mail.html' && typeof mailboxSubscribeNav === 'function') {
-            mailboxSubscribeNav();
-        }
-    }, { once: true });
+document.addEventListener('user-ready', () => {
+    __userReady = true;
+    __tryUpdateMailBadge();
 }, { once: true });
 
 window.injectLayout = injectLayout;

@@ -4,6 +4,14 @@ let currentPhotoIndex = 0;
 
 const backgroundCache = {};
 
+function debounce(fn, wait) {
+    let t = null;
+    return function (...args) {
+        clearTimeout(t);
+        t = setTimeout(() => fn.apply(this, args), wait);
+    };
+}
+
 // ========== РАБОТА С ДАТАМИ ==========
 function parseDate(dateStr) {
     if (!dateStr) return null;
@@ -113,7 +121,7 @@ function loadImage(src) {
             backgroundCache[src] = fallbackImg;
             resolve(fallbackImg);
         };
-        img.src = src + '?nocache=' + Date.now();
+        img.src = src;
     });
 }
 
@@ -456,6 +464,7 @@ document.addEventListener('DOMContentLoaded', function () {
 });
 
 // ========== ЭКСПОРТ ==========
+window.debounce = debounce;
 window.parseDate = parseDate;
 window.formatDate = formatDate;
 window.formatDateForDisplay = formatDateForDisplay;

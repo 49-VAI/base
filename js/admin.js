@@ -38,7 +38,7 @@ async function loadUsers() {
         .from('profiles').select('*').order('created_at', { ascending: false });
 
     if (error) {
-        container.innerHTML = `<div class="eis-no-results">⚠️ ${error.message}</div>`;
+        container.innerHTML = `<div class="eis-no-results">⚠️ ${escapeHtml(error.message || '')}</div>`;
         return;
     }
     allUsers = data || [];
@@ -66,9 +66,13 @@ function renderUsers() {
             <td>${escapeHtml(u.position || '—')}</td>
             <td><span class="eis-role-badge ${roleClass}">${escapeHtml(roleLabel)}</span></td>
             <td>${created}</td>
-            <td class="eis-admin-actions">
-                <button class="eis-btn eis-btn-sm eis-btn-secondary" onclick="openEditUserModal('${u.id}')">Изменить</button>
-                <button class="eis-btn eis-btn-sm eis-btn-secondary" onclick="openResetPasswordModal('${u.id}', '${escapeHtml(u.username)}')">Сбросить пароль</button>
+                        <td class="eis-admin-actions">
+                <button class="eis-btn eis-btn-sm eis-btn-secondary"
+                        data-action="edit-user" data-id="${u.id}">Изменить</button>
+                <button class="eis-btn eis-btn-sm eis-btn-secondary"
+                        data-action="reset-password"
+                        data-id="${u.id}"
+                        data-username="${escapeHtml(u.username || '')}">Сбросить пароль</button>
             </td>
         </tr>`;
     });
@@ -621,6 +625,19 @@ document.addEventListener('DOMContentLoaded', function () {
         if (e.key === 'Escape') {
             closeCreateUserModal(); closeResetPasswordModal();
             closeAuditDetailModal(); closeEditUserModal();
+        }
+    });
+
+    document.getElementById('usersContainer').addEventListener('click', (e) => {
+        const editBtn = e.target.closest('[data-action="edit-user"]');
+        if (editBtn) {
+            openEditUserModal(editBtn.dataset.id);
+            return;
+        }
+        const resetBtn = e.target.closest('[data-action="reset-password"]');
+        if (resetBtn) {
+            openResetPasswordModal(resetBtn.dataset.id, resetBtn.dataset.username || '');
+            return;
         }
     });
 });

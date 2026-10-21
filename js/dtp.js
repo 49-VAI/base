@@ -565,8 +565,8 @@ function drawDTPHeaderAndGeneral(ctx) {
     }
 
     const gibdd = getFieldValueDTP('dtpGibdd');
-    if (gibdd === 'Да') drawCheckmark(ctx, 986 + 11, 522 + 10);
-    else if (gibdd === 'Нет') drawCheckmark(ctx, 1087 + 11, 522 + 10);
+    if (gibdd === 'Нет') drawCheckmark(ctx, 986 + 11, 522 + 10);
+    else if (gibdd === 'Да') drawCheckmark(ctx, 1087 + 11, 522 + 10);
 
     const gibddNum = getFieldValueDTP('dtpGibddNumber');
     if (gibddNum) fitText(ctx, gibddNum, 1188 + 234 / 2, 522 + 30, 234, 30, ff, 'normal', color, 'center', style);
@@ -1461,11 +1461,6 @@ document.addEventListener('DOMContentLoaded', function () {
     p3SetTool('pen');
     p3UpdateToolbarState();
 
-    document.querySelectorAll('.eis-input, .eis-select').forEach(input => {
-        input.addEventListener('input', generateDTP);
-        input.addEventListener('change', generateDTP);
-    });
-
     onGibddChange();
 
     setTimeout(generateDTP, 200);
@@ -1972,7 +1967,9 @@ function p3UpdateToolbarState() {
 // ================================================================
 // ЭКСПОРТ
 // ================================================================
-window.generateDTP = generateDTP;
+const __generateDTPNow = generateDTP;
+window.generateDTP = debounce(generateDTP, 250);
+window.generateDTPNow = __generateDTPNow;
 window.saveDTPPage1 = saveDTPPage1;
 window.saveDTPPage2 = saveDTPPage2;
 window.saveDTPPage3 = saveDTPPage3;

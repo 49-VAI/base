@@ -96,3 +96,65 @@ window.mailboxLoadInbox = mailboxLoadInbox;
 window.mailboxLoadOutbox = mailboxLoadOutbox;
 window.mailboxSubscribeInbox = mailboxSubscribeInbox;
 window.mailboxUnsubscribe = mailboxUnsubscribe;
+
+// ================================================================
+// ШАГ 17 — ПАГИНАЦИЯ INBOX / OUTBOX
+// ================================================================
+
+/**
+ * Постраничная загрузка входящих.
+ * @param {Object} opts - { page: 0-based, pageSize: до 200, по умолчанию 30 }
+ * @returns {Promise<{rows: Array, total: number, page: number, pageSize: number, error}>}
+ */
+async function mailboxLoadInboxPaged(opts = {}) {
+    const page = Math.max(0, parseInt(opts.page, 10) || 0);
+    const pageSize = Math.max(1, Math.min(200, parseInt(opts.pageSize, 10) || 30));
+    const from = page * pageSize;
+    const to = from + pageSize - 1;
+
+    const { data, error, count } = await _mailboxClient
+        .from('messages')
+        .select('*', { count: 'exact' })
+        .eq('to_site', MAILBOX_MY_SITE)
+        .order('created_at', { ascending: false })
+        .range(from, to);
+
+    if (error) return { rows: [], total: 0, page, pageSize, error };
+    return { rows: data || [], total: count || 0, page, pageSize, error: null };
+}
+
+/**
+ * Постраничная загрузка исходящих.
+ */
+async function mailboxLoadOutboxPaged(opts = {}) {
+    const page = Math.max(0, parseInt(opts.page, 10) || 0);
+    const pageSize = Math.max(1, Math.min(200, parseInt(opts.pageSize, 10) || 30));
+    const from = page * pageSize;
+    const to = from + pageSize - 1;
+
+    const { data, error, count } = await _mailboxClient
+        .from('messages')
+        .select('*', { count: 'exact' })
+        .eq('from_site', MAILBOX_MY_SITE)
+        .order('created_at', { ascending: false })
+        .range(from, to);
+
+    if (error) return { rows: [], total: 0, page, pageSize, error };
+    return { rows: data || [], total: count || 0, page, pageSize, error: null };
+}
+
+/**
+ * Загрузка одного письма по id — для fallback, когда его нет
+ * в текущей странице mailInbox/mailOutbox.
+ */
+async function mailboxLoadById(id) {
+    if (!id) return null;
+    const { data, error } = await _mailboxClient
+        .from('messages').select('*').eq('id', id).single();
+    if (error || !data) return null;
+    return data;
+}
+
+window.mailboxLoadInboxPaged = mailboxLoadInboxPaged;
+window.mailboxLoadOutboxPaged = mailboxLoadOutboxPaged;
+window.mailboxLoadById = mailboxLoadById;

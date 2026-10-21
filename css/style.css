@@ -2873,13 +2873,13 @@ textarea {
 
 .eis-fine-photos {
     display: grid;
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
     gap: 14px;
 }
 
-    .eis-fine-photos.single {
-        grid-template-columns: 1fr;
-    }
+.eis-fine-photos.single {
+    grid-template-columns: 1fr;
+}
 
 .eis-fine-photo {
     position: relative;

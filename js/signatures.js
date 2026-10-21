@@ -89,14 +89,17 @@ const signatureData = {
     p3Officer: {
         image: null, src: null, scale: 1, rotation: 0,
         x: 0.5, y: 0.5, active: false, imageData: null
-    }
+    },
+	resCitizen:  { image: null, src: null, scale: 1, rotation: 0, x: 0.5, y: 0.78, active: false, imageData: null },
+    resOfficial: { image: null, src: null, scale: 1, rotation: 0, x: 0.5, y: 0.86, active: false, imageData: null },
+    resReceiver: { image: null, src: null, scale: 1, rotation: 0, x: 0.5, y: 0.93, active: false, imageData: null }
 };
 
 const ALL_SIGNATURE_TYPES = [
     'examiner', 'candidate', 'techExpert',
     'official', 'violator', 'witness', 'victim',
-    'driverA', 'driverB', 'p2Officer',
-    'p3Officer'
+    'driverA', 'driverB', 'p2Officer', 'p3Officer',
+    'resCitizen', 'resOfficial', 'resReceiver'
 ];
 
 // Типы, которые нужно перерисовывать на своих канвасах
@@ -111,7 +114,10 @@ const SIGNATURE_CANVAS_MAP = {
     driverA: 'dtpCanvas1',
     driverB: 'dtpCanvas1',
     p2Officer: 'dtpCanvas2',
-    p3Officer: 'dtpCanvas3'
+    p3Officer: 'dtpCanvas3',
+	resCitizen: 'resolutionCanvas',
+    resOfficial: 'resolutionCanvas',
+    resReceiver: 'resolutionCanvas'
 };
 
 let activeSignatureType = null;
@@ -201,10 +207,15 @@ function deactivateSignatures() {
 
 // ========== ПЕРЕРИСОВКА ВСЕХ КАНВАСОВ ==========
 function regenerateAll() {
-    if (typeof generateExam === 'function') generateExam();
-    if (typeof generateTech === 'function') generateTech();
-    if (typeof generateProtocol === 'function') generateProtocol();
-    if (typeof generateDTP === 'function') generateDTP();
+    const g = (name) => {
+        const fn = window[name + 'Now'] || window[name];
+        if (typeof fn === 'function') fn();
+    };
+    g('generateExam');
+    g('generateTech');
+    g('generateProtocol');
+    g('generateDTP');
+    g('generateResolution');
 }
 
 // ========== ПРЕВЬЮ ==========
@@ -262,7 +273,10 @@ function updateSignatureInfo(type) {
             driverA: 'Водитель ТС «A»',
             driverB: 'Водитель ТС «B»',
             p2Officer: 'Сотрудник (2-й лист)',
-            p3Officer: 'Составитель схемы'
+            p3Officer: 'Составитель схемы',
+			resCitizen: 'Гражданин (постановление)',
+			resOfficial: 'Должностное лицо (постановление)',
+			resReceiver: 'Получивший копию'
         };
         const label = labels[type] || type;
         info.textContent = `${label}: Масштаб ${Math.round(data.scale * 100)}% | Поворот ${Math.round(data.rotation)}°`;
@@ -434,7 +448,7 @@ function handleCanvasMouseUp() {
     isRotating = false;
     selectedSignature = null;
 
-    const canvases = ['examCanvas2', 'techCanvas', 'protocolCanvas2', 'dtpCanvas1', 'dtpCanvas2', 'dtpCanvas3'];
+    const canvases = ['examCanvas2', 'techCanvas', 'protocolCanvas2', 'dtpCanvas1', 'dtpCanvas2', 'dtpCanvas3', 'resolutionCanvas'];
     canvases.forEach(id => {
         const canvas = document.getElementById(id);
         if (canvas) canvas.style.cursor = 'default';
@@ -538,7 +552,10 @@ function drawSignatureOnCanvas(ctx, type, canvas, showEditMode) {
             driverA: 'Водитель ТС «A»',
             driverB: 'Водитель ТС «B»',
             p2Officer: 'Сотрудник (2-й лист)',
-            p3Officer: 'Составитель схемы'
+            p3Officer: 'Составитель схемы',
+			resCitizen: 'Гражданин (постановление)',
+			resOfficial: 'Должностное лицо (постановление)',
+			resReceiver: 'Получивший копию'
         };
         const label = labels[type] || type;
         ctx.fillText(label, x, y - drawHeight / 2 - 5);
@@ -597,7 +614,7 @@ async function withSignaturesHidden(types, fn) {
 
 // ========== ИНИЦИАЛИЗАЦИЯ ==========
 document.addEventListener('DOMContentLoaded', function () {
-    const canvases = ['examCanvas2', 'techCanvas', 'protocolCanvas2', 'dtpCanvas1', 'dtpCanvas2', 'dtpCanvas3'];
+    const canvases = ['examCanvas2', 'techCanvas', 'protocolCanvas2', 'dtpCanvas1', 'dtpCanvas2', 'dtpCanvas3', 'resolutionCanvas'];
     canvases.forEach(id => {
         const canvas = document.getElementById(id);
         if (!canvas) return;

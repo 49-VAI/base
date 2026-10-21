@@ -1,28 +1,113 @@
 // ================================================================
-// БАЗА НАРУШЕНИЙ — ЕИС ВАИ
+// БАЗА НАРУШЕНИЙ — ЕИС ВАИ (с поддержкой статусов и постановлений)
 // ================================================================
 
-let finesDatabase = [];
-let finesFiltered = [];
 let currentFineRow = null;
+let finesResults = [];
+let finesTotal = 0;
+let finesPage = 0;
+let finesActiveFilters = {};
+let finesSearchActive = false;
 
-async function loadFinesFromSupabase() {
-    const container = document.getElementById('finesResults');
-    if (!container) return;
+const FINES_PAGE_SIZE = 50;
 
-    container.innerHTML = `<div class="eis-loading"><div class="eis-spinner"></div><span>Загрузка данных...</span></div>`;
+// ========== КТО МОЖЕТ МЕНЯТЬ СТАТУС ==========
+function canChangeFineStatus() {
+    return ['chief_vai', 'chief_odps'].includes(window.currentProfile?.role);
+}
 
-    const { data, error } = await supabaseClient
-        .from('protocols').select('*').order('created_at', { ascending: false });
+// ========== ПОИСК НА СЕРВЕРЕ ==========
+async function searchFinesServer(filters = {}, opts = {}) {
+    const page = Math.max(0, parseInt(opts.page, 10) || 0);
+    const pageSize = Math.max(1, Math.min(200, parseInt(opts.pageSize, 10) || 50));
+    const from = page * pageSize;
+    const to = from + pageSize - 1;
 
-    if (error) {
-        container.innerHTML = `<div class="eis-no-results">Ошибка: ${escapeHtmlF(error.message)}</div>`;
-        return;
+    let q = supabaseClient
+        .from('protocols')
+        .select('*', { count: 'exact' })
+        .order('created_at', { ascending: false })
+        .range(from, to);
+
+    if (filters.fio && filters.fio.trim()) {
+        const f = filters.fio.trim().replace(/[,()%_\\]/g, '');
+        if (f) {
+            q = q.or(
+                `violator_last_name.ilike.%${f}%,` +
+                `violator_first_name.ilike.%${f}%,` +
+                `violator_middle_name.ilike.%${f}%`
+            );
+        }
     }
 
-    finesDatabase = data || [];
-    updateFinesStats();
+    if (filters.license && filters.license.trim()) {
+        q = q.ilike('driver_license', `%${filters.license.trim()}%`);
+    }
+    if (filters.birthDate) q = q.eq('violator_birth_date', filters.birthDate);
+    if (filters.plate && filters.plate.trim()) {
+        q = q.ilike('vehicle_plate', `%${filters.plate.trim()}%`);
+    }
+    if (filters.regNumber && filters.regNumber.trim()) {
+        q = q.ilike('reg_number', `%${filters.regNumber.trim()}%`);
+    }
+    if (filters.article && filters.article.trim()) {
+        q = q.ilike('article_number', `%${filters.article.trim()}%`);
+    }
+    if (filters.dateFrom) q = q.gte('protocol_date', filters.dateFrom);
+    if (filters.dateTo) q = q.lte('protocol_date', filters.dateTo);
+
+    // ★ Фильтр по статусу
+    if (filters.status) q = q.eq('status', filters.status);
+
+    const { data, error, count } = await sbRetry(() => q);
+
+    return { rows: data || [], total: count || 0, page, pageSize, error };
+}
+
+async function getFinesStats() {
+    const monthAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000)
+        .toISOString().slice(0, 10);
+
+    const [totalRes, monthRes, uniqueRes] = await Promise.all([
+        sbRetry(() => supabaseClient
+            .from('protocols').select('id', { count: 'exact', head: true })),
+        sbRetry(() => supabaseClient
+            .from('protocols').select('id', { count: 'exact', head: true })
+            .gte('protocol_date', monthAgo)),
+        sbRetry(() => supabaseClient.rpc('fines_unique_violators'))
+    ]);
+
+    return {
+        total: totalRes.count || 0,
+        monthly: monthRes.count || 0,
+        uniqueViolators: (typeof uniqueRes.data === 'number') ? uniqueRes.data : 0
+    };
+}
+
+async function loadFineById(id) {
+    if (!id) return null;
+    const { data, error } = await sbRetry(() =>
+        supabaseClient.from('protocols').select('*').eq('id', id).single()
+    );
+    if (error || !data) return null;
+    return data;
+}
+
+async function loadFinesFromSupabase() {
+    await refreshFinesStats();
     showFinesHint();
+}
+
+async function refreshFinesStats() {
+    try {
+        const stats = await getFinesStats();
+        const setTxt = (id, v) => { const el = document.getElementById(id); if (el) el.textContent = v; };
+        setTxt('statTotalProtocols', stats.total);
+        setTxt('statUniqueViolators', stats.uniqueViolators);
+        setTxt('statMonthProtocols', stats.monthly);
+    } catch (e) {
+        console.warn('[fines] refreshFinesStats error:', e);
+    }
 }
 
 function showFinesHint() {
@@ -44,33 +129,11 @@ function showFinesHint() {
     `;
 }
 
-function updateFinesStats() {
-    const total = finesDatabase.length;
-
-    const uniq = new Set();
-    finesDatabase.forEach(r => {
-        const key = [r.violator_last_name, r.violator_first_name, r.violator_birth_date]
-            .filter(Boolean).join('|');
-        if (key) uniq.add(key);
-    });
-
-    const monthAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
-    const monthly = finesDatabase.filter(r => {
-        const d = r.protocol_date ? parseDate(r.protocol_date) : null;
-        return d && d >= monthAgo;
-    }).length;
-
-    const setTxt = (id, v) => { const el = document.getElementById(id); if (el) el.textContent = v; };
-    setTxt('statTotalProtocols', total);
-    setTxt('statUniqueViolators', uniq.size);
-    setTxt('statMonthProtocols', monthly);
-}
-
 function hasAnySearchCriteria() {
     const ids = [
         'fineSearchFIO', 'fineSearchLicense', 'fineSearchBirthDate',
         'fineSearchPlate', 'fineSearchRegNumber', 'fineSearchArticle',
-        'fineSearchDateFrom', 'fineSearchDateTo'
+        'fineSearchDateFrom', 'fineSearchDateTo', 'fineSearchStatus'
     ];
     return ids.some(id => {
         const el = document.getElementById(id);
@@ -78,7 +141,7 @@ function hasAnySearchCriteria() {
     });
 }
 
-function runFinesSearch() {
+async function runFinesSearch() {
     if (!hasAnySearchCriteria()) {
         showToast('Заполните хотя бы одно поле для поиска', 'warning');
         showFinesHint();
@@ -87,78 +150,77 @@ function runFinesSearch() {
 
     const btn = document.getElementById('fineSearchBtn');
     const origHtml = btn ? btn.innerHTML : '';
-
     if (btn) { btn.disabled = true; btn.innerHTML = 'Поиск...'; }
 
-    setTimeout(() => {
-        applyFinesFilters();
+    const filters = collectFinesFilters();
+
+    try {
+        const res = await searchFinesServer(filters, { page: 0, pageSize: FINES_PAGE_SIZE });
+        if (res.error) throw new Error(res.error.message || 'Ошибка поиска');
+
+        finesActiveFilters = filters;
+        finesResults = res.rows;
+        finesTotal = res.total;
+        finesPage = 0;
+        finesSearchActive = true;
+
+        renderFinesTable();
+    } catch (e) {
+        console.error('[fines search]', e);
+        showToast('Ошибка поиска: ' + (e.message || 'неизвестная ошибка'), 'error');
+    } finally {
         if (btn) { btn.disabled = false; btn.innerHTML = origHtml; }
-    }, 200);
+    }
 }
 
-function applyFinesFilters() {
-    if (!hasAnySearchCriteria()) {
-        finesFiltered = [];
-        showFinesHint();
-        return;
-    }
-
-    const fio = (document.getElementById('fineSearchFIO')?.value || '').toLowerCase().trim();
-    const license = (document.getElementById('fineSearchLicense')?.value || '').toLowerCase().trim();
-    const birthDate = document.getElementById('fineSearchBirthDate')?.value || '';
-    const plate = (document.getElementById('fineSearchPlate')?.value || '').toLowerCase().trim();
-    const regNumber = (document.getElementById('fineSearchRegNumber')?.value || '').toLowerCase().trim();
-    const article = (document.getElementById('fineSearchArticle')?.value || '').trim();
-    const dateFrom = document.getElementById('fineSearchDateFrom')?.value || '';
-    const dateTo = document.getElementById('fineSearchDateTo')?.value || '';
-
-    finesFiltered = finesDatabase.filter(row => {
-        if (fio) {
-            const hay = [row.violator_last_name, row.violator_first_name, row.violator_middle_name]
-                .filter(Boolean).join(' ').toLowerCase();
-            if (!hay.includes(fio)) return false;
-        }
-        if (license && !(row.driver_license || '').toLowerCase().includes(license)) return false;
-        if (birthDate && (row.violator_birth_date || '') !== birthDate) return false;
-        if (plate && !(row.vehicle_plate || '').toLowerCase().includes(plate)) return false;
-        if (regNumber && !(row.reg_number || '').toLowerCase().includes(regNumber)) return false;
-        if (article && !(row.article_number || '').includes(article)) return false;
-
-        if (dateFrom || dateTo) {
-            const pd = parseDate(row.protocol_date);
-            if (pd) {
-                if (dateFrom) {
-                    const f = parseDate(dateFrom);
-                    if (f && pd < f) return false;
-                }
-                if (dateTo) {
-                    const t = parseDate(dateTo);
-                    if (t && pd > t) return false;
-                }
-            }
-        }
-        return true;
-    });
-
-    displayFines(finesFiltered);
+function collectFinesFilters() {
+    return {
+        fio: (document.getElementById('fineSearchFIO')?.value || '').trim(),
+        license: (document.getElementById('fineSearchLicense')?.value || '').trim(),
+        birthDate: document.getElementById('fineSearchBirthDate')?.value || '',
+        plate: (document.getElementById('fineSearchPlate')?.value || '').trim(),
+        regNumber: (document.getElementById('fineSearchRegNumber')?.value || '').trim(),
+        article: (document.getElementById('fineSearchArticle')?.value || '').trim(),
+        dateFrom: document.getElementById('fineSearchDateFrom')?.value || '',
+        dateTo: document.getElementById('fineSearchDateTo')?.value || '',
+        status: document.getElementById('fineSearchStatus')?.value || ''
+    };
 }
 
 function resetFinesSearch() {
     const f = document.getElementById('finesSearchForm');
     if (f) f.reset();
-    finesFiltered = [];
+
+    finesResults = [];
+    finesTotal = 0;
+    finesPage = 0;
+    finesActiveFilters = {};
+    finesSearchActive = false;
+
     showFinesHint();
     showToast('Форма поиска очищена', 'info');
 }
 
-function displayFines(rows) {
+// ========== ТАБЛИЦА ==========
+function renderFineStatusBadge(status) {
+    const s = status || 'active';
+    return s === 'paid'
+        ? '<span class="eis-vu-status eis-status-archived">ПОГАШЕН</span>'
+        : '<span class="eis-vu-status eis-status-expiring">АКТИВЕН</span>';
+}
+
+function renderFinesTable() {
     const container = document.getElementById('finesResults');
     const countEl = document.getElementById('finesResultsCount');
     if (!container) return;
 
-    if (countEl) countEl.textContent = `ЗАПИСЕЙ: ${rows.length}`;
+    if (countEl) {
+        countEl.textContent = finesResults.length < finesTotal
+            ? `ЗАПИСЕЙ: ${finesResults.length} из ${finesTotal}`
+            : `ЗАПИСЕЙ: ${finesResults.length}`;
+    }
 
-    if (rows.length === 0) {
+    if (finesResults.length === 0) {
         container.innerHTML = `
             <div class="eis-no-results">
                 <div style="font-size: 32px; margin-bottom: 12px;">📭</div>
@@ -170,10 +232,10 @@ function displayFines(rows) {
     }
 
     let html = '<div class="eis-admin-table-wrap"><table class="eis-admin-table"><thead><tr>';
-    html += '<th>№ протокола</th><th>Дата</th><th>ФИО нарушителя</th><th>В/У</th><th>ТС</th><th>Статья</th><th></th>';
+    html += '<th>№ протокола</th><th>Дата</th><th>ФИО нарушителя</th><th>В/У</th><th>ТС</th><th>Статья</th><th>Статус</th><th></th>';
     html += '</tr></thead><tbody>';
 
-    rows.forEach(row => {
+    finesResults.forEach(row => {
         const fio = [row.violator_last_name, row.violator_first_name, row.violator_middle_name]
             .filter(Boolean).join(' ') || '—';
         const article = [
@@ -181,6 +243,7 @@ function displayFines(rows) {
             row.article_number ? 'ст. ' + row.article_number : ''
         ].filter(Boolean).join(' ') || '—';
         const ts = [row.vehicle_make, row.vehicle_plate].filter(Boolean).join(' · ') || '—';
+        const statusBadge = renderFineStatusBadge(row.status);
 
         html += `<tr>
             <td data-label="№"><strong>${escapeHtmlF(row.reg_number || '—')}</strong></td>
@@ -189,12 +252,45 @@ function displayFines(rows) {
             <td data-label="В/У">${escapeHtmlF(truncate(row.driver_license, 40))}</td>
             <td data-label="ТС">${escapeHtmlF(ts)}</td>
             <td data-label="Статья">${escapeHtmlF(article)}</td>
-            <td><button class="eis-btn eis-btn-sm eis-btn-secondary" onclick="openFineDetail('${row.id}')">Открыть</button></td>
+            <td data-label="Статус">${statusBadge}</td>
+            <td><button class="eis-btn eis-btn-sm eis-btn-secondary"
+                    data-action="open-fine" data-id="${row.id}">Открыть</button></td>
         </tr>`;
     });
 
     html += '</tbody></table></div>';
+
+    if (finesTotal > finesResults.length) {
+        const remaining = finesTotal - finesResults.length;
+        html += `<div style="display:flex;justify-content:center;margin-top:16px;">
+            <button class="eis-btn eis-btn-primary" id="finesLoadMoreBtn" onclick="loadMoreFines()">
+                Показать ещё (осталось ${remaining})
+            </button>
+        </div>`;
+    }
+
     container.innerHTML = html;
+}
+
+async function loadMoreFines() {
+    const btn = document.getElementById('finesLoadMoreBtn');
+    if (btn) { btn.disabled = true; btn.textContent = 'Загрузка...'; }
+
+    try {
+        const nextPage = finesPage + 1;
+        const res = await searchFinesServer(finesActiveFilters, { page: nextPage, pageSize: FINES_PAGE_SIZE });
+        if (res.error) throw new Error(res.error.message || 'Ошибка загрузки');
+
+        finesResults = finesResults.concat(res.rows);
+        finesTotal = res.total;
+        finesPage = nextPage;
+
+        renderFinesTable();
+    } catch (e) {
+        console.error('[fines loadMore]', e);
+        showToast('Ошибка загрузки: ' + (e.message || 'неизвестная ошибка'), 'error');
+        if (btn) { btn.disabled = false; btn.textContent = 'Показать ещё'; }
+    }
 }
 
 function truncate(str, max) {
@@ -202,6 +298,7 @@ function truncate(str, max) {
     return str.length > max ? str.slice(0, max) + '…' : str;
 }
 
+// ========== ФОТО (включая постановление) ==========
 function getFinePhotoList(row) {
     if (!row) return [];
     const list = [];
@@ -211,17 +308,23 @@ function getFinePhotoList(row) {
     if (p) {
         if (Array.isArray(p.page1)) list.push(...p.page1);
         if (Array.isArray(p.page2)) list.push(...p.page2);
+        if (Array.isArray(p.resolution)) list.push(...p.resolution);
     }
 
     if (row.photo_url) list.push(row.photo_url);
     if (row.photo_url_2) list.push(row.photo_url_2);
+    if (row.resolution_photo_url) list.push(row.resolution_photo_url);
 
     return [...new Set(list.filter(Boolean))];
 }
 
-function openFineDetail(id) {
-    const row = finesDatabase.find(r => r.id === id);
-    if (!row) { showToast('Запись не найдена', 'error'); return; }
+// ========== ДЕТАЛИ ==========
+async function openFineDetail(id) {
+    let row = finesResults.find(r => r.id === id);
+    if (!row) {
+        row = await loadFineById(id);
+        if (!row) { showToast('Запись не найдена', 'error'); return; }
+    }
 
     currentFineRow = row;
 
@@ -236,6 +339,10 @@ function openFineDetail(id) {
     document.getElementById('fdRegNumber').textContent =
         '№ ' + (row.reg_number || '—') + ' от ' + (row.protocol_date ? formatDate(row.protocol_date) : '—');
 
+    const badgeEl = document.getElementById('fdStatusBadge');
+    if (badgeEl) badgeEl.innerHTML = renderFineStatusBadge(row.status);
+
+    // Фото
     const photosWrap = document.getElementById('fdPhotosWrap');
     const photoList = getFinePhotoList(row);
 
@@ -246,17 +353,24 @@ function openFineDetail(id) {
                 <div style="color:#888;font-size:13px;">Фото протокола отсутствует</div>
             </div>`;
         } else {
-            photosWrap.className = 'eis-fine-photos' + (photoList.length === 1 ? ' single' : '');
-            photosWrap.innerHTML = photoList.map((url, idx) => `
-                <div class="eis-fine-photo" onclick="openFinePhotoFull(${idx})">
-                    <img src="${url}" alt="Стр. ${idx + 1}">
-                    <div class="eis-fine-photo-label">Страница ${idx + 1}</div>
-                    <div class="eis-fine-photo-zoom">🔍 Открыть</div>
-                </div>
-            `).join('');
+            photosWrap.className = 'eis-fine-photos';
+            photosWrap.innerHTML = photoList.map((url, idx) => {
+                let label = 'Страница ' + (idx + 1);
+                if (idx === 0) label = 'Протокол — стр. 1';
+                else if (idx === 1) label = 'Протокол — стр. 2';
+                else if (idx === 2) label = 'Постановление';
+                return `
+                    <div class="eis-fine-photo" onclick="openFinePhotoFull(${idx})">
+                        <img src="${url}" alt="${label}">
+                        <div class="eis-fine-photo-label">${label}</div>
+                        <div class="eis-fine-photo-zoom">🔍 Открыть</div>
+                    </div>
+                `;
+            }).join('');
         }
     }
 
+    // Поля протокола
     const fields = [
         ['Рег. номер', row.reg_number],
         ['Дата составления', row.protocol_date ? formatDate(row.protocol_date) : ''],
@@ -293,27 +407,59 @@ function openFineDetail(id) {
         ['Замечания', row.remarks]
     ];
 
+    // ★ Поля постановления
+    if (row.resolution_data) {
+        const r = row.resolution_data;
+        fields.push(['═══ ПОСТАНОВЛЕНИЕ ═══', '']);
+        fields.push(['Номер постановления', r.number]);
+        fields.push(['Дата рассмотрения', r.date]);
+        fields.push(['Место рассмотрения', r.place]);
+        if (r.officialPosition || r.officialName) {
+            fields.push(['Должностное лицо', [
+                r.officialPosition, r.officialDepartment, r.officialRank, r.officialName
+            ].filter(Boolean).join(', ')]);
+        }
+        if (r.articlePart || r.articleNumber) {
+            fields.push(['Статья постановления',
+                [r.articlePart ? 'ч. ' + r.articlePart : '',
+                r.articleNumber ? 'ст. ' + r.articleNumber : '']
+                    .filter(Boolean).join(' ') + ' КоАП РФ']);
+        }
+        if (r.motivatedDecision) fields.push(['Мотивированное решение', r.motivatedDecision]);
+        if (r.copyReceivedDate) fields.push(['Копия получена', r.copyReceivedDate]);
+    }
+
     const fieldsHtml = fields
-        .filter(f => f[1] !== null && f[1] !== undefined && f[1] !== '')
-        .map(([label, val]) => `
-            <div class="eis-data-field">
-                <div class="eis-data-label">${escapeHtmlF(label)}</div>
-                <div class="eis-data-value">${escapeHtmlF(String(val))}</div>
-            </div>
-        `).join('');
+        .filter(f => {
+            if (f[1] === '' || f[1] === null || f[1] === undefined) {
+                return f[0].startsWith('═══');
+            }
+            return true;
+        })
+        .map(([label, val]) => {
+            if (label.startsWith('═══')) {
+                return `<div style="grid-column:1/-1; font-weight:700; color:#1e7e34; padding:12px 0 4px; border-bottom:2px solid #1e7e34; margin-top:8px;">${escapeHtmlF(label.replace(/═/g, '').trim())}</div>`;
+            }
+            return `
+                <div class="eis-data-field">
+                    <div class="eis-data-label">${escapeHtmlF(label)}</div>
+                    <div class="eis-data-value">${escapeHtmlF(String(val))}</div>
+                </div>`;
+        }).join('');
 
     const fieldsEl = document.getElementById('fdFields');
     if (fieldsEl) fieldsEl.innerHTML = fieldsHtml;
 
+    // Кнопка скачивания
     const dlBtn = document.getElementById('fdDownloadBtn');
     if (dlBtn) {
         const n = photoList.length;
-        dlBtn.textContent = n > 1 ? `Скачать оба листа (${n})` : 'Скачать лист';
+        dlBtn.textContent = n > 1 ? `Скачать все листы (${n})` : 'Скачать лист';
         dlBtn.disabled = n === 0;
         dlBtn.onclick = () => downloadFine(row);
     }
 
-    // ★ Кнопки редактирования и удаления — только для тех, кто может писать
+    // Кнопки редактирования / удаления
     const canEdit = canWriteToDB();
 
     const editBtn = document.getElementById('fdEditBtn');
@@ -338,7 +484,75 @@ function openFineDetail(id) {
         }
     }
 
+    // ★ Кнопка смены статуса — только начальники
+    updateFineStatusUI();
+
     document.getElementById('fineDetailModal').style.display = 'flex';
+}
+
+function updateFineStatusUI() {
+    if (!currentFineRow) return;
+
+    const badgeEl = document.getElementById('fdStatusBadge');
+    if (badgeEl) badgeEl.innerHTML = renderFineStatusBadge(currentFineRow.status);
+
+    const btn = document.getElementById('fdStatusBtn');
+    if (!btn) return;
+
+    if (canChangeFineStatus()) {
+        btn.style.display = '';
+        btn.textContent = currentFineRow.status === 'paid'
+            ? '↺ Пометить как активный'
+            : '✓ Пометить как погашенный';
+    } else {
+        btn.style.display = 'none';
+    }
+}
+
+async function toggleFineStatus() {
+    if (!currentFineRow) return;
+
+    if (!canChangeFineStatus()) {
+        showToast('Изменять статус штрафа могут только Начальник ВАИ и Начальник ОДПС', 'warning');
+        return;
+    }
+
+    const oldStatus = currentFineRow.status || 'active';
+    const newStatus = oldStatus === 'paid' ? 'active' : 'paid';
+    const oldLabel = oldStatus === 'paid' ? 'Погашен' : 'Активен';
+    const newLabel = newStatus === 'paid' ? 'Погашен' : 'Активен';
+
+    const ok = await showConfirm({
+        title: 'Изменение статуса штрафа',
+        message: `Протокол ${currentFineRow.reg_number}.\n\nСменить статус «${oldLabel}» → «${newLabel}»?`,
+        confirmText: 'Изменить',
+        type: 'default'
+    });
+    if (!ok) return;
+
+    const { error } = await supabaseClient
+        .from('protocols')
+        .update({ status: newStatus, updated_at: new Date().toISOString() })
+        .eq('id', currentFineRow.id);
+
+    if (error) { showToast('Ошибка: ' + error.message, 'error'); return; }
+
+    currentFineRow.status = newStatus;
+    const idx = finesResults.findIndex(r => r.id === currentFineRow.id);
+    if (idx !== -1) finesResults[idx].status = newStatus;
+
+    if (typeof logAction === 'function') {
+        await logAction('protocol_status_change', 'protocols', currentFineRow.id, {
+            kind: 'update',
+            summary: `Изменил статус протокола ${currentFineRow.reg_number} на «${newLabel}»`,
+            changes: [{ field: 'status', from: oldStatus, to: newStatus }],
+            changed_count: 1
+        });
+    }
+
+    updateFineStatusUI();
+    renderFinesTable();
+    showToast(`Статус изменён на «${newLabel}»`, 'success');
 }
 
 function closeFineDetail() {
@@ -364,7 +578,9 @@ function downloadFine(row) {
         setTimeout(() => {
             const link = document.createElement('a');
             link.href = url;
-            link.download = `${base}_стр${idx + 1}.jpg`;
+            let suffix = `_стр${idx + 1}`;
+            if (idx === 2) suffix = '_постановление';
+            link.download = `${base}${suffix}.jpg`;
             link.target = '_blank';
             link.rel = 'noopener';
             document.body.appendChild(link);
@@ -373,12 +589,10 @@ function downloadFine(row) {
         }, idx * 400);
     });
 
-    showToast(
-        list.length > 1 ? `Скачивание ${list.length} файлов...` : 'Скачивание файла...',
-        'info'
-    );
+    showToast(list.length > 1 ? `Скачивание ${list.length} файлов...` : 'Скачивание файла...', 'info');
 }
 
+// ========== РЕДАКТИРОВАНИЕ ПРОТОКОЛА ==========
 function openEditFineModal() {
     if (blockWrite('редактировать протоколы')) return;
     if (!currentFineRow) { showToast('Запись не найдена', 'error'); return; }
@@ -535,14 +749,18 @@ async function saveEditFine() {
         summary_prefix: `Изменил протокол ${regNumber} (${lastName} ${firstName})`
     });
 
-    const idx = finesDatabase.findIndex(r => r.id === id);
-    if (idx !== -1) finesDatabase[idx] = { ...finesDatabase[idx], ...payload };
-
     closeEditFineModal();
-    showToast(`Протокол ${regNumber} обновлён`, 'success');
 
-    if (finesFiltered.length > 0) applyFinesFilters();
-    else displayFines(finesDatabase);
+    if (finesSearchActive && hasAnySearchCriteria()) {
+        await runFinesSearch();
+    } else {
+        const idx = finesResults.findIndex(r => r.id === id);
+        if (idx !== -1) finesResults[idx] = { ...finesResults[idx], ...payload };
+        renderFinesTable();
+    }
+
+    await refreshFinesStats();
+    showToast(`Протокол ${regNumber} обновлён`, 'success');
 }
 
 async function deleteFine() {
@@ -577,6 +795,7 @@ async function deleteFine() {
 
         collect(photos.page1);
         collect(photos.page2);
+        collect(photos.resolution);
 
         if (row.photo_url) {
             const parts = row.photo_url.split('/protocol-photos/');
@@ -584,6 +803,10 @@ async function deleteFine() {
         }
         if (row.photo_url_2) {
             const parts = row.photo_url_2.split('/protocol-photos/');
+            if (parts.length >= 2) fileNames.push(decodeURIComponent(parts[1]));
+        }
+        if (row.resolution_photo_url) {
+            const parts = row.resolution_photo_url.split('/protocol-photos/');
             if (parts.length >= 2) fileNames.push(decodeURIComponent(parts[1]));
         }
 
@@ -599,16 +822,18 @@ async function deleteFine() {
         await logDelete('protocol_delete', 'protocols', row.id, row,
             `Удалил протокол ${row.reg_number} (${row.violator_last_name || ''} ${row.violator_first_name || ''})`.trim());
 
-        finesDatabase = finesDatabase.filter(r => r.id !== row.id);
-        finesFiltered = finesFiltered.filter(r => r.id !== row.id);
-
         closeFineDetail();
-        updateFinesStats();
 
-        if (finesFiltered.length > 0) displayFines(finesFiltered);
-        else if (hasAnySearchCriteria()) displayFines(finesFiltered);
-        else showFinesHint();
+        finesResults = finesResults.filter(r => r.id !== row.id);
+        finesTotal = Math.max(0, finesTotal - 1);
 
+        if (hasAnySearchCriteria()) {
+            await runFinesSearch();
+        } else {
+            showFinesHint();
+        }
+
+        await refreshFinesStats();
         showToast(`Протокол ${row.reg_number} удалён`, 'success');
 
     } catch (e) {
@@ -636,15 +861,22 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     }
 
+    document.getElementById('finesResults').addEventListener('click', (e) => {
+        const btn = e.target.closest('[data-action="open-fine"]');
+        if (btn) openFineDetail(btn.dataset.id);
+    });
+
     document.addEventListener('keydown', e => {
         if (e.key === 'Escape') { closeFineDetail(); closeEditFineModal(); }
     });
 });
 
 window.loadFinesFromSupabase = loadFinesFromSupabase;
+window.refreshFinesStats = refreshFinesStats;
 window.runFinesSearch = runFinesSearch;
-window.applyFinesFilters = applyFinesFilters;
 window.resetFinesSearch = resetFinesSearch;
+window.renderFinesTable = renderFinesTable;
+window.loadMoreFines = loadMoreFines;
 window.openFineDetail = openFineDetail;
 window.closeFineDetail = closeFineDetail;
 window.openFinePhotoFull = openFinePhotoFull;
@@ -654,3 +886,5 @@ window.openEditFineModal = openEditFineModal;
 window.closeEditFineModal = closeEditFineModal;
 window.saveEditFine = saveEditFine;
 window.deleteFine = deleteFine;
+window.toggleFineStatus = toggleFineStatus;
+window.canChangeFineStatus = canChangeFineStatus;

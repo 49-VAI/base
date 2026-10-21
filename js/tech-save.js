@@ -61,7 +61,7 @@ function onVehicleSelected(id) {
     setVal('techMaxMass', v.max_mass || '');
     setVal('techEnginePower', v.engine_power || '');
 
-    generateTech();
+    (window.generateTechNow || window.generateTech)();
     showToast('Данные ТС подставлены', 'success');
 }
 
@@ -207,7 +207,7 @@ async function saveTechToDB() {
 
         const wasActive = signatureData.techExpert?.active;
         if (signatureData.techExpert) signatureData.techExpert.active = false;
-        await generateTech();
+        await (window.generateTechNow || window.generateTech)();
 
         const canvas = document.getElementById('techCanvas');
         if (!canvas || canvas.width === 0) throw new Error('Не удалось сгенерировать изображение');
@@ -218,7 +218,7 @@ async function saveTechToDB() {
 
         if (signatureData.techExpert) {
             signatureData.techExpert.active = wasActive;
-            await generateTech();
+            await (window.generateTechNow || window.generateTech)();
         }
 
         const payload = collectTechData(photoUrl);

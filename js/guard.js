@@ -13,10 +13,7 @@ const READ_ONLY_ROLES = ['cadet'];
 function isReadOnlyUser() {
     return READ_ONLY_ROLES.includes(window.currentProfile?.role);
 }
-
-function canWriteToDB() {
-    return !isReadOnlyUser();
-}
+function canWriteToDB() { return !isReadOnlyUser(); }
 
 function blockWrite(action = 'выполнить это действие') {
     if (isReadOnlyUser()) {
@@ -45,64 +42,6 @@ const ROLE_LABELS = {
     'chief_vai': 'Начальник ВАИ'
 };
 
-document.addEventListener('layout-ready', runGuard, { once: true });
-
-async function runGuard() {
-    if (typeof supabaseClient === 'undefined') {
-        console.error('[guard] supabaseClient не загружен!');
-        return;
-    }
-
-    const { data: { session } } = await supabaseClient.auth.getSession();
-
-    if (!session) {
-        const currentPath = window.location.pathname.split('/').pop() || 'index.html';
-        sessionStorage.setItem('redirect_after_login', currentPath);
-        window.location.href = 'login.html';
-        return;
-    }
-
-    const profile = await getCurrentProfile();
-    if (!profile) {
-        console.error('[guard] Профиль не найден');
-        await supabaseClient.auth.signOut();
-        window.location.href = 'login.html';
-        return;
-    }
-
-    const currentPage = window.location.pathname.split('/').pop() || 'index.html';
-    const allowedRoles = PAGE_ACCESS[currentPage];
-
-    if (allowedRoles && !allowedRoles.includes(profile.role)) {
-        sessionStorage.setItem('flash_message', 'Недостаточно прав для доступа к этой странице');
-        sessionStorage.setItem('flash_message_type', 'warning');
-        window.location.href = 'index.html';
-        return;
-    }
-
-    window.currentUser = session.user;
-    window.currentProfile = profile;
-
-    hideReadOnlyUi();
-
-    restrictNavItems(profile);
-
-    updateHeader(profile);
-    addAdminMenuItem(profile);
-    addStaffMenuItem(profile);
-
-    document.documentElement.setAttribute('data-authenticated', 'true');
-    document.dispatchEvent(new CustomEvent('user-ready', { detail: profile }));
-
-    const flash = sessionStorage.getItem('flash_message');
-    if (flash) {
-        const flashType = sessionStorage.getItem('flash_message_type') || 'info';
-        sessionStorage.removeItem('flash_message');
-        sessionStorage.removeItem('flash_message_type');
-        setTimeout(() => showToast(flash, flashType), 400);
-    }
-}
-
 function shortName(fullName) {
     if (!fullName) return '';
     const parts = String(fullName).trim().split(/\s+/);
@@ -117,7 +56,6 @@ function shortName(fullName) {
 function updateHeader(profile) {
     const roleEl = document.querySelector('.eis-user-role');
     const nameEl = document.querySelector('.eis-user-name');
-
     if (roleEl) roleEl.textContent = profile.position || ROLE_LABELS[profile.role] || profile.role;
     if (nameEl) nameEl.textContent = `${profile.rank} ${shortName(profile.full_name)}`;
 
@@ -129,7 +67,6 @@ function updateHeader(profile) {
 
     if (!document.getElementById('profileLink')) {
         const divider = headerRight.querySelector('.eis-header-divider');
-
         const profileLink = document.createElement('a');
         profileLink.id = 'profileLink';
         profileLink.href = 'profile.html';
@@ -154,7 +91,6 @@ function updateHeader(profile) {
             profileLink.style.background = 'transparent';
             profileLink.style.color = '#ccc';
         };
-
         if (divider) headerRight.insertBefore(profileLink, divider);
         else headerRight.appendChild(profileLink);
     }
@@ -169,86 +105,40 @@ function hasDynamicNavItem(page) {
 function removeStaleNavItems() {
     const navMenu = document.querySelector('.eis-nav-menu');
     if (!navMenu) return;
-
     const stale = navMenu.querySelector('#navStaffItem');
-    if (stale) {
-        console.warn('[guard] Удаляю статический #navStaffItem из nav.html');
-        stale.remove();
-    }
+    if (stale) { stale.remove(); }
 }
 
 function addAdminMenuItem(profile) {
-
-    if (profile.role !== 'chief_vai') {
-        return;
-    }
-
+    if (profile.role !== 'chief_vai') return;
     removeStaleNavItems();
-
     const navMenu = document.querySelector('.eis-nav-menu');
-    if (!navMenu) {
-        console.warn('[guard] addAdminMenuItem: .eis-nav-menu не найден');
-        return;
-    }
-
-    if (hasDynamicNavItem('admin.html')) {
-        return;
-    }
-
+    if (!navMenu) return;
+    if (hasDynamicNavItem('admin.html')) return;
     const li = document.createElement('li');
     li.className = 'eis-nav-item';
     li.dataset.page = 'admin.html';
-
-    if (window.location.pathname.endsWith('admin.html')) {
-        li.classList.add('active');
-    }
-
+    if (window.location.pathname.endsWith('admin.html')) li.classList.add('active');
     li.innerHTML = `<a href="admin.html"><span>Админ-панель</span></a>`;
     navMenu.appendChild(li);
-
 }
 
 function addStaffMenuItem(profile) {
-
     const chiefRoles = ['chief_odps', 'chief_reo', 'chief_cuipp', 'chief_vai'];
-    if (!chiefRoles.includes(profile.role)) {
-        return;
-    }
-
+    if (!chiefRoles.includes(profile.role)) return;
     removeStaleNavItems();
-
     const navMenu = document.querySelector('.eis-nav-menu');
-    if (!navMenu) {
-        console.warn('[guard] addStaffMenuItem: .eis-nav-menu не найден');
-        return;
-    }
-
-    if (hasDynamicNavItem('staff.html')) {
-        return;
-    }
-
+    if (!navMenu) return;
+    if (hasDynamicNavItem('staff.html')) return;
     const li = document.createElement('li');
     li.className = 'eis-nav-item';
     li.dataset.page = 'staff.html';
-
-    if (window.location.pathname.endsWith('staff.html')) {
-        li.classList.add('active');
-    }
-
+    if (window.location.pathname.endsWith('staff.html')) li.classList.add('active');
     li.innerHTML = `<a href="staff.html"><span>Состав</span></a>`;
-
     const adminItem = navMenu.querySelector('li[data-page="admin.html"]:not([id])');
-    if (adminItem) {
-        navMenu.insertBefore(li, adminItem);
-        return;
-    }
-
+    if (adminItem) { navMenu.insertBefore(li, adminItem); return; }
     const dtpItem = navMenu.querySelector('li[data-page="dtp.html"]:not([id])');
-    if (dtpItem) {
-        navMenu.insertBefore(li, dtpItem);
-        return;
-    }
-
+    if (dtpItem) { navMenu.insertBefore(li, dtpItem); return; }
     navMenu.appendChild(li);
 }
 
@@ -258,22 +148,102 @@ function restrictNavItems(profile) {
         'exam.html': ['inspector_reo', 'chief_reo', 'chief_vai'],
         'tech.html': ['inspector_reo', 'chief_reo', 'chief_vai']
     };
-
     document.querySelectorAll('.eis-nav-item').forEach(item => {
         const page = item.dataset.page;
         if (restricted[page]) {
-            item.style.display = restricted[page].includes(profile.role)
-                ? 'flex'
-                : 'none';
+            item.style.display = restricted[page].includes(profile.role) ? 'flex' : 'none';
         }
     });
 }
 
+// ================================================================
+// АВТОРИЗАЦИЯ — стартует НЕМЕДЛЕННО, не ждёт вёрстки
+// ================================================================
+let guardProfilePromise = null;
+
+async function initGuard() {
+    if (typeof supabaseClient === 'undefined') {
+        console.error('[guard] supabaseClient не загружен!');
+        return null;
+    }
+
+    const { data: { session } } = await supabaseClient.auth.getSession();
+    if (!session) {
+        const currentPath = window.location.pathname.split('/').pop() || 'index.html';
+        sessionStorage.setItem('redirect_after_login', currentPath);
+        window.location.href = 'login.html';
+        return null;
+    }
+
+    const profile = await getCurrentProfile();
+    if (!profile) {
+        await supabaseClient.auth.signOut();
+        window.location.href = 'login.html';
+        return null;
+    }
+
+    const currentPage = window.location.pathname.split('/').pop() || 'index.html';
+    const allowedRoles = PAGE_ACCESS[currentPage];
+    if (allowedRoles && !allowedRoles.includes(profile.role)) {
+        sessionStorage.setItem('flash_message', 'Недостаточно прав для доступа к этой странице');
+        sessionStorage.setItem('flash_message_type', 'warning');
+        window.location.href = 'index.html';
+        return null;
+    }
+
+    window.currentUser = session.user;
+    window.currentProfile = profile;
+
+    hideReadOnlyUi();
+    document.documentElement.setAttribute('data-authenticated', 'true');
+
+    // ★ user-ready летит СРАЗУ после профиля — не ждём вёрстку
+    document.dispatchEvent(new CustomEvent('user-ready', { detail: profile }));
+
+    const flash = sessionStorage.getItem('flash_message');
+    if (flash) {
+        const flashType = sessionStorage.getItem('flash_message_type') || 'info';
+        sessionStorage.removeItem('flash_message');
+        sessionStorage.removeItem('flash_message_type');
+        setTimeout(() => showToast(flash, flashType), 400);
+    }
+
+    return profile;
+}
+
+// Стартуем немедленно — auth не зависит от DOM
+guardProfilePromise = initGuard();
+
+// ================================================================
+// ШАПКА/НАВИГАЦИЯ — когда готова вёрстка И профиль
+// ================================================================
+async function __applyGuardUi() {
+    if (!guardProfilePromise) return;
+    const profile = await guardProfilePromise;
+    if (!profile) return;
+
+    restrictNavItems(profile);
+    updateHeader(profile);
+    addAdminMenuItem(profile);
+    addStaffMenuItem(profile);
+}
+
+document.addEventListener('layout-ready', __applyGuardUi, { once: true });
+
+// На случай если layout уже успел отрисоваться до этого скрипта
+if (document.querySelector('.eis-header-right')) {
+    __applyGuardUi();
+}
+
+// ----------------------------------------------------------------
+// Экспорт (runGuard оставлен как алиас для обратной совместимости)
+// ----------------------------------------------------------------
 window.ROLE_LABELS = ROLE_LABELS;
 window.PAGE_ACCESS = PAGE_ACCESS;
 window.addAdminMenuItem = addAdminMenuItem;
 window.addStaffMenuItem = addStaffMenuItem;
-window.runGuard = runGuard;
+window.runGuard = initGuard;
+window.initGuard = initGuard;
 window.updateHeader = updateHeader;
 window.restrictNavItems = restrictNavItems;
 window.shortName = shortName;

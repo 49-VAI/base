@@ -568,7 +568,7 @@ async function generateExamPage2(canvas, data) {
 function saveExamPage1() {
     const canvas = document.getElementById('examCanvas1');
     if (!canvas || canvas.width === 0 || canvas.height === 0) {
-        alert('Холст пуст');
+        showToast('Холст пуст', 'warning');
         return;
     }
 
@@ -590,7 +590,7 @@ function saveExamPage2() {
 
     const canvas = document.getElementById('examCanvas2');
     if (!canvas || canvas.width === 0 || canvas.height === 0) {
-        alert('Холст пуст');
+        showToast('Холст пуст', 'warning');
         for (const type of ['examiner', 'candidate']) {
             signatureData[type].active = wasActive[type];
         }
@@ -699,7 +699,7 @@ function saveExamPage2() {
         });
     }).catch(error => {
         console.error('Ошибка сохранения:', error);
-        alert('Ошибка сохранения');
+        showToast('Ошибка сохранения: ' + (error?.message || 'неизвестная ошибка'), 'error');
         for (const type of ['examiner', 'candidate']) {
             signatureData[type].active = wasActive[type];
         }
@@ -722,17 +722,12 @@ document.addEventListener('DOMContentLoaded', function () {
     initSkills();
     initErrors();
 
-    const examInputs = document.querySelectorAll('#tab-exam .eis-input, .eis-input');
-    examInputs.forEach(input => {
-        if (!input.closest('.eis-panel-body')) return;
-        input.addEventListener('input', generateExam);
-        input.addEventListener('change', generateExam);
-    });
-
     setTimeout(generateExam, 200);
 });
 
-window.generateExam = generateExam;
+const __generateExamNow = generateExam;
+window.generateExam = debounce(generateExam, 250);
+window.generateExamNow = __generateExamNow;
 window.saveExamPage1 = saveExamPage1;
 window.saveExamPage2 = saveExamPage2;
 window.saveExamBoth = saveExamBoth;

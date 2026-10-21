@@ -18,6 +18,7 @@ let planCapacity = PLAN_DEFAULT_CAPACITY;
 let planHorizon = PLAN_DEFAULT_HORIZON;
 let planCurrentMonth = new Date();
 let planUnplanned = [];
+const planDayLoadIndex = new Map();
 
 window.switchTechTab = function (tab) {
     document.querySelectorAll('.eis-tab').forEach(t => {
@@ -84,6 +85,8 @@ async function loadPlanningData() {
     } else {
         planAppointments = data || [];
     }
+
+    rebuildDayLoadIndex();
 
     renderPlanningTab();
 }
@@ -157,9 +160,17 @@ function buildUnplannedList() {
 }
 
 function getDayLoad(isoDate) {
-    return planAppointments.filter(a =>
-        a.scheduled_date === isoDate && a.status === 'planned'
-    ).length;
+    return planDayLoadIndex.get(isoDate) || 0;
+}
+
+function rebuildDayLoadIndex() {
+    planDayLoadIndex.clear();
+    for (const a of planAppointments) {
+        if (a.status !== 'planned') continue;
+        const d = a.scheduled_date;
+        if (!d) continue;
+        planDayLoadIndex.set(d, (planDayLoadIndex.get(d) || 0) + 1);
+    }
 }
 
 function getLoadClass(count) {
@@ -332,9 +343,12 @@ function renderPlanningQueue() {
             <td data-label="Гос.номер"><strong>${escapeHtmlTd(row.plate_number || '—')}</strong></td>
             <td data-label="ТС">${escapeHtmlTd(row.vehicle_make_model || '—')}</td>
             <td data-label="Эксперт">${escapeHtmlTd(row.expert_name || '—')}</td>
-            <td>
+                        <td>
                 ${canEdit ? `<button class="eis-btn eis-btn-sm eis-btn-primary"
-                        onclick="openAssignModal('${escapeHtmlTd(row.plate_number || '')}', '${escapeHtmlTd(row.vehicle_make_model || '')}', '${row.valid_until}')">
+                        data-action="assign-to"
+                        data-plate="${escapeHtmlTd(row.plate_number || '')}"
+                        data-make="${escapeHtmlTd(row.vehicle_make_model || '')}"
+                        data-valid-until="${escapeHtmlTd(row.valid_until || '')}">
                     Записать
                 </button>` : ''}
             </td>
@@ -514,6 +528,7 @@ async function saveAppointment() {
     }
 
     planAppointments.push(data);
+    planDayLoadIndex.set(data.scheduled_date, (planDayLoadIndex.get(data.scheduled_date) || 0) + 1);
 
     if (typeof logCreate === 'function') {
         await logCreate('tech_appointment_create', 'tech_appointments', data.id, data,
@@ -573,7 +588,9 @@ function openDayAppointmentsModal(isoDate) {
             <td data-label="Примечание">${escapeHtmlTd(a.notes || '—')}</td>
             <td>
                 ${canEdit ? `<button class="eis-btn eis-btn-sm eis-btn-danger"
-                        onclick="cancelAppointment('${a.id}', '${escapeHtmlTd(a.plate_number)}')">
+                        data-action="cancel-appt"
+                        data-id="${a.id}"
+                        data-plate="${escapeHtmlTd(a.plate_number || '')}">
                     Отменить
                 </button>` : ''}
             </td>
@@ -607,7 +624,13 @@ async function cancelAppointment(id, plate) {
 
     if (error) { showToast('Ошибка: ' + error.message, 'error'); return; }
 
+    const removed = planAppointments.find(a => a.id === id);
     planAppointments = planAppointments.filter(a => a.id !== id);
+    if (removed && removed.status === 'planned' && removed.scheduled_date) {
+        const cur = planDayLoadIndex.get(removed.scheduled_date) || 0;
+        if (cur > 1) planDayLoadIndex.set(removed.scheduled_date, cur - 1);
+        else planDayLoadIndex.delete(removed.scheduled_date);
+    }
 
     if (typeof logDelete === 'function') {
         await logDelete('tech_appointment_delete', 'tech_appointments', id,
@@ -636,6 +659,26 @@ document.addEventListener('DOMContentLoaded', function () {
             else closeDayAppointmentsModal();
         });
     });
+
+    // ★ Делегирование кликов по динамическим кнопкам планирования
+    // (защита от XSS через inline-onclick с plate_number / make_model)
+    document.getElementById('planningQueue').addEventListener('click', (e) => {
+        const assignBtn = e.target.closest('[data-action="assign-to"]');
+        if (assignBtn) {
+            openAssignModal(
+                assignBtn.dataset.plate || '',
+                assignBtn.dataset.make || '',
+                assignBtn.dataset.validUntil || ''
+            );
+        }
+    });
+
+    document.getElementById('dayApptBody').addEventListener('click', (e) => {
+        const cancelBtn = e.target.closest('[data-action="cancel-appt"]');
+        if (cancelBtn) {
+            cancelAppointment(cancelBtn.dataset.id, cancelBtn.dataset.plate || '');
+        }
+    });
 });
 
 window.loadPlanningData = loadPlanningData;
@@ -653,3 +696,4 @@ window.saveAppointment = saveAppointment;
 window.openDayAppointmentsModal = openDayAppointmentsModal;
 window.closeDayAppointmentsModal = closeDayAppointmentsModal;
 window.cancelAppointment = cancelAppointment;
+window.rebuildDayLoadIndex = rebuildDayLoadIndex;

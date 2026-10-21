@@ -13,7 +13,8 @@ const MAILBOX_MAX_FILE_SIZE = 5 * 1024 * 1024;
 const MAILBOX_MAX_ATTACHMENTS = 5;
 
 const MAILBOX_RECIPIENTS = [
-    { value: 'msb', label: 'МСБ (Медико-санитарный батальон)' }
+    { value: 'msb', label: 'МСБ (Медико-санитарный батальон)' },
+	{ value: 'vp',  label: 'Военная комендатура Нижегородской области' }
 ];
 
 // Отдельный клиент — не пересекается с основным supabaseClient

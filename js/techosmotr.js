@@ -429,23 +429,13 @@ document.addEventListener('DOMContentLoaded', function () {
 
     initTechItems();
 
-    const inputs = document.querySelectorAll('#tab-tech .eis-input, .eis-input');
-    inputs.forEach(input => {
-        input.addEventListener('input', generateTech);
-        input.addEventListener('change', generateTech);
-    });
-
-    document.querySelectorAll('input[type="radio"]').forEach(radio => {
-        if (radio.name === 'techCheckType' || radio.name === 'techConclusion') {
-            radio.addEventListener('change', generateTech);
-        }
-    });
-
     setTimeout(generateTech, 200);
 });
 
 // ========== ЭКСПОРТ ==========
-window.generateTech = generateTech;
+const __generateTechNow = generateTech;
+window.generateTech = debounce(generateTech, 250);
+window.generateTechNow = __generateTechNow;
 window.saveTech = saveTech;
 window.setTechItem = setTechItem;
 window.setAllTechItems = setAllTechItems;

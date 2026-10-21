@@ -573,7 +573,6 @@ async function saveProtocolBoth() {
 }
 
 async function saveProtocolToDB() {
-    // ★ Блокируем запись в БД для курсантов
     if (blockWrite('сохранять протоколы в базу')) return;
 
     const btn = document.getElementById('protocolSaveToDbBtn');
@@ -601,6 +600,7 @@ async function saveProtocolToDB() {
     if (btn) { btn.disabled = true; btn.textContent = 'Сохранение...'; }
 
     const uploadedFiles = [];
+    let savedId = null;
 
     try {
         const wasActive = {};
@@ -674,6 +674,7 @@ async function saveProtocolToDB() {
             consideration_place_time: getFieldValue('protocolConsiderationPlaceTime') || null,
             explanation: getFieldValue('protocolExplanation') || null,
             remarks: getFieldValue('protocolRemarks') || null,
+            status: 'active',
             photo_url: url1,
             photos: { page1: [url1], page2: [url2] },
             created_by: window.currentUser?.id || null
@@ -684,11 +685,20 @@ async function saveProtocolToDB() {
 
         if (error) throw new Error(error.message);
 
+        savedId = data.id;
+
         await logCreate('protocol_create', 'protocols', data.id, data,
             `Создал протокол ${regNumber} на ${lastName} ${firstName} (${payload.article_part ? 'ч. ' + payload.article_part + ' ' : ''}ст. ${payload.article_number})`);
 
-        showToast(`Протокол ${regNumber} сохранён в базе ЕИС`, 'success');
+        // Запоминаем id для последующего сохранения постановления
+        window._savedProtocolId = data.id;
+        try { sessionStorage.setItem('saved_protocol_id', data.id); } catch (e) { }
 
+        if (typeof updateResolutionAttachHint === 'function') {
+            updateResolutionAttachHint();
+        }
+
+        showToast(`Протокол ${regNumber} сохранён в базе ЕИС`, 'success');
     } catch (e) {
         console.error('[protocol-save]', e);
         if (uploadedFiles.length > 0) {
@@ -697,6 +707,25 @@ async function saveProtocolToDB() {
         showToast('Ошибка: ' + e.message, 'error');
     } finally {
         if (btn) { btn.disabled = false; btn.textContent = origText; }
+    }
+
+    // После finally — если сохранилось, предложить заполнить постановление
+    if (savedId) {
+        const fillRes = await showConfirm({
+            title: 'Заполнить постановление?',
+            message: 'Протокол сохранён. Заполнить постановление по этому делу на основе данных протокола?',
+            confirmText: 'Заполнить',
+            type: 'default'
+        });
+
+        if (fillRes) {
+            switchProtocolTab('resolution');
+            setTimeout(() => {
+                if (typeof autoFillResolutionFromProtocol === 'function') {
+                    autoFillResolutionFromProtocol();
+                }
+            }, 150);
+        }
     }
 }
 
@@ -741,18 +770,10 @@ function extractProtocolFileName(url) {
 
 document.addEventListener('DOMContentLoaded', function () {
     if (!document.getElementById('protocolCanvas1')) return;
-
-    const inputs = document.querySelectorAll('.eis-input');
-    inputs.forEach(input => {
-        input.addEventListener('input', generateProtocol);
-        input.addEventListener('change', generateProtocol);
-    });
-
-    const radios = document.querySelectorAll('input[type="radio"]');
-    radios.forEach(radio => {
-        if (radio.name === 'protocolRussianLanguage') radio.addEventListener('change', generateProtocol);
-    });
-
+    try {
+        const saved = sessionStorage.getItem('saved_protocol_id');
+        if (saved) window._savedProtocolId = saved;
+    } catch (e) { }
     setTimeout(generateProtocol, 300);
 });
 
@@ -804,7 +825,49 @@ function incrementRegNumber(regNumber) {
     return prefix + next + suffix;
 }
 
-window.generateProtocol = generateProtocol;
+function switchProtocolTab(tab) {
+    document.querySelectorAll('.eis-tab').forEach(t => {
+        t.classList.toggle('active', t.dataset.tab === tab);
+    });
+    document.querySelectorAll('.eis-tab-content').forEach(c => {
+        c.classList.toggle('active', c.id === 'tab-' + tab);
+    });
+
+    if (tab === 'resolution' && typeof generateResolution === 'function') {
+        setTimeout(generateResolution, 80);
+        if (typeof updateResolutionAttachHint === 'function') {
+            updateResolutionAttachHint();
+        }
+    }
+}
+window.switchProtocolTab = switchProtocolTab;
+
+function resetProtocolForm() {
+    if (!confirm('Очистить все поля протокола и отвязать постановление? Несохранённые данные будут потеряны.')) return;
+
+    document.querySelectorAll('#tab-protocol input, #tab-protocol textarea, #tab-protocol select').forEach(el => {
+        if (el.type === 'radio' || el.type === 'checkbox') el.checked = false;
+        else if (el.type !== 'file') el.value = '';
+    });
+
+    // Сбросить подписи протокола
+    if (typeof signatureData !== 'undefined') {
+        ['official', 'violator', 'witness', 'victim'].forEach(t => {
+            if (signatureData[t]) resetSignature(t);
+        });
+    }
+
+    window._savedProtocolId = null;
+    try { sessionStorage.removeItem('saved_protocol_id'); } catch (e) { }
+
+    generateProtocolNow();
+    showToast('Форма протокола очищена', 'info');
+}
+window.resetProtocolForm = resetProtocolForm;
+
+const __generateProtocolNow = generateProtocol;
+window.generateProtocol = debounce(generateProtocol, 250);
+window.generateProtocolNow = __generateProtocolNow;
 window.saveProtocolPage1 = saveProtocolPage1;
 window.saveProtocolPage2 = saveProtocolPage2;
 window.saveProtocolBoth = saveProtocolBoth;

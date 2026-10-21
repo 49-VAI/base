@@ -349,7 +349,10 @@
                     <h3 id="fdTitle" style="margin:0">Протокол</h3>
                     <div id="fdRegNumber" style="font-size:13px; color:#888; margin-top:4px;"></div>
                 </div>
-                <span class="eis-modal-form-close" onclick="closeFineDetail()">×</span>
+                <div style="display:flex; align-items:center; gap:12px;">
+                    <div id="fdStatusBadge"></div>
+                    <span class="eis-modal-form-close" onclick="closeFineDetail()">×</span>
+                </div>
             </div>
             <div class="eis-modal-form-body">
                 <div class="eis-tech-detail-layout">
@@ -360,12 +363,18 @@
                 </div>
             </div>
             <div class="eis-modal-form-footer eis-modal-form-footer-split">
-                <button type="button" class="eis-btn eis-btn-danger" id="fdDeleteBtn" data-readonly-hide>
-                    Удалить
-                </button>
+                <div style="display:flex; gap:8px;">
+                    <button type="button" class="eis-btn eis-btn-danger" id="fdDeleteBtn" data-readonly-hide>
+                        Удалить
+                    </button>
+                    <button type="button" class="eis-btn eis-btn-secondary" id="fdStatusBtn"
+                            style="display:none;" onclick="toggleFineStatus()">
+                        Изменить статус
+                    </button>
+                </div>
                 <div class="eis-modal-form-footer-right">
                     <button type="button" class="eis-btn eis-btn-secondary" onclick="closeFineDetail()">Закрыть</button>
-                    <button type="button" class="eis-btn eis-btn-secondary" id="fdDownloadBtn">Скачать оба листа</button>
+                    <button type="button" class="eis-btn eis-btn-secondary" id="fdDownloadBtn">Скачать все листы</button>
                     <button type="button" class="eis-btn eis-btn-primary" id="fdEditBtn" data-readonly-hide>Редактировать</button>
                 </div>
             </div>
