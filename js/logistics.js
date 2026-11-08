@@ -1,4 +1,4 @@
-﻿// ================================================================
+// ================================================================
 // КЛИЕНТ КОМАНДОВАНИЯ ВТО — только просмотр базы ВУ
 // ================================================================
 
@@ -18,6 +18,17 @@ function escapeHtmlLog(str) {
     if (str === null || str === undefined) return '';
     return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;')
         .replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+}
+
+function shortNameLog(fullName) {
+    if (!fullName) return '';
+    const parts = String(fullName).trim().split(/\s+/);
+    if (parts.length === 0) return '';
+    const lastName = parts[0];
+    const initials = [];
+    if (parts[1]) initials.push(parts[1][0].toUpperCase() + '.');
+    if (parts[2]) initials.push(parts[2][0].toUpperCase() + '.');
+    return initials.length > 0 ? `${lastName} ${initials.join('')}` : lastName;
 }
 
 function formatDateLog(str) {
@@ -90,7 +101,10 @@ function showAccessDenied(profile) {
     const userBlock = document.getElementById('userBlock');
     userBlock.style.display = '';
     document.getElementById('userRole').textContent = profile.position || 'Пользователь';
-    document.getElementById('userName').textContent = profile.full_name || profile.username;
+	document.getElementById('userName').textContent = [
+		profile.rank,
+		shortNameLog(profile.full_name)
+	].filter(Boolean).join(' ') || profile.username || '—';
 
     document.getElementById('deniedMessage').textContent =
         `Учётная запись «${profile.username}» не имеет доступа к базе ВУ для командования ВТО.`;
@@ -102,10 +116,19 @@ async function showDatabase() {
     document.getElementById('dbBlock').style.display = '';
 
     document.getElementById('userBlock').style.display = '';
-    document.getElementById('userRole').textContent =
-        LOGISTICS_ROLE_LABELS[logisticsProfile.role] || 'Пользователь';
-    document.getElementById('userName').textContent =
-        [logisticsProfile.rank, logisticsProfile.full_name].filter(Boolean).join(' ');
+
+    // ★ Должность (с фолбэком на название роли, если должность не указана)
+    const positionText = logisticsProfile.position
+        || LOGISTICS_ROLE_LABELS[logisticsProfile.role]
+        || 'Пользователь';
+    document.getElementById('userRole').textContent = positionText;
+
+    // ★ Звание + Фамилия И.О.
+    const nameText = [
+        logisticsProfile.rank,
+        shortNameLog(logisticsProfile.full_name)
+    ].filter(Boolean).join(' ');
+    document.getElementById('userName').textContent = nameText || logisticsProfile.username || '—';
 
     await loadVUData();
 }
