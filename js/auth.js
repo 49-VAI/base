@@ -91,7 +91,7 @@ function humanValue(key, value) {
     }
     if (key === 'role') {
         const map = {
-            cadet: 'Курсант', inspector_odps: 'Инспектор ОДПС', inspector_reo: 'Инспектор РЭО',
+            cadet: 'Курсант', logistics_commander: 'ВТО', inspector_odps: 'Инспектор ОДПС', inspector_reo: 'Инспектор РЭО',
             chief_odps: 'Начальник ОДПС', chief_reo: 'Начальник РЭО',
             chief_cuipp: 'Начальник ЦУиПП', chief_vai: 'Начальник ВАИ'
         };

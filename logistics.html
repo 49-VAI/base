@@ -1,0 +1,191 @@
+﻿<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>База ВУ — Командование ВТО</title>
+    <link rel="icon" type="image/png" href="images/favicon.png">
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <div class="eis-wrapper">
+        <header class="eis-header">
+            <div class="eis-container">
+                <div class="eis-header-left">
+                    <div class="eis-logo">
+                        <img src="images/gerb.png" alt="Герб" class="eis-logo-img">
+                    </div>
+                    <div class="eis-org-info">
+                        <div class="eis-org-title">База военных удостоверений</div>
+                        <div class="eis-org-sub">Командование взвода ВТО</div>
+                    </div>
+                </div>
+                <div class="eis-header-right" id="userBlock" style="display:none;">
+                    <div class="eis-user-info">
+                        <span class="eis-user-role" id="userRole">—</span>
+                        <span class="eis-user-name" id="userName">—</span>
+                    </div>
+                    <div class="eis-header-divider"></div>
+                    <button class="eis-logout-btn" onclick="doLogout()" title="Выход">
+                        <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor">
+                            <path d="M17 7l-1.41 1.41L18.17 11H8v2h10.17l-2.58 2.58L17 17l5-5zM4 5h8V3H4c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h8v-2H4V5z" />
+                        </svg>
+                    </button>
+                </div>
+            </div>
+        </header>
+
+        <main class="eis-main">
+            <div class="eis-container">
+
+                <!-- Вход -->
+                <div id="loginBlock" style="display:none;">
+                    <div style="padding:60px 20px;">
+                        <div class="eis-auth-card" style="margin:0 auto;max-width:420px;">
+                            <div class="eis-auth-header">
+                                <img src="images/gerb.png" alt="Герб" class="eis-auth-logo">
+                                <h1 class="eis-auth-title">Командование ВТО</h1>
+                                <p class="eis-auth-subtitle">База военных удостоверений</p>
+                            </div>
+                            <form id="loginForm" class="eis-auth-form">
+                                <div class="eis-form-group">
+                                    <label class="eis-form-label">Логин</label>
+                                    <input type="text" class="eis-input" id="loginUsername" required autocomplete="username">
+                                </div>
+                                <div class="eis-form-group">
+                                    <label class="eis-form-label">Пароль</label>
+                                    <input type="password" class="eis-input" id="loginPassword" required autocomplete="current-password">
+                                </div>
+                                <div class="eis-auth-error" id="loginError"></div>
+                                <button type="submit" class="eis-btn eis-btn-primary eis-btn-block" id="loginBtn">Войти</button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Отказ в доступе -->
+                <div id="accessDeniedBlock" style="display:none;">
+                    <div class="eis-panel" style="max-width:560px;margin:60px auto;">
+                        <div class="eis-panel-body" style="text-align:center;padding:40px 24px;">
+                            <div style="font-size:48px;margin-bottom:16px;">🔒</div>
+                            <h2 style="margin-bottom:12px;">Доступ запрещён</h2>
+                            <p style="color:#666;margin-bottom:20px;" id="deniedMessage">
+                                У вашей учётной записи нет доступа к этому разделу.
+                            </p>
+                            <button class="eis-btn eis-btn-secondary" onclick="doLogout()">Выйти</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- База ВУ -->
+                <div id="dbBlock" style="display:none;">
+                    <div class="eis-page-header">
+                        <h1 class="eis-page-title">База военных удостоверений</h1>
+                        <div class="eis-page-subtitle">Контроль сроков действия ВУ личного состава</div>
+                    </div>
+
+                    <div class="eis-panel">
+                        <div class="eis-panel-header"><span class="eis-panel-title">Сводка</span></div>
+                        <div class="eis-panel-body">
+                            <div class="eis-admin-stats">
+                                <div class="eis-stat-card" style="cursor:pointer;" onclick="setStatusFilter('all')">
+                                    <div class="eis-stat-value" id="statTotal">—</div>
+                                    <div class="eis-stat-label">Всего</div>
+                                </div>
+                                <div class="eis-stat-card" style="cursor:pointer;border-left-color:#28a745" onclick="setStatusFilter('valid')">
+                                    <div class="eis-stat-value" id="statValid" style="color:#28a745">—</div>
+                                    <div class="eis-stat-label">Действительно</div>
+                                </div>
+                                <div class="eis-stat-card" style="cursor:pointer;border-left-color:#ffc107" onclick="setStatusFilter('expiring')">
+                                    <div class="eis-stat-value" id="statExpiring" style="color:#f57c00">—</div>
+                                    <div class="eis-stat-label">Истекает (≤7 дн.)</div>
+                                </div>
+                                <div class="eis-stat-card" style="cursor:pointer;border-left-color:#dc3545" onclick="setStatusFilter('expired')">
+                                    <div class="eis-stat-value" id="statExpired" style="color:#c62828">—</div>
+                                    <div class="eis-stat-label">Просрочено</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="eis-panel">
+                        <div class="eis-panel-header"><span class="eis-panel-title">Поиск и фильтры</span></div>
+                        <div class="eis-panel-body">
+                            <div class="eis-form-row">
+                                <div class="eis-form-group">
+                                    <label class="eis-form-label">Поиск (ФИО, номер ВУ)</label>
+                                    <input type="text" class="eis-input" id="searchInput"
+                                           placeholder="Фамилия, имя или номер ВУ">
+                                </div>
+                                <div class="eis-form-group">
+                                    <label class="eis-form-label">Статус</label>
+                                    <select class="eis-select" id="statusFilter">
+                                        <option value="all">Все</option>
+                                        <option value="valid">Действительно</option>
+                                        <option value="expiring">Истекает</option>
+                                        <option value="expired">Просрочено</option>
+                                    </select>
+                                </div>
+                                <div class="eis-form-group">
+                                    <label class="eis-form-label">Сортировка</label>
+                                    <select class="eis-select" id="sortSelect">
+                                        <option value="expiry-asc">По сроку (сначала истекающие)</option>
+                                        <option value="expiry-desc">По сроку (сначала свежие)</option>
+                                        <option value="fio-asc">По ФИО</option>
+                                        <option value="issue-desc">По дате выдачи</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="eis-panel">
+                        <div class="eis-panel-header">
+                            <span class="eis-panel-title">Военные удостоверения</span>
+                            <span class="eis-badge" id="resultsCount">ЗАПИСЕЙ: 0</span>
+                        </div>
+                        <div class="eis-panel-body" id="resultsContainer" style="padding:0;">
+                            <div class="eis-loading"><div class="eis-spinner"></div><span>Загрузка...</span></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+
+        <footer class="eis-footer">
+            <div class="eis-container">
+                <div class="eis-footer-top">
+                    <div class="eis-footer-logo">
+                        <img src="images/gerb.png" alt="Герб" class="eis-footer-logo-img">
+                    </div>
+                    <div class="eis-footer-org">
+                        <div class="eis-footer-org-title">Единая информационная система</div>
+                        <div class="eis-footer-org-sub">66-ой территориальной ВАИ</div>
+                    </div>
+                </div>
+                <div class="eis-footer-bottom">
+                    <div class="eis-footer-disclaimer">
+                        Данный сайт создан исключительно для использования в качестве атрибута
+                        ролевой игры <strong>GreenTech Role Play</strong> и не является официальным
+                        сайтом Министерства обороны РФ. Все материалы носят вымышленный характер.
+                    </div>
+                    <div class="eis-footer-copy">© 2026 Aleksandr_Kravchenko</div>
+                </div>
+            </div>
+        </footer>
+    </div>
+
+    <div class="eis-modal" id="photoModal" onclick="if(event.target===this)closePhoto()">
+        <span class="eis-modal-close" onclick="closePhoto()">×</span>
+        <div class="eis-modal-content">
+            <img id="photoImg" src="" alt="ВУ"
+                 style="max-width:90%;max-height:80vh;object-fit:contain;">
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="js/toast.js"></script>
+    <script src="js/supabase.js"></script>
+    <script src="js/logistics.js"></script>
+</body>
+</html>

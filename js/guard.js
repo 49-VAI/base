@@ -34,6 +34,7 @@ function hideReadOnlyUi() {
 
 const ROLE_LABELS = {
     'cadet': 'Курсант',
+    'logistics_commander': 'ВТО', 
     'inspector_odps': 'Инспектор ОДПС',
     'inspector_reo': 'Инспектор РЭО',
     'chief_odps': 'Начальник ОДПС',
@@ -179,6 +180,11 @@ async function initGuard() {
     if (!profile) {
         await supabaseClient.auth.signOut();
         window.location.href = 'login.html';
+        return null;
+    }
+
+    if (profile.role === 'logistics_commander') {
+        window.location.href = 'logistics.html';
         return null;
     }
 
