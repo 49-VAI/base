@@ -575,7 +575,7 @@ async function loadArchiveRequests() {
     const countEl = document.getElementById('archiveRequestsCount');
     if (!panel || !list) return;
 
-    const canReview = ['chief_odps', 'chief_reo', 'chief_cuipp', 'chief_vai']
+    const canReview = ['inspector_reo', 'chief_odps', 'chief_reo', 'chief_cuipp', 'chief_vai']
         .includes(window.currentProfile?.role);
     if (!canReview) { panel.style.display = 'none'; return; }
 
