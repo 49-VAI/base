@@ -9,6 +9,8 @@ let vuActiveFilters = {};       // фильтры активного поиск�
 
 const VU_PAGE_SIZE = 15;
 
+let archiveRequestsPending = [];
+
 // ================================================================
 // СЕРВЕРНЫЙ ПОИСК ВУ (см. шаг 16.1)
 // ================================================================
@@ -515,6 +517,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
     document.addEventListener('user-ready', () => {
         loadVUFromSupabase();
+        loadArchiveRequests();
     }, { once: true });
 
     // ★ Debounce на ввод в фильтры — 300 мс
@@ -550,10 +553,169 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     });
 
+    document.getElementById('archiveRequestsList').addEventListener('click', (e) => {
+        const approve = e.target.closest('[data-action="archive-approve"]');
+        if (approve) { approveArchiveRequest(approve.dataset.id); return; }
+        const reject = e.target.closest('[data-action="archive-reject"]');
+        if (reject) { rejectArchiveRequest(reject.dataset.id); }
+    });
+
     document.addEventListener('keydown', (e) => {
         if (e.key === 'Escape') closeEditVUModal();
     });
 });
+
+// ================================================================
+// ЗАПРОСЫ НА АРХИВИРОВАНИЕ ВУ (от ВТО)
+// ================================================================
+
+async function loadArchiveRequests() {
+    const panel = document.getElementById('archiveRequestsPanel');
+    const list = document.getElementById('archiveRequestsList');
+    const countEl = document.getElementById('archiveRequestsCount');
+    if (!panel || !list) return;
+
+    const canReview = ['chief_odps', 'chief_reo', 'chief_cuipp', 'chief_vai']
+        .includes(window.currentProfile?.role);
+    if (!canReview) { panel.style.display = 'none'; return; }
+
+    try {
+        const { data, error } = await supabaseClient
+            .from('archive_requests')
+            .select('*')
+            .eq('status', 'pending')
+            .order('created_at', { ascending: false });
+
+        if (error) throw new Error(error.message);
+        archiveRequestsPending = data || [];
+    } catch (e) {
+        console.warn('[archive requests]', e);
+        panel.style.display = 'none';
+        return;
+    }
+
+    if (archiveRequestsPending.length === 0) {
+        panel.style.display = 'none';
+        return;
+    }
+
+    panel.style.display = '';
+    if (countEl) countEl.textContent = `ЗАПРОСОВ: ${archiveRequestsPending.length}`;
+
+    let html = '<div class="eis-admin-table-wrap"><table class="eis-admin-table"><thead><tr>';
+    html += '<th>Дата</th><th>№ ВУ</th><th>ФИО</th><th>Запросил</th><th>Действия</th>';
+    html += '</tr></thead><tbody>';
+
+    archiveRequestsPending.forEach(r => {
+        const date = r.created_at
+            ? new Date(r.created_at).toLocaleString('ru-RU', {
+                day: '2-digit', month: '2-digit', year: '2-digit',
+                hour: '2-digit', minute: '2-digit'
+            })
+            : '—';
+
+        html += `<tr>
+            <td data-label="Дата">${date}</td>
+            <td data-label="№ ВУ"><strong>${escapeHtml(r.vu_number || '—')}</strong></td>
+            <td data-label="ФИО">${escapeHtml(r.fio || '—')}</td>
+            <td data-label="Запросил">${escapeHtml(r.requested_by_name || '—')}</td>
+            <td>
+                <div class="eis-admin-actions">
+                    <button class="eis-btn eis-btn-sm eis-btn-success"
+                            data-action="archive-approve" data-id="${r.id}">✓ Одобрить</button>
+                    <button class="eis-btn eis-btn-sm eis-btn-danger"
+                            data-action="archive-reject" data-id="${r.id}">✕ Отклонить</button>
+                </div>
+            </td>
+        </tr>`;
+    });
+
+    html += '</tbody></table></div>';
+    list.innerHTML = html;
+}
+
+async function approveArchiveRequest(requestId) {
+    if (blockWrite('одобрять запросы на архив')) return;
+
+    const req = archiveRequestsPending.find(r => r.id === requestId);
+    if (!req) return;
+
+    const ok = await showConfirm({
+        title: 'Одобрить архивирование',
+        message: `Перенести ВУ ${req.vu_number || ''} (${req.fio || 'без ФИО'}) в архив?`,
+        confirmText: 'В архив', type: 'default'
+    });
+    if (!ok) return;
+
+    try {
+        const { error: vuErr } = await supabaseClient
+            .from('military_ids')
+            .update({ status: 'archived', updated_at: new Date().toISOString() })
+            .eq('id', req.vu_id);
+        if (vuErr) throw new Error(vuErr.message);
+
+        const { error: reqErr } = await supabaseClient
+            .from('archive_requests')
+            .update({
+                status: 'approved',
+                reviewed_by: window.currentUser?.id || null,
+                reviewed_by_name: window.currentProfile?.full_name || '',
+                reviewed_at: new Date().toISOString()
+            })
+            .eq('id', requestId);
+        if (reqErr) throw new Error(reqErr.message);
+
+        await logAction('vu_archive_approved', 'military_ids', req.vu_id, {
+            kind: 'update',
+            summary: `Одобрил архивирование ВУ ${req.vu_number || ''} (${req.fio || ''})`,
+            changes: [{ field: 'status', from: 'active', to: 'archived' }],
+            changed_count: 1
+        });
+
+        showToast(`ВУ ${req.vu_number || ''} перенесён в архив`, 'success');
+        await loadArchiveRequests();
+        await runVUSearch();
+    } catch (e) {
+        showToast('Ошибка: ' + e.message, 'error');
+    }
+}
+
+async function rejectArchiveRequest(requestId) {
+    if (blockWrite('отклонять запросы на архив')) return;
+
+    const req = archiveRequestsPending.find(r => r.id === requestId);
+    if (!req) return;
+
+    const ok = await showConfirm({
+        title: 'Отклонить запрос',
+        message: `Отклонить запрос на архивирование ВУ ${req.vu_number || ''} (${req.fio || ''})?`,
+        confirmText: 'Отклонить', type: 'danger'
+    });
+    if (!ok) return;
+
+    try {
+        const { error } = await supabaseClient
+            .from('archive_requests')
+            .update({
+                status: 'rejected',
+                reviewed_by: window.currentUser?.id || null,
+                reviewed_by_name: window.currentProfile?.full_name || '',
+                reviewed_at: new Date().toISOString()
+            })
+            .eq('id', requestId);
+        if (error) throw new Error(error.message);
+
+        await logAction('vu_archive_rejected', 'military_ids', req.vu_id, {
+            kind: 'update',
+            summary: `Отклонил архивирование ВУ ${req.vu_number || ''} (${req.fio || ''})`
+        });
+
+        showToast('Запрос отклонён', 'info');
+        await loadArchiveRequests();
+    } catch (e) {
+        showToast('Ошибка: ' + e.message, 'error');
+    }
+}
 
 window.loadVUFromSupabase = loadVUFromSupabase;
 window.runVUSearch = runVUSearch;
@@ -564,4 +726,7 @@ window.openEditVUModal = openEditVUModal;
 window.closeEditVUModal = closeEditVUModal;
 window.saveEditVU = saveEditVU;
 window.toggleArchiveVU = toggleArchiveVU;
+window.loadArchiveRequests = loadArchiveRequests;
+window.approveArchiveRequest = approveArchiveRequest;
+window.rejectArchiveRequest = rejectArchiveRequest;
 window.deleteVU = deleteVU;

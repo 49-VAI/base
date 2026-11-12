@@ -1,8 +1,8 @@
-const LAYOUT_VERSION = '3';
+п»їconst LAYOUT_VERSION = '3';
 
 async function loadPartial(url) {
     const res = await fetch(`${url}?v=${LAYOUT_VERSION}`);
-    if (!res.ok) throw new Error(`Не удалось загрузить ${url}`);
+    if (!res.ok) throw new Error(`РќРµ СѓРґР°Р»РѕСЃСЊ Р·Р°РіСЂСѓР·РёС‚СЊ ${url}`);
     const buffer = await res.arrayBuffer();
     return new TextDecoder('utf-8').decode(buffer);
 }
@@ -14,7 +14,7 @@ function highlightActiveNav() {
     });
 }
 
-// ? Каждый partial вставляется СРАЗУ как только пришёл — не ждём остальные
+// ? РљР°Р¶РґС‹Р№ partial РІСЃС‚Р°РІР»СЏРµС‚СЃСЏ РЎР РђР—РЈ РєР°Рє С‚РѕР»СЊРєРѕ РїСЂРёС€С‘Р» вЂ” РЅРµ Р¶РґС‘Рј РѕСЃС‚Р°Р»СЊРЅС‹Рµ
 async function injectLayout() {
     const headerMount = document.getElementById('site-header');
     const navMount = document.getElementById('site-nav');
@@ -42,8 +42,8 @@ async function injectLayout() {
     document.dispatchEvent(new Event('layout-ready'));
 }
 
-// ? Скрипт стоит в конце <body> — точки монтирования уже в DOM.
-// Стартуем немедленно, не ждём DOMContentLoaded.
+// ? РЎРєСЂРёРїС‚ СЃС‚РѕРёС‚ РІ РєРѕРЅС†Рµ <body> вЂ” С‚РѕС‡РєРё РјРѕРЅС‚РёСЂРѕРІР°РЅРёСЏ СѓР¶Рµ РІ DOM.
+// РЎС‚Р°СЂС‚СѓРµРј РЅРµРјРµРґР»РµРЅРЅРѕ, РЅРµ Р¶РґС‘Рј DOMContentLoaded.
 if (document.getElementById('site-header')
     || document.getElementById('site-nav')
     || document.getElementById('site-footer')) {
@@ -55,8 +55,8 @@ if (document.getElementById('site-header')
 }
 
 // -----------------------------------------------------------------
-// Бейдж почты — обновляем ТОЛЬКО когда готов и layout, и user.
-// Не блокирует ни навигацию, ни что-либо ещё.
+// Р‘РµР№РґР¶ РїРѕС‡С‚С‹ вЂ” РѕР±РЅРѕРІР»СЏРµРј РўРћР›Р¬РљРћ РєРѕРіРґР° РіРѕС‚РѕРІ Рё layout, Рё user.
+// РќРµ Р±Р»РѕРєРёСЂСѓРµС‚ РЅРё РЅР°РІРёРіР°С†РёСЋ, РЅРё С‡С‚Рѕ-Р»РёР±Рѕ РµС‰С‘.
 // -----------------------------------------------------------------
 let __layoutReady = false;
 let __userReady = false;
@@ -83,5 +83,65 @@ document.addEventListener('user-ready', () => {
     __tryUpdateMailBadge();
 }, { once: true });
 
+// ================================================================
+// РџР РћРљР РЈРўРљРђ РќРђР’РР“РђР¦РР: РєРѕР»РµСЃРѕ РјС‹С€Рё + drag Р›РљРњ, Р±РµР· СЃРєСЂРѕР»Р»Р±Р°СЂР°
+// ================================================================
+function setupNavScroll() {
+    const menu = document.querySelector('.eis-nav-menu');
+    if (!menu || menu.dataset.navScrollSetup) return;
+    menu.dataset.navScrollSetup = '1';
+
+    // РљРѕР»РµСЃРѕ РјС‹С€Рё в†’ РіРѕСЂРёР·РѕРЅС‚Р°Р»СЊРЅС‹Р№ СЃРєСЂРѕР»Р»
+    menu.addEventListener('wheel', (e) => {
+        if (menu.scrollWidth <= menu.clientWidth) return;
+        if (Math.abs(e.deltaY) < Math.abs(e.deltaX)) return;
+        e.preventDefault();
+        menu.scrollLeft += e.deltaY;
+    }, { passive: false });
+
+    // Drag-scroll Р›РљРњ
+    let isDown = false;
+    let startX = 0;
+    let startScroll = 0;
+    let moved = false;
+
+    menu.addEventListener('mousedown', (e) => {
+        if (e.button !== 0) return;
+        if (menu.scrollWidth <= menu.clientWidth) return;
+        isDown = true;
+        moved = false;
+        startX = e.clientX;
+        startScroll = menu.scrollLeft;
+    });
+
+    window.addEventListener('mousemove', (e) => {
+        if (!isDown) return;
+        const dx = e.clientX - startX;
+        if (!moved && Math.abs(dx) > 5) {
+            moved = true;
+            menu.classList.add('is-dragging');
+        }
+        if (moved) {
+            e.preventDefault();
+            menu.scrollLeft = startScroll - dx;
+        }
+    });
+
+    window.addEventListener('mouseup', () => {
+        if (!isDown) return;
+        isDown = false;
+        menu.classList.remove('is-dragging');
+        setTimeout(() => { moved = false; }, 60);
+    });
+
+    menu.addEventListener('click', (e) => {
+        if (moved) { e.preventDefault(); e.stopPropagation(); }
+    }, true);
+}
+
+document.addEventListener('layout-ready', setupNavScroll);
+if (document.querySelector('.eis-nav-menu')) setupNavScroll();
+
 window.injectLayout = injectLayout;
 window.highlightActiveNav = highlightActiveNav;
+

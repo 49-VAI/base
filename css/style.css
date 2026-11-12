@@ -2877,9 +2877,9 @@ textarea {
     gap: 14px;
 }
 
-.eis-fine-photos.single {
-    grid-template-columns: 1fr;
-}
+    .eis-fine-photos.single {
+        grid-template-columns: 1fr;
+    }
 
 .eis-fine-photo {
     position: relative;
@@ -3035,29 +3035,29 @@ textarea {
     overflow-y: auto;
 }
 
-.eis-circumstances-grid .eis-radio {
-    display: flex;
-    align-items: flex-start;
-    padding: 6px 10px;
-    font-size: 13px;
-    line-height: 1.3;
-    gap: 8px;
-    cursor: pointer;
-}
+    .eis-circumstances-grid .eis-radio {
+        display: flex;
+        align-items: flex-start;
+        padding: 6px 10px;
+        font-size: 13px;
+        line-height: 1.3;
+        gap: 8px;
+        cursor: pointer;
+    }
 
-.eis-circumstances-grid .eis-radio input[type="checkbox"] {
-    width: 16px;
-    height: 16px;
-    margin-top: 2px;
-    flex-shrink: 0;
-    accent-color: var(--eis-accent);
-}
+        .eis-circumstances-grid .eis-radio input[type="checkbox"] {
+            width: 16px;
+            height: 16px;
+            margin-top: 2px;
+            flex-shrink: 0;
+            accent-color: var(--eis-accent);
+        }
 
-.eis-circumstances-grid .eis-radio:has(input:checked) {
-    background: var(--eis-accent-light);
-    color: var(--eis-accent);
-    font-weight: 600;
-}
+        .eis-circumstances-grid .eis-radio:has(input:checked) {
+            background: var(--eis-accent-light);
+            color: var(--eis-accent);
+            font-weight: 600;
+        }
 
 /* Обёртка для пункта обстоятельств */
 .eis-circumstance-item {
@@ -3145,7 +3145,7 @@ textarea {
         cursor: not-allowed;
     }
 
-    /* ================================================================
+/* ================================================================
    СОСТАВ ПОДРАЗДЕЛЕНИЯ — ЕИС ВАИ v2
    ================================================================ */
 
@@ -3153,7 +3153,10 @@ textarea {
 .eis-staff-dept {
     margin-bottom: 28px;
 }
-.eis-staff-dept:last-child { margin-bottom: 0; }
+
+    .eis-staff-dept:last-child {
+        margin-bottom: 0;
+    }
 
 .eis-staff-dept-head {
     display: flex;
@@ -3212,16 +3215,16 @@ textarea {
     overflow: hidden;
 }
 
-.eis-staff-row:hover {
-    border-color: #c8d3cc;
-    box-shadow: 0 4px 16px rgba(20, 40, 25, 0.06);
-}
+    .eis-staff-row:hover {
+        border-color: #c8d3cc;
+        box-shadow: 0 4px 16px rgba(20, 40, 25, 0.06);
+    }
 
-.eis-staff-row.is-me {
-    border-color: #2e7d32;
-    background: #fbfdfb;
-    box-shadow: 0 0 0 3px rgba(46, 125, 50, 0.06);
-}
+    .eis-staff-row.is-me {
+        border-color: #2e7d32;
+        background: #fbfdfb;
+        box-shadow: 0 0 0 3px rgba(46, 125, 50, 0.06);
+    }
 
 .eis-staff-row-bar {
     align-self: stretch;
@@ -3246,7 +3249,9 @@ textarea {
 }
 
 /* Инфо */
-.eis-staff-row-info { min-width: 0; }
+.eis-staff-row-info {
+    min-width: 0;
+}
 
 .eis-staff-row-name {
     font-size: 15px;
@@ -3326,12 +3331,12 @@ textarea {
     max-width: 100%;
 }
 
-.eis-staff-row-callsign.is-empty {
-    background: #f7f8f9;
-    border-color: #e6e9ec;
-    color: #9aa3ac;
-    font-style: italic;
-}
+    .eis-staff-row-callsign.is-empty {
+        background: #f7f8f9;
+        border-color: #e6e9ec;
+        color: #9aa3ac;
+        font-style: italic;
+    }
 
 .eis-staff-row-callsign-label {
     font-size: 9.5px;
@@ -3358,11 +3363,11 @@ textarea {
     gap: 4px;
 }
 
-.eis-staff-row-vehicle.is-empty {
-    font-size: 11.5px;
-    color: #9aa3ac;
-    font-style: italic;
-}
+    .eis-staff-row-vehicle.is-empty {
+        font-size: 11.5px;
+        color: #9aa3ac;
+        font-style: italic;
+    }
 
 .eis-staff-row-vehicle-make {
     font-size: 11px;
@@ -3415,15 +3420,17 @@ textarea {
     align-items: center;
     justify-content: center;
 }
-.eis-staff-move-btn:hover:not(:disabled) {
-    border-color: #2e7d32;
-    color: #2e7d32;
-    background: #f0f7f2;
-}
-.eis-staff-move-btn:disabled {
-    opacity: 0.35;
-    cursor: not-allowed;
-}
+
+    .eis-staff-move-btn:hover:not(:disabled) {
+        border-color: #2e7d32;
+        color: #2e7d32;
+        background: #f0f7f2;
+    }
+
+    .eis-staff-move-btn:disabled {
+        opacity: 0.35;
+        cursor: not-allowed;
+    }
 
 .eis-staff-row-actions-main {
     display: flex;
@@ -3457,7 +3464,10 @@ textarea {
     flex-shrink: 0;
 }
 
-.eis-staff-modal-info { flex: 1; min-width: 0; }
+.eis-staff-modal-info {
+    flex: 1;
+    min-width: 0;
+}
 
 .eis-staff-modal-name {
     font-size: 15px;
@@ -3496,10 +3506,15 @@ textarea {
     justify-content: flex-start;
     min-height: 0;
 }
-.eis-staff-plate-preview .eis-plate-img { max-width: 200px; }
+
+    .eis-staff-plate-preview .eis-plate-img {
+        max-width: 200px;
+    }
 
 /* PDF текущий */
-.eis-staff-pdf-current { margin-bottom: 10px; }
+.eis-staff-pdf-current {
+    margin-bottom: 10px;
+}
 
 .eis-staff-pdf-empty {
     font-size: 12px;
@@ -3523,18 +3538,21 @@ textarea {
     font-size: 13px;
 }
 
-.eis-staff-pdf-current-file.is-saved {
-    background: #eaf4ff;
-    border-color: #b8daff;
-}
+    .eis-staff-pdf-current-file.is-saved {
+        background: #eaf4ff;
+        border-color: #b8daff;
+    }
 
-.eis-staff-pdf-current-file a {
-    color: #0d5aa7;
-    text-decoration: none;
-    font-weight: 600;
-    word-break: break-all;
-}
-.eis-staff-pdf-current-file a:hover { text-decoration: underline; }
+    .eis-staff-pdf-current-file a {
+        color: #0d5aa7;
+        text-decoration: none;
+        font-weight: 600;
+        word-break: break-all;
+    }
+
+        .eis-staff-pdf-current-file a:hover {
+            text-decoration: underline;
+        }
 
 .eis-staff-pdf-remove {
     width: 26px;
@@ -3552,7 +3570,10 @@ textarea {
     flex-shrink: 0;
     transition: background .15s;
 }
-.eis-staff-pdf-remove:hover { background: rgba(220, 53, 69, 0.25); }
+
+    .eis-staff-pdf-remove:hover {
+        background: rgba(220, 53, 69, 0.25);
+    }
 
 .eis-staff-pdf-hint {
     margin-top: 6px;
@@ -3572,7 +3593,9 @@ textarea {
     line-height: 1.5;
 }
 
-.eis-manage-search { margin-bottom: 14px; }
+.eis-manage-search {
+    margin-bottom: 14px;
+}
 
 .eis-manage-list {
     max-height: 55vh;
@@ -3581,7 +3604,9 @@ textarea {
     margin: 0 -4px;
 }
 
-.eis-manage-group { margin-bottom: 14px; }
+.eis-manage-group {
+    margin-bottom: 14px;
+}
 
 .eis-manage-group-title {
     display: flex;
@@ -3615,19 +3640,23 @@ textarea {
     border: 1px solid transparent;
     margin-bottom: 4px;
 }
-.eis-manage-row:hover { background: #f5f7f9; }
-.eis-manage-row.is-checked {
-    background: #f0f7f2;
-    border-color: #d7e8dc;
-}
 
-.eis-manage-row input[type="checkbox"] {
-    width: 18px;
-    height: 18px;
-    accent-color: #2e7d32;
-    cursor: pointer;
-    flex-shrink: 0;
-}
+    .eis-manage-row:hover {
+        background: #f5f7f9;
+    }
+
+    .eis-manage-row.is-checked {
+        background: #f0f7f2;
+        border-color: #d7e8dc;
+    }
+
+    .eis-manage-row input[type="checkbox"] {
+        width: 18px;
+        height: 18px;
+        accent-color: #2e7d32;
+        cursor: pointer;
+        flex-shrink: 0;
+    }
 
 .eis-manage-row-avatar {
     width: 36px;
@@ -3643,7 +3672,10 @@ textarea {
     flex-shrink: 0;
 }
 
-.eis-manage-row-info { min-width: 0; flex: 1; }
+.eis-manage-row-info {
+    min-width: 0;
+    flex: 1;
+}
 
 .eis-manage-row-name {
     font-size: 13px;
@@ -3680,6 +3712,7 @@ textarea {
     border-radius: 8px;
     margin-bottom: 18px;
 }
+
 .eis-profile-avatar {
     width: 58px;
     height: 58px;
@@ -3693,17 +3726,24 @@ textarea {
     font-weight: 700;
     flex-shrink: 0;
 }
-.eis-profile-identity-info { flex: 1; min-width: 0; }
+
+.eis-profile-identity-info {
+    flex: 1;
+    min-width: 0;
+}
+
 .eis-profile-name {
     font-size: 15px;
     font-weight: 700;
     color: #16211a;
     margin-bottom: 2px;
 }
+
 .eis-profile-role {
     font-size: 12px;
     color: #6b7280;
 }
+
 .eis-profile-epaulette {
     width: 44px;
     height: 82px;
@@ -3712,7 +3752,10 @@ textarea {
     justify-content: center;
     flex-shrink: 0;
 }
-.eis-profile-epaulette .eis-epaulette-img { max-height: 82px; }
+
+    .eis-profile-epaulette .eis-epaulette-img {
+        max-height: 82px;
+    }
 
 .eis-profile-vehicle {
     padding: 12px;
@@ -3721,6 +3764,7 @@ textarea {
     border-radius: 6px;
     text-align: center;
 }
+
 .eis-profile-vehicle-make {
     font-size: 12px;
     color: #6b7280;
@@ -3729,7 +3773,11 @@ textarea {
     margin-bottom: 6px;
     font-weight: 600;
 }
-.eis-profile-vehicle-plate { display: flex; justify-content: center; }
+
+.eis-profile-vehicle-plate {
+    display: flex;
+    justify-content: center;
+}
 
 .eis-profile-pdf {
     display: flex;
@@ -3740,8 +3788,18 @@ textarea {
     border: 1px solid #b8daff;
     border-radius: 8px;
 }
-.eis-profile-pdf-icon { font-size: 32px; line-height: 1; flex-shrink: 0; }
-.eis-profile-pdf-info { flex: 1; min-width: 0; }
+
+.eis-profile-pdf-icon {
+    font-size: 32px;
+    line-height: 1;
+    flex-shrink: 0;
+}
+
+.eis-profile-pdf-info {
+    flex: 1;
+    min-width: 0;
+}
+
 .eis-profile-pdf-title {
     font-size: 14px;
     font-weight: 700;
@@ -3749,6 +3807,7 @@ textarea {
     word-break: break-all;
     margin-bottom: 2px;
 }
+
 .eis-profile-pdf-sub {
     font-size: 11px;
     color: #5b7ba3;
@@ -3767,11 +3826,32 @@ textarea {
         gap: 12px 14px;
         padding: 14px 16px 14px 0;
     }
-    .eis-staff-row-bar { grid-area: bar; }
-    .eis-staff-row-avatar { grid-area: avatar; width: 48px; height: 48px; font-size: 15px; }
-    .eis-staff-row-info { grid-area: info; }
-    .eis-staff-row-epaulette { grid-area: epaulette; height: 72px; width: 38px; }
-    .eis-staff-row-epaulette .eis-epaulette-img { max-height: 72px; }
+
+    .eis-staff-row-bar {
+        grid-area: bar;
+    }
+
+    .eis-staff-row-avatar {
+        grid-area: avatar;
+        width: 48px;
+        height: 48px;
+        font-size: 15px;
+    }
+
+    .eis-staff-row-info {
+        grid-area: info;
+    }
+
+    .eis-staff-row-epaulette {
+        grid-area: epaulette;
+        height: 72px;
+        width: 38px;
+    }
+
+        .eis-staff-row-epaulette .eis-epaulette-img {
+            max-height: 72px;
+        }
+
     .eis-staff-row-extra {
         grid-area: extra;
         flex-direction: row;
@@ -3779,13 +3859,17 @@ textarea {
         gap: 10px;
         align-items: center;
     }
+
     .eis-staff-row-actions {
         grid-area: actions;
         flex-direction: row;
         justify-content: space-between;
         align-items: center;
     }
-    .eis-staff-row-move { justify-content: flex-start; }
+
+    .eis-staff-row-move {
+        justify-content: flex-start;
+    }
 }
 
 @media (max-width: 640px) {
@@ -3797,6 +3881,7 @@ textarea {
             "bar extra extra"
             "bar actions actions";
     }
+
     .eis-staff-row-epaulette {
         width: 100%;
         height: auto;
@@ -3804,12 +3889,26 @@ textarea {
         justify-content: flex-start;
         padding-left: 62px;
     }
-    .eis-staff-row-extra { padding-left: 62px; }
-    .eis-staff-row-actions { padding-left: 62px; }
-    .eis-staff-row-actions-main { flex-wrap: wrap; }
-    .eis-staff-row-actions-main .eis-btn { flex: 1 1 auto; }
 
-    .eis-plate-img { max-width: 150px; }
+    .eis-staff-row-extra {
+        padding-left: 62px;
+    }
+
+    .eis-staff-row-actions {
+        padding-left: 62px;
+    }
+
+    .eis-staff-row-actions-main {
+        flex-wrap: wrap;
+    }
+
+        .eis-staff-row-actions-main .eis-btn {
+            flex: 1 1 auto;
+        }
+
+    .eis-plate-img {
+        max-width: 150px;
+    }
 }
 
 /* ================================================================
@@ -4188,11 +4287,12 @@ textarea {
     justify-content: center;
     padding: 0;
 }
-.eis-calendar-nav:hover {
-    border-color: var(--eis-accent);
-    color: var(--eis-accent);
-    background: var(--eis-accent-light);
-}
+
+    .eis-calendar-nav:hover {
+        border-color: var(--eis-accent);
+        color: var(--eis-accent);
+        background: var(--eis-accent-light);
+    }
 
 .eis-planning-legend {
     display: flex;
@@ -4203,11 +4303,13 @@ textarea {
     font-size: 12px;
     color: var(--eis-text-secondary);
 }
-.eis-planning-legend span {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-}
+
+    .eis-planning-legend span {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+    }
+
 .eis-cal-dot {
     display: inline-block;
     width: 10px;
@@ -4221,15 +4323,16 @@ textarea {
     gap: 4px;
     margin-bottom: 4px;
 }
-.eis-calendar-weekdays span {
-    text-align: center;
-    font-size: 11px;
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: .5px;
-    color: var(--eis-text-secondary);
-    padding: 6px 0;
-}
+
+    .eis-calendar-weekdays span {
+        text-align: center;
+        font-size: 11px;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: .5px;
+        color: var(--eis-text-secondary);
+        padding: 6px 0;
+    }
 
 .eis-planning-grid {
     display: grid;
@@ -4250,28 +4353,34 @@ textarea {
     transition: all .15s;
     overflow: hidden;
 }
-.eis-plan-day.is-empty {
-    background: #fafbfc;
-    border-color: transparent;
-}
-.eis-plan-day.is-past {
-    opacity: 0.55;
-}
-.eis-plan-day.is-today {
-    border-color: var(--eis-accent);
-    box-shadow: 0 0 0 2px rgba(30,126,52,0.15);
-}
-.eis-plan-day.is-weekend .eis-plan-day-num {
-    color: #c62828;
-}
-.eis-plan-day.has-appts {
-    cursor: pointer;
-}
-.eis-plan-day.has-appts:hover {
-    border-color: var(--eis-accent);
-    transform: translateY(-1px);
-    box-shadow: 0 3px 10px rgba(0,0,0,0.08);
-}
+
+    .eis-plan-day.is-empty {
+        background: #fafbfc;
+        border-color: transparent;
+    }
+
+    .eis-plan-day.is-past {
+        opacity: 0.55;
+    }
+
+    .eis-plan-day.is-today {
+        border-color: var(--eis-accent);
+        box-shadow: 0 0 0 2px rgba(30,126,52,0.15);
+    }
+
+    .eis-plan-day.is-weekend .eis-plan-day-num {
+        color: #c62828;
+    }
+
+    .eis-plan-day.has-appts {
+        cursor: pointer;
+    }
+
+        .eis-plan-day.has-appts:hover {
+            border-color: var(--eis-accent);
+            transform: translateY(-1px);
+            box-shadow: 0 3px 10px rgba(0,0,0,0.08);
+        }
 
 .eis-plan-day-head {
     display: flex;
@@ -4279,12 +4388,14 @@ textarea {
     justify-content: space-between;
     gap: 4px;
 }
+
 .eis-plan-day-num {
     font-size: 13px;
     font-weight: 700;
     color: var(--eis-text);
     line-height: 1;
 }
+
 .eis-plan-day-count {
     font-size: 10px;
     font-weight: 700;
@@ -4303,6 +4414,7 @@ textarea {
     border-radius: 2px;
     overflow: hidden;
 }
+
 .eis-plan-load-fill {
     height: 100%;
     background: var(--eis-success);
@@ -4310,15 +4422,41 @@ textarea {
 }
 
 /* Цвета загрузки */
-.eis-plan-day.load-free        .eis-plan-load-fill { background: #28a745; }
-.eis-plan-day.load-half        .eis-plan-load-fill { background: #fbc02d; }
-.eis-plan-day.load-almost-full .eis-plan-load-fill { background: #f57c00; }
-.eis-plan-day.load-overload    .eis-plan-load-fill { background: #c62828; }
+.eis-plan-day.load-free .eis-plan-load-fill {
+    background: #28a745;
+}
 
-.eis-plan-day.load-free        .eis-plan-day-count { background: #e8f5e9; color: #1b5e20; }
-.eis-plan-day.load-half        .eis-plan-day-count { background: #fff8e1; color: #b28704; }
-.eis-plan-day.load-almost-full .eis-plan-day-count { background: #fff3e0; color: #e65100; }
-.eis-plan-day.load-overload    .eis-plan-day-count { background: #ffebee; color: #c62828; }
+.eis-plan-day.load-half .eis-plan-load-fill {
+    background: #fbc02d;
+}
+
+.eis-plan-day.load-almost-full .eis-plan-load-fill {
+    background: #f57c00;
+}
+
+.eis-plan-day.load-overload .eis-plan-load-fill {
+    background: #c62828;
+}
+
+.eis-plan-day.load-free .eis-plan-day-count {
+    background: #e8f5e9;
+    color: #1b5e20;
+}
+
+.eis-plan-day.load-half .eis-plan-day-count {
+    background: #fff8e1;
+    color: #b28704;
+}
+
+.eis-plan-day.load-almost-full .eis-plan-day-count {
+    background: #fff3e0;
+    color: #e65100;
+}
+
+.eis-plan-day.load-overload .eis-plan-day-count {
+    background: #ffebee;
+    color: #c62828;
+}
 
 /* Загрузка в модалке записи */
 .eis-assign-load {
@@ -4330,23 +4468,70 @@ textarea {
     color: var(--eis-text-secondary);
     border: 1px solid var(--eis-border);
 }
-.eis-assign-load.free        { background: #e8f5e9; color: #1b5e20; border-color: #a5d6a7; }
-.eis-assign-load.half        { background: #fff8e1; color: #b28704; border-color: #ffe082; }
-.eis-assign-load.almost-full { background: #fff3e0; color: #e65100; border-color: #ffcc80; }
-.eis-assign-load.overload    { background: #ffebee; color: #c62828; border-color: #ef9a9a; }
+
+    .eis-assign-load.free {
+        background: #e8f5e9;
+        color: #1b5e20;
+        border-color: #a5d6a7;
+    }
+
+    .eis-assign-load.half {
+        background: #fff8e1;
+        color: #b28704;
+        border-color: #ffe082;
+    }
+
+    .eis-assign-load.almost-full {
+        background: #fff3e0;
+        color: #e65100;
+        border-color: #ffcc80;
+    }
+
+    .eis-assign-load.overload {
+        background: #ffebee;
+        color: #c62828;
+        border-color: #ef9a9a;
+    }
 
 @media (max-width: 768px) {
-    .eis-plan-day { min-height: 56px; padding: 4px; }
-    .eis-plan-day-num { font-size: 11px; }
-    .eis-plan-day-count { font-size: 9px; padding: 1px 4px; }
-    .eis-planning-legend { gap: 10px; font-size: 11px; }
-    .eis-calendar-title { font-size: 15px; min-width: 130px; }
-    .eis-planning-toolbar { gap: 6px; }
+    .eis-plan-day {
+        min-height: 56px;
+        padding: 4px;
+    }
+
+    .eis-plan-day-num {
+        font-size: 11px;
+    }
+
+    .eis-plan-day-count {
+        font-size: 9px;
+        padding: 1px 4px;
+    }
+
+    .eis-planning-legend {
+        gap: 10px;
+        font-size: 11px;
+    }
+
+    .eis-calendar-title {
+        font-size: 15px;
+        min-width: 130px;
+    }
+
+    .eis-planning-toolbar {
+        gap: 6px;
+    }
 }
 
 @media (max-width: 480px) {
-    .eis-plan-day { min-height: 42px; }
-    .eis-plan-day-count { display: none; }
+    .eis-plan-day {
+        min-height: 42px;
+    }
+
+    .eis-plan-day-count {
+        display: none;
+    }
+
     .eis-plan-day.has-appts::after {
         content: '';
         position: absolute;
@@ -4376,16 +4561,16 @@ textarea {
     background: var(--eis-bg-dark);
 }
 
-.eis-auth-page .eis-auth-wrapper {
-    flex: 1;
-    min-height: 0;
-    background: transparent;
-}
+    .eis-auth-page .eis-auth-wrapper {
+        flex: 1;
+        min-height: 0;
+        background: transparent;
+    }
 
-.eis-auth-page .eis-footer {
-    margin-top: 0;
-    padding: 16px 0 12px;
-}
+    .eis-auth-page .eis-footer {
+        margin-top: 0;
+        padding: 16px 0 12px;
+    }
 
 @media (max-width: 768px) {
     .eis-auth-page .eis-footer {
@@ -4436,6 +4621,7 @@ textarea {
         font-size: 10px;
         padding: 0 4px;
     }
+
     .eis-nav-item a {
         position: relative;
     }
@@ -4470,9 +4656,171 @@ textarea {
     padding-left: 17px !important;
 }
 
-.eis-mail-item.selected.unread {
+    .eis-mail-item.selected.unread {
+        background: #fff8e1 !important;
+        border-left: 3px solid var(--eis-warning) !important;
+    }
+
+.eis-mail-selected-info {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--eis-text-secondary);
+    padding: 0 8px;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+}
+
+    .eis-mail-selected-info strong {
+        color: var(--eis-warning);
+        font-family: var(--eis-font-mono);
+    }
+
+/* Локальные стили почты */
+.eis-mail-tabs {
+    display: flex;
+    gap: 4px;
+    border-bottom: 2px solid var(--eis-border);
+    margin-bottom: 20px;
+}
+
+.eis-mail-tab {
+    padding: 10px 22px;
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--eis-text-secondary);
+    background: transparent;
+    border: none;
+    border-bottom: 2px solid transparent;
+    margin-bottom: -2px;
+    cursor: pointer;
+    transition: all .2s;
+    font-family: inherit;
+    position: relative;
+}
+
+    .eis-mail-tab:hover {
+        color: var(--eis-text);
+    }
+
+    .eis-mail-tab.active {
+        color: var(--eis-accent);
+        border-bottom-color: var(--eis-accent);
+    }
+
+    .eis-mail-tab .badge {
+        display: inline-block;
+        min-width: 18px;
+        height: 18px;
+        padding: 0 5px;
+        border-radius: 9px;
+        background: var(--eis-danger);
+        color: #fff;
+        font-size: 10px;
+        font-weight: 700;
+        line-height: 18px;
+        text-align: center;
+        margin-left: 6px;
+        font-family: monospace;
+        vertical-align: middle;
+    }
+
+.eis-mail-tab-content {
+    display: none;
+}
+
+    .eis-mail-tab-content.active {
+        display: block;
+    }
+
+.eis-mail-item {
+    padding: 14px 20px;
+    border-bottom: 1px solid #f0f2f4;
+    cursor: pointer;
+    transition: background .15s;
+    position: relative;
+    display: flex;
+    gap: 10px;
+    align-items: flex-start;
+}
+
+    .eis-mail-item:last-child {
+        border-bottom: none;
+    }
+
+    .eis-mail-item:hover {
+        background: #fafbfc;
+    }
+
+    .eis-mail-item.unread {
+        background: #f0f7f2;
+        border-left: 3px solid var(--eis-accent);
+        padding-left: 17px;
+    }
+
+.eis-mail-item-body {
+    flex: 1;
+    min-width: 0;
+}
+
+.eis-mail-checkbox {
+    width: 18px;
+    height: 18px;
+    margin-top: 3px;
+    accent-color: var(--eis-accent);
+    cursor: pointer;
+    flex-shrink: 0;
+}
+
+.eis-mail-item.selected {
     background: #fff8e1 !important;
     border-left: 3px solid var(--eis-warning) !important;
+    padding-left: 17px !important;
+}
+
+.eis-mail-head {
+    display: flex;
+    justify-content: space-between;
+    gap: 10px;
+    margin-bottom: 4px;
+    font-size: 12px;
+    color: var(--eis-text-light);
+}
+
+.eis-mail-from {
+    font-weight: 700;
+    color: var(--eis-text);
+    font-size: 13px;
+}
+
+.eis-mail-subject {
+    font-size: 14px;
+    font-weight: 600;
+    margin-bottom: 2px;
+}
+
+.eis-mail-preview {
+    font-size: 12px;
+    color: var(--eis-text-secondary);
+    line-height: 1.4;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+}
+
+.eis-mail-attach-count {
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+    font-size: 10.5px;
+    color: var(--eis-info);
+    background: #e3f4f7;
+    padding: 1px 6px;
+    border-radius: 10px;
+    margin-top: 4px;
+    font-weight: 600;
 }
 
 .eis-mail-selected-info {
@@ -4485,99 +4833,107 @@ textarea {
     gap: 4px;
 }
 
-.eis-mail-selected-info strong {
-    color: var(--eis-warning);
-    font-family: var(--eis-font-mono);
+    .eis-mail-selected-info strong {
+        color: var(--eis-warning);
+        font-family: var(--eis-font-mono);
+    }
+
+.eis-mail-attach-zone {
+    border: 2px dashed var(--eis-border);
+    border-radius: 6px;
+    padding: 14px;
+    text-align: center;
+    cursor: pointer;
+    transition: all .2s;
+    background: #fafbfc;
 }
 
-/* Локальные стили почты */
-    .eis-mail-tabs { display: flex; gap: 4px; border-bottom: 2px solid var(--eis-border); margin-bottom: 20px; }
-    .eis-mail-tab {
-        padding: 10px 22px; font-size: 14px; font-weight: 600;
-        color: var(--eis-text-secondary); background: transparent; border: none;
-        border-bottom: 2px solid transparent; margin-bottom: -2px; cursor: pointer;
-        transition: all .2s; font-family: inherit; position: relative;
-    }
-    .eis-mail-tab:hover { color: var(--eis-text); }
-    .eis-mail-tab.active { color: var(--eis-accent); border-bottom-color: var(--eis-accent); }
-    .eis-mail-tab .badge {
-        display: inline-block; min-width: 18px; height: 18px; padding: 0 5px;
-        border-radius: 9px; background: var(--eis-danger); color: #fff;
-        font-size: 10px; font-weight: 700; line-height: 18px; text-align: center;
-        margin-left: 6px; font-family: monospace; vertical-align: middle;
-    }
-    .eis-mail-tab-content { display: none; }
-    .eis-mail-tab-content.active { display: block; }
-
-    .eis-mail-item {
-        padding: 14px 20px; border-bottom: 1px solid #f0f2f4;
-        cursor: pointer; transition: background .15s; position: relative;
-        display: flex; gap: 10px; align-items: flex-start;
-    }
-    .eis-mail-item:last-child { border-bottom: none; }
-    .eis-mail-item:hover { background: #fafbfc; }
-    .eis-mail-item.unread { background: #f0f7f2; border-left: 3px solid var(--eis-accent); padding-left: 17px; }
-    .eis-mail-item-body { flex: 1; min-width: 0; }
-    .eis-mail-checkbox {
-        width: 18px; height: 18px; margin-top: 3px;
-        accent-color: var(--eis-accent); cursor: pointer; flex-shrink: 0;
-    }
-    .eis-mail-item.selected { background: #fff8e1 !important; border-left: 3px solid var(--eis-warning) !important; padding-left: 17px !important; }
-
-    .eis-mail-head {
-        display: flex; justify-content: space-between; gap: 10px;
-        margin-bottom: 4px; font-size: 12px; color: var(--eis-text-light);
-    }
-    .eis-mail-from { font-weight: 700; color: var(--eis-text); font-size: 13px; }
-    .eis-mail-subject { font-size: 14px; font-weight: 600; margin-bottom: 2px; }
-    .eis-mail-preview {
-        font-size: 12px; color: var(--eis-text-secondary); line-height: 1.4;
-        overflow: hidden; text-overflow: ellipsis;
-        display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;
-    }
-    .eis-mail-attach-count {
-        display: inline-flex; align-items: center; gap: 3px;
-        font-size: 10.5px; color: var(--eis-info); background: #e3f4f7;
-        padding: 1px 6px; border-radius: 10px; margin-top: 4px; font-weight: 600;
-    }
-
-    .eis-mail-selected-info {
-        font-size: 12px; font-weight: 600; color: var(--eis-text-secondary);
-        padding: 0 8px; display: inline-flex; align-items: center; gap: 4px;
-    }
-    .eis-mail-selected-info strong { color: var(--eis-warning); font-family: var(--eis-font-mono); }
-
-    .eis-mail-attach-zone {
-        border: 2px dashed var(--eis-border); border-radius: 6px;
-        padding: 14px; text-align: center; cursor: pointer;
-        transition: all .2s; background: #fafbfc;
-    }
     .eis-mail-attach-zone:hover, .eis-mail-attach-zone.dragover {
-        border-color: var(--eis-accent); background: var(--eis-accent-light);
+        border-color: var(--eis-accent);
+        background: var(--eis-accent-light);
     }
-    .eis-mail-attach-zone-icon { font-size: 20px; margin-bottom: 4px; opacity: .5; }
-    .eis-mail-attach-zone-text { font-size: 12px; color: var(--eis-text-secondary); }
-    .eis-mail-attach-zone-text strong { color: var(--eis-text); }
 
-    .eis-mail-attach-list { margin-top: 8px; display: flex; flex-direction: column; gap: 6px; }
-    .eis-mail-attach-item {
-        display: flex; align-items: center; gap: 8px;
-        background: #f5f7f9; border: 1px solid var(--eis-border);
-        border-radius: 5px; padding: 7px 10px; font-size: 12px;
-    }
-    .eis-mail-attach-item-info { flex: 1; min-width: 0; }
-    .eis-mail-attach-item-name { font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-    .eis-mail-attach-item-size { font-size: 10.5px; color: var(--eis-text-light); }
-    .eis-mail-attach-item-remove {
-        width: 22px; height: 22px; border-radius: 50%; border: none;
-        background: rgba(220,53,69,.1); color: var(--eis-danger);
-        font-size: 15px; line-height: 1; cursor: pointer;
-        display: flex; align-items: center; justify-content: center; flex-shrink: 0;
-    }
-    .eis-mail-attach-item-remove:hover { background: rgba(220,53,69,.25); }
+.eis-mail-attach-zone-icon {
+    font-size: 20px;
+    margin-bottom: 4px;
+    opacity: .5;
+}
 
-    .eis-mail-form-row-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; }
-    @media (max-width: 480px) { .eis-mail-form-row-3 { grid-template-columns: 1fr; } }
+.eis-mail-attach-zone-text {
+    font-size: 12px;
+    color: var(--eis-text-secondary);
+}
+
+    .eis-mail-attach-zone-text strong {
+        color: var(--eis-text);
+    }
+
+.eis-mail-attach-list {
+    margin-top: 8px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.eis-mail-attach-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: #f5f7f9;
+    border: 1px solid var(--eis-border);
+    border-radius: 5px;
+    padding: 7px 10px;
+    font-size: 12px;
+}
+
+.eis-mail-attach-item-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.eis-mail-attach-item-name {
+    font-weight: 600;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.eis-mail-attach-item-size {
+    font-size: 10.5px;
+    color: var(--eis-text-light);
+}
+
+.eis-mail-attach-item-remove {
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    border: none;
+    background: rgba(220,53,69,.1);
+    color: var(--eis-danger);
+    font-size: 15px;
+    line-height: 1;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+    .eis-mail-attach-item-remove:hover {
+        background: rgba(220,53,69,.25);
+    }
+
+.eis-mail-form-row-3 {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 8px;
+}
+
+@media (max-width: 480px) {
+    .eis-mail-form-row-3 {
+        grid-template-columns: 1fr;
+    }
+}
 
 /* ================================================================
    МОДАЛКА ПИСЬМА (v3 — большая и удобная)
@@ -4593,7 +4949,10 @@ textarea {
     padding: 24px;
     backdrop-filter: blur(3px);
 }
-.eis-mail-modal-overlay.open { display: flex; }
+
+    .eis-mail-modal-overlay.open {
+        display: flex;
+    }
 
 .eis-mail-modal {
     background: #fff;
@@ -4619,7 +4978,11 @@ textarea {
     background: linear-gradient(180deg, #fafcfb 0%, #ffffff 100%);
     flex-shrink: 0;
 }
-.eis-mail-modal-header-main { flex: 1; min-width: 0; }
+
+.eis-mail-modal-header-main {
+    flex: 1;
+    min-width: 0;
+}
 
 .eis-mail-modal-subject {
     font-size: 20px;
@@ -4644,7 +5007,11 @@ textarea {
     flex-shrink: 0;
     transition: background .15s, color .15s;
 }
-.eis-mail-modal-close:hover { background: #f2f2f2; color: var(--eis-text); }
+
+    .eis-mail-modal-close:hover {
+        background: #f2f2f2;
+        color: var(--eis-text);
+    }
 
 /* Блок отправителя */
 .eis-mail-modal-sender {
@@ -4656,6 +5023,7 @@ textarea {
     background: #fafbfc;
     flex-shrink: 0;
 }
+
 .eis-mail-modal-avatar {
     width: 48px;
     height: 48px;
@@ -4671,7 +5039,12 @@ textarea {
     flex-shrink: 0;
     border: 2px solid #2e3a31;
 }
-.eis-mail-modal-sender-info { flex: 1; min-width: 0; }
+
+.eis-mail-modal-sender-info {
+    flex: 1;
+    min-width: 0;
+}
+
 .eis-mail-modal-sender-name {
     font-size: 15px;
     font-weight: 700;
@@ -4679,11 +5052,13 @@ textarea {
     margin-bottom: 3px;
     line-height: 1.3;
 }
+
 .eis-mail-modal-sender-line {
     font-size: 13px;
     color: var(--eis-text-secondary);
     line-height: 1.4;
 }
+
 .eis-mail-modal-date {
     font-size: 13px;
     color: var(--eis-text-light);
@@ -4703,6 +5078,7 @@ textarea {
     background: #fff;
     flex-shrink: 0;
 }
+
 .eis-mail-modal-recipient-label {
     font-weight: 700;
     color: var(--eis-text-light);
@@ -4712,6 +5088,7 @@ textarea {
     padding-top: 2px;
     flex-shrink: 0;
 }
+
 .eis-mail-modal-recipient-value {
     color: var(--eis-text);
     word-break: break-word;
@@ -4730,11 +5107,12 @@ textarea {
     background: #fff;
     min-height: 120px;
 }
-.eis-mail-modal-body:empty::before {
-    content: '(без текста)';
-    color: var(--eis-text-light);
-    font-style: italic;
-}
+
+    .eis-mail-modal-body:empty::before {
+        content: '(без текста)';
+        color: var(--eis-text-light);
+        font-style: italic;
+    }
 
 /* Вложения */
 .eis-mail-modal-attachments {
@@ -4745,6 +5123,7 @@ textarea {
     max-height: 260px;
     overflow-y: auto;
 }
+
 .eis-mail-modal-attach-title {
     font-size: 11px;
     font-weight: 700;
@@ -4756,24 +5135,29 @@ textarea {
     align-items: center;
     gap: 8px;
 }
-.eis-mail-modal-attach-title .count {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    min-width: 20px;
-    height: 20px;
-    padding: 0 6px;
-    background: var(--eis-accent-light);
-    color: var(--eis-accent);
-    border-radius: 10px;
-    font-family: var(--eis-font-mono);
-    font-size: 11px;
-    font-weight: 700;
-    letter-spacing: 0;
-    text-transform: none;
-}
 
-.eis-mail-modal-attach-list { display: flex; flex-direction: column; gap: 8px; }
+    .eis-mail-modal-attach-title .count {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-width: 20px;
+        height: 20px;
+        padding: 0 6px;
+        background: var(--eis-accent-light);
+        color: var(--eis-accent);
+        border-radius: 10px;
+        font-family: var(--eis-font-mono);
+        font-size: 11px;
+        font-weight: 700;
+        letter-spacing: 0;
+        text-transform: none;
+    }
+
+.eis-mail-modal-attach-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
 
 /* Карточка вложения — крупная и кликабельная */
 .eis-mail-attach-card {
@@ -4786,10 +5170,12 @@ textarea {
     padding: 12px 16px;
     transition: border-color .15s, box-shadow .15s;
 }
-.eis-mail-attach-card:hover {
-    border-color: #b8cec0;
-    box-shadow: 0 2px 8px rgba(20, 40, 25, 0.08);
-}
+
+    .eis-mail-attach-card:hover {
+        border-color: #b8cec0;
+        box-shadow: 0 2px 8px rgba(20, 40, 25, 0.08);
+    }
+
 .eis-mail-attach-card-icon {
     width: 42px;
     height: 42px;
@@ -4802,7 +5188,12 @@ textarea {
     font-size: 20px;
     flex-shrink: 0;
 }
-.eis-mail-attach-card-info { flex: 1; min-width: 0; }
+
+.eis-mail-attach-card-info {
+    flex: 1;
+    min-width: 0;
+}
+
 .eis-mail-attach-card-name {
     font-weight: 600;
     color: var(--eis-text);
@@ -4812,18 +5203,21 @@ textarea {
     text-overflow: ellipsis;
     line-height: 1.3;
 }
+
 .eis-mail-attach-card-size {
     font-size: 12px;
     color: var(--eis-text-light);
     margin-top: 3px;
     font-family: var(--eis-font-mono);
 }
+
 .eis-mail-attach-card-actions {
     display: flex;
     gap: 8px;
     flex-shrink: 0;
     align-items: center;
 }
+
 .eis-mail-attach-card-btn {
     color: var(--eis-accent);
     font-weight: 600;
@@ -4838,19 +5232,22 @@ textarea {
     transition: background .15s, border-color .15s;
     white-space: nowrap;
 }
-.eis-mail-attach-card-btn:hover {
-    background: var(--eis-accent-light);
-    border-color: #c8e6c9;
-}
-.eis-mail-attach-card-btn.is-primary {
-    background: var(--eis-accent);
-    color: #fff;
-    border-color: var(--eis-accent);
-}
-.eis-mail-attach-card-btn.is-primary:hover {
-    background: var(--eis-accent-hover);
-    border-color: var(--eis-accent-hover);
-}
+
+    .eis-mail-attach-card-btn:hover {
+        background: var(--eis-accent-light);
+        border-color: #c8e6c9;
+    }
+
+    .eis-mail-attach-card-btn.is-primary {
+        background: var(--eis-accent);
+        color: #fff;
+        border-color: var(--eis-accent);
+    }
+
+        .eis-mail-attach-card-btn.is-primary:hover {
+            background: var(--eis-accent-hover);
+            border-color: var(--eis-accent-hover);
+        }
 
 /* Подвал */
 .eis-mail-modal-footer {
@@ -4863,12 +5260,17 @@ textarea {
     gap: 12px;
     flex-shrink: 0;
 }
+
 .eis-mail-modal-footer-info {
     font-size: 12px;
     color: var(--eis-text-light);
     font-family: var(--eis-font-mono);
 }
-.eis-mail-modal-footer-actions { display: flex; gap: 10px; }
+
+.eis-mail-modal-footer-actions {
+    display: flex;
+    gap: 10px;
+}
 
 /* Мобильная версия */
 @media (max-width: 768px) {
@@ -4876,82 +5278,368 @@ textarea {
         padding: 0;
         align-items: flex-end;
     }
+
     .eis-mail-modal {
         max-width: 100%;
         height: 94vh;
         max-height: 94vh;
         border-radius: 16px 16px 0 0;
     }
-    .eis-mail-modal-header { padding: 18px 20px 14px; }
-    .eis-mail-modal-subject { font-size: 17px; }
-    .eis-mail-modal-sender { padding: 14px 20px; gap: 12px; }
-    .eis-mail-modal-avatar { width: 42px; height: 42px; font-size: 14px; }
-    .eis-mail-modal-recipient { padding: 12px 20px; }
-    .eis-mail-modal-body { padding: 20px; font-size: 14px; line-height: 1.7; }
-    .eis-mail-modal-attachments { padding: 14px 20px 16px; max-height: 40vh; }
-    .eis-mail-attach-card { padding: 10px 12px; gap: 12px; }
-    .eis-mail-attach-card-icon { width: 36px; height: 36px; font-size: 17px; }
-    .eis-mail-attach-card-actions { flex-direction: column; gap: 6px; }
-    .eis-mail-attach-card-btn { padding: 6px 10px; font-size: 12px; }
+
+    .eis-mail-modal-header {
+        padding: 18px 20px 14px;
+    }
+
+    .eis-mail-modal-subject {
+        font-size: 17px;
+    }
+
+    .eis-mail-modal-sender {
+        padding: 14px 20px;
+        gap: 12px;
+    }
+
+    .eis-mail-modal-avatar {
+        width: 42px;
+        height: 42px;
+        font-size: 14px;
+    }
+
+    .eis-mail-modal-recipient {
+        padding: 12px 20px;
+    }
+
+    .eis-mail-modal-body {
+        padding: 20px;
+        font-size: 14px;
+        line-height: 1.7;
+    }
+
+    .eis-mail-modal-attachments {
+        padding: 14px 20px 16px;
+        max-height: 40vh;
+    }
+
+    .eis-mail-attach-card {
+        padding: 10px 12px;
+        gap: 12px;
+    }
+
+    .eis-mail-attach-card-icon {
+        width: 36px;
+        height: 36px;
+        font-size: 17px;
+    }
+
+    .eis-mail-attach-card-actions {
+        flex-direction: column;
+        gap: 6px;
+    }
+
+    .eis-mail-attach-card-btn {
+        padding: 6px 10px;
+        font-size: 12px;
+    }
+
     .eis-mail-modal-footer {
         padding: 12px 20px;
         flex-direction: column-reverse;
         gap: 10px;
     }
-    .eis-mail-modal-footer .eis-btn { width: 100%; }
-    .eis-mail-modal-footer-info { display: none; }
+
+        .eis-mail-modal-footer .eis-btn {
+            width: 100%;
+        }
+
+    .eis-mail-modal-footer-info {
+        display: none;
+    }
 }
 
 /* ================================================================
    ПРОСМОТРЩИК ФАЙЛОВ
    ================================================================ */
 .eis-mail-viewer-overlay {
-    display: none; position: fixed; inset: 0;
-    background: rgba(0,0,0,.85); z-index: 2500;
-    align-items: center; justify-content: center; padding: 20px;
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,.85);
+    z-index: 2500;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
 }
-.eis-mail-viewer-overlay.open { display: flex; }
+
+    .eis-mail-viewer-overlay.open {
+        display: flex;
+    }
+
 .eis-mail-viewer {
-    background: #1f2025; border-radius: var(--eis-radius);
-    width: 100%; max-width: 1100px; max-height: 92vh;
-    display: flex; flex-direction: column; overflow: hidden;
+    background: #1f2025;
+    border-radius: var(--eis-radius);
+    width: 100%;
+    max-width: 1100px;
+    max-height: 92vh;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
 }
+
 .eis-mail-viewer-header {
-    display: flex; justify-content: space-between; align-items: center;
-    padding: 12px 18px; border-bottom: 1px solid rgba(255,255,255,.1);
-    background: #2a2b31; gap: 12px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 18px;
+    border-bottom: 1px solid rgba(255,255,255,.1);
+    background: #2a2b31;
+    gap: 12px;
 }
+
 .eis-mail-viewer-title {
-    color: #fff; font-size: 13px; font-weight: 600;
-    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+    color: #fff;
+    font-size: 13px;
+    font-weight: 600;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }
-.eis-mail-viewer-title small { color: #9aa3ac; font-weight: 400; margin-left: 8px; }
+
+    .eis-mail-viewer-title small {
+        color: #9aa3ac;
+        font-weight: 400;
+        margin-left: 8px;
+    }
+
 .eis-mail-viewer-close {
-    font-size: 24px; line-height: 1; color: #9aa3ac; cursor: pointer;
-    width: 30px; height: 30px; display: flex; align-items: center; justify-content: center;
-    border-radius: 4px; flex-shrink: 0;
+    font-size: 24px;
+    line-height: 1;
+    color: #9aa3ac;
+    cursor: pointer;
+    width: 30px;
+    height: 30px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 4px;
+    flex-shrink: 0;
 }
-.eis-mail-viewer-close:hover { background: rgba(255,255,255,.1); color: #fff; }
+
+    .eis-mail-viewer-close:hover {
+        background: rgba(255,255,255,.1);
+        color: #fff;
+    }
+
 .eis-mail-viewer-body {
-    flex: 1; overflow: auto; display: flex; align-items: center;
-    justify-content: center; background: #2a2b31; min-height: 300px;
+    flex: 1;
+    overflow: auto;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #2a2b31;
+    min-height: 300px;
 }
-.eis-mail-viewer-body img { max-width: 100%; max-height: 80vh; object-fit: contain; display: block; }
-.eis-mail-viewer-body iframe { width: 100%; height: 80vh; border: none; background: #fff; }
-.eis-mail-viewer-body pre {
-    width: 100%; height: 80vh; overflow: auto; margin: 0; padding: 16px;
-    background: #1f2025; color: #e0e0e0; font-family: monospace;
-    font-size: 12.5px; white-space: pre-wrap; word-break: break-word;
-}
-.eis-mail-viewer-body .unsupported {
-    text-align: center; color: #c8d3cc; padding: 40px 20px; font-size: 13.5px;
-}
-.eis-mail-viewer-body .unsupported .big { font-size: 40px; margin-bottom: 14px; opacity: .5; }
+
+    .eis-mail-viewer-body img {
+        max-width: 100%;
+        max-height: 80vh;
+        object-fit: contain;
+        display: block;
+    }
+
+    .eis-mail-viewer-body iframe {
+        width: 100%;
+        height: 80vh;
+        border: none;
+        background: #fff;
+    }
+
+    .eis-mail-viewer-body pre {
+        width: 100%;
+        height: 80vh;
+        overflow: auto;
+        margin: 0;
+        padding: 16px;
+        background: #1f2025;
+        color: #e0e0e0;
+        font-family: monospace;
+        font-size: 12.5px;
+        white-space: pre-wrap;
+        word-break: break-word;
+    }
+
+    .eis-mail-viewer-body .unsupported {
+        text-align: center;
+        color: #c8d3cc;
+        padding: 40px 20px;
+        font-size: 13.5px;
+    }
+
+        .eis-mail-viewer-body .unsupported .big {
+            font-size: 40px;
+            margin-bottom: 14px;
+            opacity: .5;
+        }
+
 .eis-mail-viewer-footer {
-    padding: 10px 18px; border-top: 1px solid rgba(255,255,255,.1);
-    background: #2a2b31; display: flex; justify-content: flex-end; gap: 10px;
+    padding: 10px 18px;
+    border-top: 1px solid rgba(255,255,255,.1);
+    background: #2a2b31;
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
 }
-.eis-mail-viewer-footer .eis-btn { background: #3a3b42; color: #fff; border-color: #4a4b52; }
-.eis-mail-viewer-footer .eis-btn:hover { background: #4a4b52; }
-.eis-mail-viewer-footer .eis-btn-primary-viewer { background: var(--eis-accent); color: #fff; border-color: var(--eis-accent); }
-.eis-mail-viewer-footer .eis-btn-primary-viewer:hover { background: var(--eis-accent-hover); }
+
+    .eis-mail-viewer-footer .eis-btn {
+        background: #3a3b42;
+        color: #fff;
+        border-color: #4a4b52;
+    }
+
+        .eis-mail-viewer-footer .eis-btn:hover {
+            background: #4a4b52;
+        }
+
+    .eis-mail-viewer-footer .eis-btn-primary-viewer {
+        background: var(--eis-accent);
+        color: #fff;
+        border-color: var(--eis-accent);
+    }
+
+        .eis-mail-viewer-footer .eis-btn-primary-viewer:hover {
+            background: var(--eis-accent-hover);
+        }
+
+/* Статус "Проведено" (информационный) */
+.eis-status-info {
+    background: #e3f4f7;
+    color: #17a2b8;
+    border: 1px solid #80deea;
+}
+
+/* ================================================================
+   НАВИГАЦИЯ — DRAG + WHEEL, БЕЗ СКРОЛЛБАРА
+   ================================================================ */
+.eis-nav-menu {
+    scrollbar-width: none; /* Firefox */
+    -ms-overflow-style: none; /* IE/Edge */
+    cursor: grab;
+    user-select: none;
+}
+
+    .eis-nav-menu::-webkit-scrollbar {
+        display: none;
+    }
+    /* Chrome/Safari/Opera */
+    .eis-nav-menu.is-dragging {
+        cursor: grabbing;
+    }
+
+        .eis-nav-menu.is-dragging a {
+            pointer-events: none;
+        }
+
+/* ================================================================
+   НЕЙТРАЛЬНЫЙ СТАТУС «ПРОВЕДЕНО»
+   ================================================================ */
+.eis-status-info {
+    background: #eef2f5;
+    color: #4a5560;
+    border: 1px solid #cfd6dd;
+}
+
+/* Модалка заявки — 2 колонки */
+.eis-app-detail-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1.4fr) minmax(320px, 1fr);
+    gap: 24px;
+    align-items: start;
+}
+
+@media (max-width: 900px) {
+    .eis-app-detail-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* Чекбоксы категорий */
+.eis-cat-checks {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.eis-cat-checks .eis-radio {
+    padding: 6px 14px;
+}
+
+
+/* ================================================================
+   НЕЙТРАЛЬНАЯ СЕРАЯ КНОПКА (для «Проведено»)
+   ================================================================ */
+.eis-btn-neutral {
+    background: #eef2f5;
+    color: #4a5560;
+    border-color: #cfd6dd;
+}
+
+    .eis-btn-neutral:hover:not(:disabled) {
+        background: #e2e8ee;
+        border-color: #b8c2cc;
+    }
+
+/* ================================================================
+   СТИЛИЗОВАННЫЕ ЧЕКБОКСЫ-КАТЕГОРИИ
+   ================================================================ */
+.eis-cat-checks {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin-top: 4px;
+}
+
+.eis-cat-check {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 9px 18px;
+    font-size: 14px;
+    font-weight: 600;
+    color: #333;
+    background: #fff;
+    border: 1px solid #e0e4e8;
+    border-radius: 4px;
+    cursor: pointer;
+    user-select: none;
+    transition: all .15s;
+    line-height: 1;
+}
+
+    .eis-cat-check:hover {
+        border-color: var(--eis-accent);
+        background: #f5faf6;
+    }
+
+    .eis-cat-check input[type="checkbox"] {
+        width: 16px;
+        height: 16px;
+        accent-color: var(--eis-accent);
+        cursor: pointer;
+        margin: 0;
+        flex-shrink: 0;
+    }
+
+    .eis-cat-check:has(input:checked) {
+        border-color: var(--eis-accent);
+        background: var(--eis-accent-light);
+        color: var(--eis-accent);
+    }
+
+/* ================================================================
+   ПАНЕЛЬ HEADER — ПРАВЫЙ БЛОК (кнопка + бейдж)
+   ================================================================ */
+.eis-panel-header-right {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-left: auto;
+}

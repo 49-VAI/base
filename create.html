@@ -23,6 +23,13 @@
                     <div class="eis-panel">
                         <div class="eis-panel-header">
                             <span class="eis-panel-title">Данные для заполнения</span>
+                            <div class="eis-panel-header-right">
+                                <button type="button" class="eis-btn eis-btn-primary"
+                                        onclick="openApplicationPicker()"
+                                        title="Подставить данные из заявки на сдачу ВУ">
+                                    Из заявки
+                                </button>
+                            </div>
                         </div>
                         <div class="eis-panel-body">
                             <div class="eis-form-group">
@@ -82,26 +89,14 @@
                             </div>
 
                             <div class="eis-actions-bar" style="margin-bottom: 0;">
-                                <button class="eis-btn eis-btn-secondary" onclick="downloadVUImage()">
-                                    <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor">
-                                        <path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z" />
-                                    </svg>
-                                    Скачать фото
-                                </button>
-                                <button class="eis-btn eis-btn-primary" onclick="saveVU()" data-readonly-hide>
-                                    <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor">
-                                        <path d="M17 3H5c-1.11 0-2 .9-2 2v14c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V7l-4-4zm-5 16c-1.66 0-3-1.34-3-3s1.34-3 3-3 3 1.34 3 3-1.34 3-3 3zm3-10H5V5h10v4z" />
-                                    </svg>
-                                    Сохранить ВУ в базу
-                                </button>
+                                <button class="eis-btn eis-btn-secondary" onclick="downloadVUImage()">Скачать фото</button>
+                                <button class="eis-btn eis-btn-primary" onclick="saveVU()" data-readonly-hide>Сохранить ВУ в базу</button>
                             </div>
                         </div>
                     </div>
 
                     <div class="eis-panel">
-                        <div class="eis-panel-header">
-                            <span class="eis-panel-title">Предпросмотр</span>
-                        </div>
+                        <div class="eis-panel-header"><span class="eis-panel-title">Предпросмотр</span></div>
                         <div class="eis-panel-body eis-preview-body">
                             <canvas id="vuCanvas" width="1215" height="892"></canvas>
                         </div>
@@ -110,7 +105,6 @@
             </div>
         </main>
 
-        <!-- Модалка подтверждения ВУ -->
         <div class="eis-modal-form" id="confirmVUModal">
             <div class="eis-modal-form-content" style="max-width: 800px;">
                 <div class="eis-modal-form-header">
@@ -119,12 +113,9 @@
                 </div>
                 <div class="eis-modal-form-body">
                     <div class="eis-confirm-vu">
-                        <!-- Фото -->
                         <div class="eis-confirm-vu-photo">
                             <img id="cvPhoto" src="" alt="ВУ">
                         </div>
-
-                        <!-- Данные -->
                         <div class="eis-confirm-vu-fields">
                             <div class="eis-data-field">
                                 <div class="eis-data-label">Номер ВУ</div>
@@ -138,7 +129,6 @@
                                 <div class="eis-data-label">Звание</div>
                                 <div class="eis-data-value" id="cvRank">—</div>
                             </div>
-
                             <div class="eis-data-field">
                                 <div class="eis-data-label">Дата выдачи</div>
                                 <div class="eis-data-value" id="cvIssueDate">—</div>
@@ -153,7 +143,6 @@
                             </div>
                         </div>
                     </div>
-
                     <div class="eis-auth-error" id="cvError"></div>
                     <div class="eis-profile-hint" style="margin-top: 16px;">
                         Нажмите «Записать в базу», чтобы сохранить ВУ в ЕИС.
@@ -161,9 +150,45 @@
                 </div>
                 <div class="eis-modal-form-footer">
                     <button type="button" class="eis-btn eis-btn-secondary" onclick="closeConfirmVUModal()">Отмена</button>
-                    <button type="button" class="eis-btn eis-btn-primary" id="cvSaveBtn" onclick="confirmSaveVU()">
-                        Записать в базу
-                    </button>
+                    <button type="button" class="eis-btn eis-btn-primary" id="cvSaveBtn" onclick="confirmSaveVU()">Записать в базу</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Модалка выбора заявки -->
+        <div class="eis-modal-form" id="applicationPickerModal">
+            <div class="eis-modal-form-content" style="max-width: 1000px;">
+                <div class="eis-modal-form-header">
+                    <div>
+                        <h3 style="margin:0">Заявки на сдачу ВУ</h3>
+                        <div style="font-size:13px;color:#888;margin-top:4px;">
+                            Выберите заявку — данные подставятся в форму создания ВУ
+                        </div>
+                    </div>
+                    <span class="eis-modal-form-close" onclick="closeApplicationPicker()">×</span>
+                </div>
+                <div class="eis-modal-form-body">
+                    <div class="eis-form-group">
+                        <label class="eis-form-label">Статус заявки</label>
+                        <select class="eis-select" id="appPickerStatusFilter" onchange="renderApplicationPickerList()">
+                            <option value="passed" selected>Сдал</option>
+                            <option value="conducted">Проведено</option>
+                            <option value="">Все</option>
+                        </select>
+                    </div>
+                    <div class="eis-form-group">
+                        <label class="eis-form-label">Поиск</label>
+                        <input type="text" class="eis-input" id="appPickerSearch"
+                               placeholder="ФИО, подразделение"
+                               oninput="renderApplicationPickerList()">
+                    </div>
+                    <div id="applicationPickerList"
+                         style="max-height: 500px; overflow-y: auto;
+                                border: 1px solid var(--eis-border);
+                                border-radius: var(--eis-radius-sm);"></div>
+                </div>
+                <div class="eis-modal-form-footer">
+                    <button type="button" class="eis-btn eis-btn-secondary" onclick="closeApplicationPicker()">Отмена</button>
                 </div>
             </div>
         </div>
@@ -175,10 +200,11 @@
     <script src="js/layout.js"></script>
     <script src="js/toast.js"></script>
     <script src="js/supabase.js"></script>
-	<script src="js/mailbox-client.js"></script> 
+    <script src="js/mailbox-client.js"></script>
     <script src="js/auth.js"></script>
     <script src="js/guard.js"></script>
     <script src="js/main.js"></script>
     <script src="js/create.js"></script>
+    <script src="js/create-applications.js"></script>
 </body>
 </html>

@@ -4,6 +4,7 @@
     'create.html': ['inspector_reo', 'chief_reo', 'chief_vai'],
     'exam.html': ['inspector_reo', 'chief_reo', 'chief_vai'],
     'tech.html': ['inspector_reo', 'chief_reo', 'chief_vai'],
+    'applications.html': ['inspector_reo', 'chief_reo', 'chief_vai'],
     'protocol.html': ['cadet', 'inspector_odps', 'inspector_reo',
         'chief_odps', 'chief_reo', 'chief_cuipp', 'chief_vai']
 };

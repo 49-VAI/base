@@ -1,0 +1,172 @@
+﻿<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Заявки на ВУ — ЕИС ВАИ</title>
+    <link rel="icon" type="image/png" href="images/favicon.png">
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <div class="eis-wrapper">
+        <div id="site-header"></div>
+        <div id="site-nav"></div>
+
+        <main class="eis-main">
+            <div class="eis-container">
+                <div class="eis-page-header">
+                    <h1 class="eis-page-title">Заявки на сдачу ВУ</h1>
+                    <div class="eis-page-subtitle">Заявки от подразделений ВТО на экзамен для получения военного удостоверения</div>
+                </div>
+
+                <div class="eis-panel">
+                    <div class="eis-panel-header"><span class="eis-panel-title">Сводка</span></div>
+                    <div class="eis-panel-body">
+                        <div class="eis-admin-stats">
+                            <div class="eis-stat-card" style="cursor:pointer" onclick="filterAppsByStatus('')">
+                                <div class="eis-stat-value" id="appStatTotal">—</div>
+                                <div class="eis-stat-label">Всего</div>
+                            </div>
+                            <div class="eis-stat-card" style="cursor:pointer;border-left-color:#ffc107" onclick="filterAppsByStatus('pending')">
+                                <div class="eis-stat-value" id="appStatPending" style="color:#f57c00">—</div>
+                                <div class="eis-stat-label">Ожидают</div>
+                            </div>
+                            <div class="eis-stat-card" style="cursor:pointer;border-left-color:#4a5560" onclick="filterAppsByStatus('conducted')">
+                                <div class="eis-stat-value" id="appStatConducted" style="color:#4a5560">—</div>
+                                <div class="eis-stat-label">Проведено</div>
+                            </div>
+                            <div class="eis-stat-card" style="cursor:pointer;border-left-color:#28a745" onclick="filterAppsByStatus('passed')">
+                                <div class="eis-stat-value" id="appStatPassed" style="color:#28a745">—</div>
+                                <div class="eis-stat-label">Сдали</div>
+                            </div>
+                            <div class="eis-stat-card" style="cursor:pointer;border-left-color:#dc3545" onclick="filterAppsByStatus('failed')">
+                                <div class="eis-stat-value" id="appStatFailed" style="color:#c62828">—</div>
+                                <div class="eis-stat-label">Не сдали</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="eis-panel">
+                    <div class="eis-panel-header"><span class="eis-panel-title">Поиск и фильтры</span></div>
+                    <div class="eis-panel-body">
+                        <div class="eis-form-row">
+                            <div class="eis-form-group">
+                                <label class="eis-form-label">Поиск</label>
+                                <input type="text" class="eis-input" id="appSearchQuery" placeholder="ФИО, подразделение">
+                            </div>
+                            <div class="eis-form-group">
+                                <label class="eis-form-label">Статус</label>
+                                <select class="eis-select" id="appFilterStatus">
+                                    <option value="">Все статусы</option>
+                                    <option value="pending">Ожидают</option>
+                                    <option value="conducted">Проведено</option>
+                                    <option value="passed">Сдал</option>
+                                    <option value="failed">Не сдал</option>
+                                    <option value="cancelled">Отменено</option>
+                                </select>
+                            </div>
+                            <div class="eis-form-group">
+                                <label class="eis-form-label">Дата с</label>
+                                <input type="date" class="eis-input" id="appFilterDateFrom">
+                            </div>
+                            <div class="eis-form-group">
+                                <label class="eis-form-label">Дата по</label>
+                                <input type="date" class="eis-input" id="appFilterDateTo">
+                            </div>
+                            <div class="eis-form-group eis-form-group-btn">
+                                <label class="eis-form-label">&nbsp;</label>
+                                <button type="button" class="eis-btn eis-btn-danger" onclick="resetAppFilters()">Сбросить</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="eis-panel">
+                    <div class="eis-panel-header">
+                        <span class="eis-panel-title">Заявки</span>
+                        <div class="eis-panel-header-right">
+                            <button class="eis-btn eis-btn-sm eis-btn-secondary" onclick="loadApplications()">Обновить</button>
+                            <span class="eis-badge" id="appResultsCount">ЗАПИСЕЙ: 0</span>
+                        </div>
+                    </div>
+                    <div class="eis-panel-body" id="appResults">
+                        <div class="eis-loading"><div class="eis-spinner"></div><span>Загрузка...</span></div>
+                    </div>
+                </div>
+            </div>
+        </main>
+        <div id="site-footer"></div>
+    </div>
+
+    <!-- Модалка заявки -->
+    <div class="eis-modal-form" id="appDetailModal">
+        <div class="eis-modal-form-content" style="max-width: 1050px;">
+            <div class="eis-modal-form-header">
+                <div>
+                    <h3 id="appDetailTitle" style="margin:0">Заявка на ВУ</h3>
+                    <div id="appDetailSubtitle" style="font-size:13px; color:#888; margin-top:4px;"></div>
+                </div>
+                <span class="eis-modal-form-close" onclick="closeAppDetail()">×</span>
+            </div>
+            <div class="eis-modal-form-body">
+                <div id="appDetailStatusBadge" style="margin-bottom:16px;"></div>
+
+                <div class="eis-app-detail-grid">
+                    <div>
+                        <div style="font-size:11px; font-weight:700; text-transform:uppercase;
+                                    letter-spacing:.5px; color:#666; margin-bottom:8px;">
+                            Данные заявки
+                        </div>
+                        <div id="appDetailFields"></div>
+                    </div>
+
+                    <div id="appDetailActions">
+                        <div style="font-size:11px; font-weight:700; text-transform:uppercase;
+                                    letter-spacing:.5px; color:#666; margin-bottom:8px;">
+                            Обработка
+                        </div>
+
+                        <div class="eis-form-group">
+                            <label class="eis-form-label">Примечание ВАИ (видно ВТО)</label>
+                            <textarea class="eis-input" id="appStatusNotes" rows="3"
+                                      style="resize:vertical;" placeholder="Причина, примечание"></textarea>
+                        </div>
+
+                        <div style="display:flex; flex-direction:column; gap:8px;">
+                            <button type="button" class="eis-btn eis-btn-neutral" onclick="setApplicationStatus('conducted')">
+                                Проведено (без результата)
+                            </button>
+                            <button type="button" class="eis-btn eis-btn-success" onclick="setApplicationStatus('passed')">
+                                Сдал
+                            </button>
+                            <button type="button" class="eis-btn eis-btn-danger" onclick="setApplicationStatus('failed')">
+                                Не сдал
+                            </button>
+                            <button type="button" class="eis-btn eis-btn-secondary" onclick="setApplicationStatus('pending')">
+                                Вернуть в ожидание
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="eis-modal-form-footer eis-modal-form-footer-split">
+                <button type="button" class="eis-btn eis-btn-danger" id="appDeleteBtn" onclick="deleteApplication()">Удалить</button>
+                <div class="eis-modal-form-footer-right">
+                    <button type="button" class="eis-btn eis-btn-secondary" onclick="closeAppDetail()">Закрыть</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="js/layout.js"></script>
+    <script src="js/toast.js"></script>
+    <script src="js/supabase.js"></script>
+    <script src="js/mailbox-client.js"></script>
+    <script src="js/auth.js"></script>
+    <script src="js/guard.js"></script>
+    <script src="js/main.js"></script>
+    <script src="js/applications.js"></script>
+</body>
+</html>

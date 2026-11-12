@@ -68,6 +68,21 @@
                     </div>
                 </div>
 
+                <!-- ===== ЗАПРОСЫ НА АРХИВИРОВАНИЕ ===== -->
+                <div class="eis-panel" id="archiveRequestsPanel" style="display:none;">
+                    <div class="eis-panel-header">
+                        <span class="eis-panel-title">Запросы на архивирование ВУ</span>
+                        <div class="eis-panel-actions">
+                            <button class="eis-btn eis-btn-sm eis-btn-secondary"
+                                    onclick="loadArchiveRequests()">
+                                Обновить
+                            </button>
+                            <span class="eis-badge" id="archiveRequestsCount">ЗАПРОСОВ: 0</span>
+                        </div>
+                    </div>
+                    <div class="eis-panel-body" id="archiveRequestsList" style="padding:0;"></div>
+                </div>
+
                 <div class="eis-panel">
                     <div class="eis-panel-header">
                         <span class="eis-panel-title">Результаты поиска</span>
